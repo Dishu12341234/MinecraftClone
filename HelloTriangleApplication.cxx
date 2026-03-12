@@ -89,6 +89,8 @@ void HelloTriangleApplication::cleanup()
     vkDestroyBuffer(device, vertexBuffer, nullptr);
     vkFreeMemory(device, vertexBufferMemory, nullptr);
 
+    c.value().cleanup();
+
     // Destroy per-frame semaphores and fences
 for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);

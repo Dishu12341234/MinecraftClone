@@ -1,34 +1,12 @@
 #ifndef H_GPIPE
 #define H_GPIPE
-
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/hash.hpp>
 #include <array>
 #include "PassInfo.hpp"
+#include "Structs.h"
 
 #include <vector>
 #include <fstream>
 #include <functional>
-
-//UBO
-struct UniformBufferObject {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
-};
-
-//PCS
-struct PushConstantC1
-{       
-    glm::mat4 data;
-};
-
 
 struct Vertex {
     glm::vec3 pos;

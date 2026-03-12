@@ -6,9 +6,8 @@
 #include <chrono>
 #include "Textures.hpp"
 #include "GraphicsPipeline.h"
-#include "GameMeshObject.h"
-#include "MeshUploader.h"
 #include "GameObjectPool.h"
+#include "Chunk.h"
 
 class HelloTriangleApplication
 {
@@ -17,10 +16,10 @@ private:
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
     VkInstance instance;
-    MeshUploader meshUploader;
 
     GameObjectPool gameObjectPool;
-    GameMeshObject gmo1;
+
+    std::optional<Chunk> c;
 
     struct QueueFamilyIndices
     {
@@ -56,8 +55,6 @@ private:
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
     uint32_t currentFrame = 0;
-
-    GameMeshObject testGameObject;
 
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;

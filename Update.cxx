@@ -1,12 +1,12 @@
 #include "HelloTriangleApplication.hpp"
-#include "GameMeshObject.h"
+#include "Chunk.h"
 #include <cstdlib>
 #include <cstring>
 #include <memory>
 
 void HelloTriangleApplication::initGameObjects()
 {
-    VulkanContext context{};
+    static VulkanContext context{};
     context.device = device;
     context.physicalDevice = physicalDevice;
     context.graphicsQueue = graphicsQueue;
@@ -15,6 +15,9 @@ void HelloTriangleApplication::initGameObjects()
     context.commandPool = commandPool;
 
     gameObjectPool.uploadVBOsAndIBOs();
+    c = std::move(Chunk(context));
+    c.value().populateBlocks(); 
+    c.value().buildChunkMesh();
 }
 
 void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
@@ -28,11 +31,11 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 
     // Model 0
     // ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
-    ubo.model = glm::translate(glm::mat4(1.f), glm::vec3(1.f, 1.f, 0.5f));
-    // ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+    ubo.model = glm::translate(glm::mat4(1.f), glm::vec3(0.f));
+    ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
 
-    ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 1.f), glm::vec3(0.f), glm::vec3(0.f, -0.f, 1.f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+    ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 1.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+    ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.01f, 100.0f);
 
     ubo.proj[1][1] *= -1; //-1 => y -> -y
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));

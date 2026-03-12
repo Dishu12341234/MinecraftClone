@@ -1,0 +1,3163 @@
+./Voxel.cxx:#include "Voxel.h"
+./Voxel.cxx:
+./Voxel.cxx:Voxel::Voxel(VulkanContext &vkContext, BlockType blockType) : vkContext{vkContext}
+./Voxel.cxx:{
+./Voxel.cxx:    this->blockType = blockType;
+./Voxel.cxx:}
+./Voxel.cxx:
+./Voxel.cxx:void Voxel::setType(BlockType blockType)
+./Voxel.cxx:{
+./Voxel.cxx:    this->blockType = blockType;
+./Voxel.cxx:}
+./Voxel.cxx:
+./Voxel.cxx:void Voxel::setPosition(glm::vec3 position)
+./Voxel.cxx:{
+./Voxel.cxx:    this->transform.position = position;
+./Voxel.cxx:}
+./Voxel.cxx:
+./Voxel.cxx:void Voxel::setRotation(glm::vec3 rotation)
+./Voxel.cxx:{
+./Voxel.cxx:    this->transform.rotation = rotation;
+./Voxel.cxx:}
+./Voxel.cxx:
+./Voxel.cxx:void Voxel::setScale(glm::vec3 scale)
+./Voxel.cxx:{
+./Voxel.cxx:    this->transform.scale = scale;
+./Voxel.cxx:}
+./Voxel.cxx:
+./Voxel.cxx:BlockType Voxel::getBlockType()
+./Voxel.cxx:{
+./Voxel.cxx:    return BlockType(blockType);
+./Voxel.cxx:}
+./Voxel.cxx:
+./Voxel.cxx:Voxel::~Voxel()
+./Voxel.cxx:{
+./Voxel.cxx:}
+./GameObjectPool.h:#ifndef GAME_OBJECT_POOL
+./GameObjectPool.h:#define GAME_OBJECT_POOL
+./GameObjectPool.h:#include "PassInfo.hpp"
+./GameObjectPool.h:#include "GraphicsPipeline.h"
+./GameObjectPool.h:#include <vector>
+./GameObjectPool.h:#include <string.h>
+./GameObjectPool.h:
+./GameObjectPool.h:class GameObjectPool
+./GameObjectPool.h:{
+./GameObjectPool.h:private:
+./GameObjectPool.h:    VulkanContext vkContext;
+./GameObjectPool.h:    
+./GameObjectPool.h:
+./GameObjectPool.h:public:
+./GameObjectPool.h:    GameObjectPool();
+./GameObjectPool.h:    void init(VulkanContext context);
+./GameObjectPool.h:    void uploadVBOsAndIBOs();
+./GameObjectPool.h:    void drawIndexed(VkCommandBuffer &commandBuffer, std::vector<VkDescriptorSet> &descriptorSets, u_GraphicsPipeline &graphicsPipeline, VkExtent2D &swapChainExtent, uint64_t instanceCount, uint32_t &currentFrame);
+./GameObjectPool.h:    void cleanUpResources();
+./GameObjectPool.h:    ~GameObjectPool();
+./GameObjectPool.h:};
+./GameObjectPool.h:
+./GameObjectPool.h:#endif
+./intiVk.cxx:#include "HelloTriangleApplication.hpp"
+./intiVk.cxx:#include <vulkan/vulkan.h>
+./intiVk.cxx:#include <iostream>
+./intiVk.cxx:#include <stdexcept>
+./intiVk.cxx:#include <cstdlib>
+./intiVk.cxx:#include <vector>
+./intiVk.cxx:#include <iostream>
+./intiVk.cxx:#include <limits>
+./intiVk.cxx:#include <algorithm>
+./intiVk.cxx:#include <unordered_map>
+./intiVk.cxx:#include <chrono>
+./intiVk.cxx:#include <map>
+./intiVk.cxx:#include <set>
+./intiVk.cxx:
+./intiVk.cxx:
+./intiVk.cxx:VkSampleCountFlagBits HelloTriangleApplication::getMaxUsableSampleCount()
+./intiVk.cxx:{
+./intiVk.cxx:    VkPhysicalDeviceProperties physicalDeviceProperties;
+./intiVk.cxx:    vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+./intiVk.cxx:
+./intiVk.cxx:    VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+./intiVk.cxx:    if (counts & VK_SAMPLE_COUNT_64_BIT)
+./intiVk.cxx:    {
+./intiVk.cxx:        return VK_SAMPLE_COUNT_64_BIT;
+./intiVk.cxx:    }
+./intiVk.cxx:    if (counts & VK_SAMPLE_COUNT_32_BIT)
+./intiVk.cxx:    {
+./intiVk.cxx:        return VK_SAMPLE_COUNT_32_BIT;
+./intiVk.cxx:    }
+./intiVk.cxx:    if (counts & VK_SAMPLE_COUNT_16_BIT)
+./intiVk.cxx:    {
+./intiVk.cxx:        return VK_SAMPLE_COUNT_16_BIT;
+./intiVk.cxx:    }
+./intiVk.cxx:    if (counts & VK_SAMPLE_COUNT_8_BIT)
+./intiVk.cxx:    {
+./intiVk.cxx:        return VK_SAMPLE_COUNT_8_BIT;
+./intiVk.cxx:    }
+./intiVk.cxx:    if (counts & VK_SAMPLE_COUNT_4_BIT)
+./intiVk.cxx:    {
+./intiVk.cxx:        return VK_SAMPLE_COUNT_4_BIT;
+./intiVk.cxx:    }
+./intiVk.cxx:    if (counts & VK_SAMPLE_COUNT_2_BIT)
+./intiVk.cxx:    {
+./intiVk.cxx:        return VK_SAMPLE_COUNT_2_BIT;
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    return VK_SAMPLE_COUNT_1_BIT;
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::initWindow()
+./intiVk.cxx:{
+./intiVk.cxx:    glfwInit();
+./intiVk.cxx:
+./intiVk.cxx:    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+./intiVk.cxx:    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+./intiVk.cxx:
+./intiVk.cxx:    _window = glfwCreateWindow(WIDTH, HEIGHT, PROCESS_NAME.c_str(), nullptr, nullptr);
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::initVulkan()
+./intiVk.cxx:{
+./intiVk.cxx:    createInstance();
+./intiVk.cxx:    createSurface();
+./intiVk.cxx:    pickPhysicalDevice();
+./intiVk.cxx:    createLogicalDevice();
+./intiVk.cxx:    createSwapChain();
+./intiVk.cxx:    createImageViews();
+./intiVk.cxx:    createRenderPass();
+./intiVk.cxx:
+./intiVk.cxx:    createDescriptorSetLayout();
+./intiVk.cxx:
+./intiVk.cxx:    u_GraphicsPipelineCreateInfo createInfo{};
+./intiVk.cxx:    createInfo.device = device;
+./intiVk.cxx:    createInfo.height = HEIGHT;
+./intiVk.cxx:    createInfo.width = WIDTH;
+./intiVk.cxx:    createInfo.msaaSamples = msaaSamples;
+./intiVk.cxx:    createInfo.swapChainExtent = swapChainExtent;
+./intiVk.cxx:    createInfo.renderPass = renderPass;
+./intiVk.cxx:    createInfo.descriptorSetLayout = &descriptorSetLayout;
+./intiVk.cxx:
+./intiVk.cxx:    graphicsPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
+./intiVk.cxx:    graphicsPipeline.createGraphicsPipeline();
+./intiVk.cxx:
+./intiVk.cxx:    u_TexturePassInfo texturePassInfo{};
+./intiVk.cxx:    texturePassInfo.device = device;
+./intiVk.cxx:    texturePassInfo.physicalDevice = physicalDevice;
+./intiVk.cxx:    texturePassInfo.swapChainExtent = swapChainExtent;
+./intiVk.cxx:
+./intiVk.cxx:    texture.passTextureCreateInfo(texturePassInfo);
+./intiVk.cxx:    createColorResources();
+./intiVk.cxx:    createDepthResources();
+./intiVk.cxx:    createFramebuffers();
+./intiVk.cxx:    createCommandPool();
+./intiVk.cxx:    texturePassInfo.graphicsQueue = graphicsQueue;
+./intiVk.cxx:    texturePassInfo.renderPass = renderPass;
+./intiVk.cxx:    texturePassInfo.commandPool = commandPool;
+./intiVk.cxx:    texturePassInfo.height = HEIGHT;
+./intiVk.cxx:    texturePassInfo.width = WIDTH;
+./intiVk.cxx:    texturePassInfo.texturePath = TEXTURE_PATH;
+./intiVk.cxx:    texture.passTextureCreateInfo(texturePassInfo);
+./intiVk.cxx:    loadModel();
+./intiVk.cxx:    // createVertexBuffer();
+./intiVk.cxx:    // createIndexBuffer();
+./intiVk.cxx:    initGameObjects();
+./intiVk.cxx:    createUniformBuffers();
+./intiVk.cxx:    createDescriptorPool();
+./intiVk.cxx:
+./intiVk.cxx:    std::cout << "Creating Texture..." << std::endl;
+./intiVk.cxx:    texture.createTextureImage();
+./intiVk.cxx:    texture.createTextureView();
+./intiVk.cxx:    texture.createTextureSampler();
+./intiVk.cxx:
+./intiVk.cxx:    createDescriptorSets();
+./intiVk.cxx:    createCommandBuffers();
+./intiVk.cxx:    createSyncObject();
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::createInstance()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Creating Vulkan Instance..." << std::endl;
+./intiVk.cxx:    if (enableValidationLayers && !checkValidationLayerSupport())
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("Validation layers requested, but not available");
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    if (enableValidationLayers)
+./intiVk.cxx:    {
+./intiVk.cxx:        std::cout << "Validation layers enabled" << std::endl;
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    // --- Application info ---
+./intiVk.cxx:    VkApplicationInfo appInfo{};
+./intiVk.cxx:    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+./intiVk.cxx:    appInfo.pApplicationName = "Hello Triangle";
+./intiVk.cxx:    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+./intiVk.cxx:    appInfo.pEngineName = "No Engine";
+./intiVk.cxx:    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+./intiVk.cxx:    appInfo.apiVersion = VK_API_VERSION_1_1; // Use 1.1 for MoltenVK
+./intiVk.cxx:
+./intiVk.cxx:    // --- Instance create info ---
+./intiVk.cxx:    VkInstanceCreateInfo createInfo{};
+./intiVk.cxx:    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+./intiVk.cxx:    createInfo.pApplicationInfo = &appInfo;
+./intiVk.cxx:
+./intiVk.cxx:    // --- Validation layers ---
+./intiVk.cxx:    if (enableValidationLayers)
+./intiVk.cxx:    {
+./intiVk.cxx:        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+./intiVk.cxx:        createInfo.ppEnabledLayerNames = validationLayers.data();
+./intiVk.cxx:    }
+./intiVk.cxx:    else
+./intiVk.cxx:    {
+./intiVk.cxx:        createInfo.enabledLayerCount = 0;
+./intiVk.cxx:        createInfo.ppEnabledLayerNames = nullptr;
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    // --- Required extensions ---
+./intiVk.cxx:    uint32_t glfwExtensionCount = 0;
+./intiVk.cxx:    const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+./intiVk.cxx:    std::vector<const char *> requiredExtensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+./intiVk.cxx:    requiredExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+./intiVk.cxx:
+./intiVk.cxx:    createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+./intiVk.cxx:    createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
+./intiVk.cxx:    createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+./intiVk.cxx:
+./intiVk.cxx:    // --- Create instance ---
+./intiVk.cxx:    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("failed to create instance!");
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    // --- Print available extensions ---
+./intiVk.cxx:    uint32_t extensionCount = 0;
+./intiVk.cxx:    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+./intiVk.cxx:    std::vector<VkExtensionProperties> extensions(extensionCount);
+./intiVk.cxx:    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+./intiVk.cxx:
+./intiVk.cxx:    std::cout << "available extensions:\n";
+./intiVk.cxx:    for (const auto &extension : extensions)
+./intiVk.cxx:    {
+./intiVk.cxx:        std::cout << '\t' << extension.extensionName << '\n';
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// finding if VL_LAYERS_KHRONOS_validation is there or not
+./intiVk.cxx:bool HelloTriangleApplication::checkValidationLayerSupport()
+./intiVk.cxx:{
+./intiVk.cxx:    uint32_t layerCount;
+./intiVk.cxx:    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+./intiVk.cxx:
+./intiVk.cxx:    std::vector<VkLayerProperties> availableLayers(layerCount);
+./intiVk.cxx:    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+./intiVk.cxx:
+./intiVk.cxx:    for (const char *layerName : validationLayers)
+./intiVk.cxx:    {
+./intiVk.cxx:        bool layerFound = false;
+./intiVk.cxx:
+./intiVk.cxx:        for (auto &layerPorperties : availableLayers)
+./intiVk.cxx:        {
+./intiVk.cxx:            if (strcmp(layerName, layerPorperties.layerName) == 0)
+./intiVk.cxx:            {
+./intiVk.cxx:                layerFound = true;
+./intiVk.cxx:                break;
+./intiVk.cxx:            }
+./intiVk.cxx:        }
+./intiVk.cxx:
+./intiVk.cxx:        if (!layerFound)
+./intiVk.cxx:        {
+./intiVk.cxx:            return false;
+./intiVk.cxx:        }
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    return true;
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::createSurface()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Creating window surface..." << std::endl;
+./intiVk.cxx:    if (glfwCreateWindowSurface(instance, _window, nullptr, &surface) != VK_SUCCESS)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("Failed to create Window surface");
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::pickPhysicalDevice()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Picking Physical Device..." << std::endl;
+./intiVk.cxx:    physicalDevice = VK_NULL_HANDLE; // this will be implicitly cleanup when VkInstance is destroid(no additoinal cleanup needed)
+./intiVk.cxx:
+./intiVk.cxx:    uint32_t deviceCount = 0;
+./intiVk.cxx:    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+./intiVk.cxx:
+./intiVk.cxx:    if (deviceCount == 0)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("failed to find GPUs that support Vulkan");
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    std::vector<VkPhysicalDevice> devices(deviceCount);
+./intiVk.cxx:    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+./intiVk.cxx:
+./intiVk.cxx:    std::multimap<int, VkPhysicalDevice> candidates;
+./intiVk.cxx:
+./intiVk.cxx:    for (const auto &device : devices)
+./intiVk.cxx:    {
+./intiVk.cxx:        int score = rateDeviceSuitablity(device);
+./intiVk.cxx:        candidates.insert(std::make_pair(score, device));
+./intiVk.cxx:        std::cout << "Score: " << score << std::endl;
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    if (candidates.rbegin()->first > 0)
+./intiVk.cxx:    {
+./intiVk.cxx:        physicalDevice = candidates.rbegin()->second;
+./intiVk.cxx:        msaaSamples = getMaxUsableSampleCount();
+./intiVk.cxx:    }
+./intiVk.cxx:    else
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("Failed to find a suitable GPU");
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// right now we only allow to use dedicated cards the support geometry shaders
+./intiVk.cxx:// bool HelloTriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
+./intiVk.cxx:// {
+./intiVk.cxx:
+./intiVk.cxx://     // this controls which type of GPU to allow
+./intiVk.cxx://     return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
+./intiVk.cxx:// }
+./intiVk.cxx:
+./intiVk.cxx:int HelloTriangleApplication::rateDeviceSuitablity(VkPhysicalDevice device)
+./intiVk.cxx:{
+./intiVk.cxx:    VkPhysicalDeviceProperties props;
+./intiVk.cxx:    VkPhysicalDeviceFeatures feats;
+./intiVk.cxx:    vkGetPhysicalDeviceProperties(device, &props);
+./intiVk.cxx:    vkGetPhysicalDeviceFeatures(device, &feats);
+./intiVk.cxx:
+./intiVk.cxx:    int score = 0;
+./intiVk.cxx:
+./intiVk.cxx:    std::cout << "Device: " << props.deviceName << std::endl;
+./intiVk.cxx:
+./intiVk.cxx:    // Prefer discrete or integrated GPU
+./intiVk.cxx:    if (props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+./intiVk.cxx:        score += 10000;
+./intiVk.cxx:    else if (props.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+./intiVk.cxx:        score += 5000;
+./intiVk.cxx:
+./intiVk.cxx:    // Bigger textures = better
+./intiVk.cxx:    score += props.limits.maxImageDimension2D;
+./intiVk.cxx:
+./intiVk.cxx:    // Useful features
+./intiVk.cxx:    if (feats.samplerAnisotropy)
+./intiVk.cxx:        score += 1000;
+./intiVk.cxx:    if (feats.shaderInt64)
+./intiVk.cxx:        score += 500;
+./intiVk.cxx:    if (feats.wideLines)
+./intiVk.cxx:        score += 300;
+./intiVk.cxx:
+./intiVk.cxx:#ifdef __APPLE__
+./intiVk.cxx:    // Metal backend doesn’t support geometry/tessellation shaders
+./intiVk.cxx:    score += 1500;
+./intiVk.cxx:#else
+./intiVk.cxx:    if (!feats.geometryShader)
+./intiVk.cxx:        return 0; // skip if no geometry shader
+./intiVk.cxx:#endif
+./intiVk.cxx:
+./intiVk.cxx:    return score;
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// Queue -> a line in which a set of commands needs to be executed
+./intiVk.cxx:// there maybe multiple types of queues(Graphics, Computem, ...)
+./intiVk.cxx:// Queue Family -> Conatains multiple queues for the GPU(Note: A queue family must be homogenous)
+./intiVk.cxx:
+./intiVk.cxx:// finding queue families
+./intiVk.cxx:HelloTriangleApplication::QueueFamilyIndices HelloTriangleApplication::findQueueFamilies(VkPhysicalDevice device)
+./intiVk.cxx:{
+./intiVk.cxx:    QueueFamilyIndices indices;
+./intiVk.cxx:    uint32_t queueFamilyCount = 0;
+./intiVk.cxx:    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr); // grts all the queue families supported by the GPU
+./intiVk.cxx:
+./intiVk.cxx:    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+./intiVk.cxx:    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+./intiVk.cxx:
+./intiVk.cxx:    int i = 0;
+./intiVk.cxx:    for (const auto &queueFamily : queueFamilies)
+./intiVk.cxx:    {
+./intiVk.cxx:        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+./intiVk.cxx:            indices.graphicsFamily = i;
+./intiVk.cxx:
+./intiVk.cxx:        VkBool32 presentSupport = false;
+./intiVk.cxx:        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+./intiVk.cxx:        if (presentSupport)
+./intiVk.cxx:            indices.presentFamily = i;
+./intiVk.cxx:
+./intiVk.cxx:        if (indices.isComplete())
+./intiVk.cxx:            break;
+./intiVk.cxx:
+./intiVk.cxx:        i++;
+./intiVk.cxx:    }
+./intiVk.cxx:    // NOTE: some GPU supports different graphics and presentation queues
+./intiVk.cxx:
+./intiVk.cxx:    return indices;
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// Logical device -> A brige between the program and the GPU
+./intiVk.cxx:void HelloTriangleApplication::createLogicalDevice()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Creating Logical Device..." << std::endl;
+./intiVk.cxx:    // Queue Family Stuff
+./intiVk.cxx:    QueueFamilyIndices indices = findQueueFamilies(physicalDevice); // get the required queue families
+./intiVk.cxx:    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+./intiVk.cxx:    std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+./intiVk.cxx:
+./intiVk.cxx:    // right now only creating a single queue(can create muliple)
+./intiVk.cxx:    float queuePriority = 1.f;
+./intiVk.cxx:    for (uint32_t queueFamily : uniqueQueueFamilies) // prepare each queue family
+./intiVk.cxx:    {
+./intiVk.cxx:        VkDeviceQueueCreateInfo queueCreateInfo{};
+./intiVk.cxx:        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+./intiVk.cxx:        queueCreateInfo.queueFamilyIndex = queueFamily;
+./intiVk.cxx:        queueCreateInfo.queueCount = 1;
+./intiVk.cxx:        queueCreateInfo.pQueuePriorities = &queuePriority;
+./intiVk.cxx:
+./intiVk.cxx:        queueCreateInfos.push_back(queueCreateInfo); // push the queue info in the vector
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    // ---- Specifing which feature we wanna use ----
+./intiVk.cxx:    VkPhysicalDeviceFeatures deviceFeatures{};
+./intiVk.cxx:    deviceFeatures.samplerAnisotropy = VK_TRUE;
+./intiVk.cxx:    deviceFeatures.sampleRateShading = VK_TRUE;
+./intiVk.cxx:
+./intiVk.cxx:    VkDeviceCreateInfo createInfo{};
+./intiVk.cxx:    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+./intiVk.cxx:
+./intiVk.cxx:    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+./intiVk.cxx:    createInfo.pQueueCreateInfos = queueCreateInfos.data();
+./intiVk.cxx:
+./intiVk.cxx:    createInfo.pEnabledFeatures = &deviceFeatures;
+./intiVk.cxx:
+./intiVk.cxx:#ifdef __APPLE__
+./intiVk.cxx:    deviceExtensions.push_back("VK_KHR_portability_subset");
+./intiVk.cxx:#else
+./intiVk.cxx:    deviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+./intiVk.cxx:#endif
+./intiVk.cxx:
+./intiVk.cxx:    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+./intiVk.cxx:    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+./intiVk.cxx:
+./intiVk.cxx:    // Device specific validation layers
+./intiVk.cxx:    if (enableValidationLayers)
+./intiVk.cxx:    {
+./intiVk.cxx:        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+./intiVk.cxx:        createInfo.ppEnabledLayerNames = validationLayers.data();
+./intiVk.cxx:    }
+./intiVk.cxx:    else
+./intiVk.cxx:    {
+./intiVk.cxx:        createInfo.enabledLayerCount = 0;
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("Faild to create logical device");
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    // ---- retrive the queues and store them into the class members ----
+./intiVk.cxx:    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+./intiVk.cxx:    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// this is never called because I have rateDeviceSutablity
+./intiVk.cxx:// this is just redundent
+./intiVk.cxx:bool HelloTriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
+./intiVk.cxx:{
+./intiVk.cxx:    QueueFamilyIndices indices = findQueueFamilies(device);
+./intiVk.cxx:
+./intiVk.cxx:    bool extensionsSupported = checkDeviceExtensionSupport(device);
+./intiVk.cxx:
+./intiVk.cxx:    bool swapChainAdequate = false;
+./intiVk.cxx:    if (extensionsSupported)
+./intiVk.cxx:    {
+./intiVk.cxx:        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+./intiVk.cxx:        swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    return indices.isComplete() && extensionsSupported && swapChainAdequate;
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:bool HelloTriangleApplication::checkDeviceExtensionSupport(VkPhysicalDevice device)
+./intiVk.cxx:{
+./intiVk.cxx:    // ---- counting the number of extensions ----
+./intiVk.cxx:    uint32_t extensionCount;
+./intiVk.cxx:    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+./intiVk.cxx:
+./intiVk.cxx:    std::vector<VkExtensionProperties> availableExtansions(extensionCount);
+./intiVk.cxx:    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtansions.data()); // all the required extensions are now retrived
+./intiVk.cxx:
+./intiVk.cxx:    std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+./intiVk.cxx:
+./intiVk.cxx:    for (const auto &extension : availableExtansions)
+./intiVk.cxx:    {
+./intiVk.cxx:        requiredExtensions.erase(extension.extensionName);
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    // if all the required extensions are supported then the 'requiredExtension' vector is empty
+./intiVk.cxx:    // which returns true
+./intiVk.cxx:    return requiredExtensions.empty();
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// Swapchain -> A queue of images presented to the screen in a sequence
+./intiVk.cxx:// Draw to an offscreen -> present it to the current window -> repeat
+./intiVk.cxx:
+./intiVk.cxx:// This function asks the GPU about the capablitie of the SwapChain that this GPU has
+./intiVk.cxx:HelloTriangleApplication::SwapChainSupportDetails HelloTriangleApplication::querySwapChainSupport(VkPhysicalDevice device)
+./intiVk.cxx:{
+./intiVk.cxx:    SwapChainSupportDetails details;
+./intiVk.cxx:
+./intiVk.cxx:    // ---- Get the capabilities ----
+./intiVk.cxx:    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+./intiVk.cxx:
+./intiVk.cxx:    // ---- get the format ----
+./intiVk.cxx:    uint32_t formatCount;
+./intiVk.cxx:    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+./intiVk.cxx:
+./intiVk.cxx:    if (formatCount != 0)
+./intiVk.cxx:    {
+./intiVk.cxx:        details.formats.resize(formatCount);
+./intiVk.cxx:        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    // ---- get the presentation mode(vsync, mailbox ...) ----
+./intiVk.cxx:    uint32_t presentModeCount;
+./intiVk.cxx:    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+./intiVk.cxx:
+./intiVk.cxx:    if (presentModeCount != 0)
+./intiVk.cxx:    {
+./intiVk.cxx:        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    return details;
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// A swap suface define how pixels are stored(RGB vs BRGA or linear vs sRGB)
+./intiVk.cxx:VkSurfaceFormatKHR HelloTriangleApplication::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats)
+./intiVk.cxx:{
+./intiVk.cxx:    {
+./intiVk.cxx:        for (const auto &availableFormat : availableFormats)
+./intiVk.cxx:        {
+./intiVk.cxx:            if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR)
+./intiVk.cxx:            {
+./intiVk.cxx:                return availableFormat;
+./intiVk.cxx:            }
+./intiVk.cxx:        }
+./intiVk.cxx:
+./intiVk.cxx:        return availableFormats.at(0);
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// this specifies how to presnet the images to the screen (vsync or mailbox or normal)
+./intiVk.cxx:VkPresentModeKHR HelloTriangleApplication::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes)
+./intiVk.cxx:{
+./intiVk.cxx:    {
+./intiVk.cxx:        for (const auto &availablePresentMode : availablePresentModes)
+./intiVk.cxx:        {
+./intiVk.cxx:            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+./intiVk.cxx:            {
+./intiVk.cxx:                return availablePresentMode;
+./intiVk.cxx:            }
+./intiVk.cxx:        }
+./intiVk.cxx:
+./intiVk.cxx:        return VK_PRESENT_MODE_FIFO_KHR;
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// Extent defines the resolution of the image
+./intiVk.cxx:// MacOS has a fixed extent while other windowing systems have a varible extent which is clamped to the window bounds
+./intiVk.cxx:// also High-DPI displays like Apple Liquid Retina displays have to be configure in a sepreate way
+./intiVk.cxx:VkExtent2D HelloTriangleApplication::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities)
+./intiVk.cxx:{
+./intiVk.cxx:#ifdef __APPLE__
+./intiVk.cxx:    // MoltenVK on macOS (Retina-safe)
+./intiVk.cxx:    int width, height;
+./intiVk.cxx:    glfwGetFramebufferSize(_window, &width, &height);
+./intiVk.cxx:
+./intiVk.cxx:    VkExtent2D actualExtent = {
+./intiVk.cxx:        static_cast<uint32_t>(width),
+./intiVk.cxx:        static_cast<uint32_t>(height)};
+./intiVk.cxx:
+./intiVk.cxx:    return actualExtent; // Always use framebuffer size on Retina
+./intiVk.cxx:#else
+./intiVk.cxx:    // Metal IE: the size is predifined and is not UINT 32 max. therefore, use the size provided by the system
+./intiVk.cxx:    if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+./intiVk.cxx:    {
+./intiVk.cxx:        return capabilities.currentExtent;
+./intiVk.cxx:    }
+./intiVk.cxx:    // The surface does not have a fixed size and you must create it by yourself
+./intiVk.cxx:    else
+./intiVk.cxx:    {
+./intiVk.cxx:        int width, height;
+./intiVk.cxx:        glfwGetFramebufferSize(_window, &width, &height);
+./intiVk.cxx:
+./intiVk.cxx:        VkExtent2D actualExtent =
+./intiVk.cxx:            {
+./intiVk.cxx:                static_cast<uint32_t>(width),
+./intiVk.cxx:                static_cast<uint32_t>(height)};
+./intiVk.cxx:
+./intiVk.cxx:        actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+./intiVk.cxx:
+./intiVk.cxx:        actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+./intiVk.cxx:
+./intiVk.cxx:        return actualExtent;
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:#endif
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:
+./intiVk.cxx:// here we are using a staging buffer which is accisible by the CPU and then afterwards copying the contents of the staging buffer to the vertex buffer
+./intiVk.cxx:void HelloTriangleApplication::createVertexBuffer()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Creating Vertex Buffer..." << std::endl;
+./intiVk.cxx:
+./intiVk.cxx:    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+./intiVk.cxx:
+./intiVk.cxx:    VkBuffer stagingBuffer;
+./intiVk.cxx:    VkDeviceMemory stagingBufferMemory;
+./intiVk.cxx:    // TX
+./intiVk.cxx:    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, stagingBuffer, stagingBufferMemory);
+./intiVk.cxx:
+./intiVk.cxx:    // filling in the vertex buffer
+./intiVk.cxx:    void *data;
+./intiVk.cxx:    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+./intiVk.cxx:    memcpy(data, vertices.data(), (size_t)bufferSize);
+./intiVk.cxx:    vkUnmapMemory(device, stagingBufferMemory);
+./intiVk.cxx:
+./intiVk.cxx:    // creating the actul VBO and setting it up so the it is the destionation of the transfer source
+./intiVk.cxx:    // TX
+./intiVk.cxx:    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+./intiVk.cxx:
+./intiVk.cxx:    // but we still have to copy the memory contents manully
+./intiVk.cxx:    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+./intiVk.cxx:
+./intiVk.cxx:    vkDestroyBuffer(device, stagingBuffer, nullptr);
+./intiVk.cxx:    vkFreeMemory(device, stagingBufferMemory, nullptr);
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::createIndexBuffer()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Creating Index Buffer..." << std::endl;
+./intiVk.cxx:
+./intiVk.cxx:    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+./intiVk.cxx:
+./intiVk.cxx:    VkBuffer stagingBuffer;
+./intiVk.cxx:    VkDeviceMemory stagingBufferMemory;
+./intiVk.cxx:
+./intiVk.cxx:    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+./intiVk.cxx:
+./intiVk.cxx:    void *data;
+./intiVk.cxx:    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+./intiVk.cxx:    memcpy(data, indices.data(), (size_t)bufferSize);
+./intiVk.cxx:    vkUnmapMemory(device, stagingBufferMemory);
+./intiVk.cxx:
+./intiVk.cxx:    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+./intiVk.cxx:
+./intiVk.cxx:    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+./intiVk.cxx:
+./intiVk.cxx:    vkDestroyBuffer(device, stagingBuffer, nullptr);
+./intiVk.cxx:    vkFreeMemory(device, stagingBufferMemory, nullptr);
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::createUniformBuffers()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Creating Uniform Buffers..." << std::endl;
+./intiVk.cxx:
+./intiVk.cxx:    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+./intiVk.cxx:
+./intiVk.cxx:    uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:    uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:    uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT); // like 'void *data;'
+./intiVk.cxx:
+./intiVk.cxx:    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+./intiVk.cxx:    {
+./intiVk.cxx:        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
+./intiVk.cxx:        vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::createDescriptorPool()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Creating Descriptor Pool..." << std::endl;
+./intiVk.cxx:
+./intiVk.cxx:    std::array<VkDescriptorPoolSize, 2> poolSizes{};
+./intiVk.cxx:    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+./intiVk.cxx:    poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:    poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+./intiVk.cxx:    poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:
+./intiVk.cxx:    VkDescriptorPoolCreateInfo poolInfo{};
+./intiVk.cxx:    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+./intiVk.cxx:    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+./intiVk.cxx:    poolInfo.pPoolSizes = poolSizes.data();
+./intiVk.cxx:    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:
+./intiVk.cxx:    if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("failed to create descriptor pool!");
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::createDescriptorSets()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Creating Descriptor Sets..." << std::endl;
+./intiVk.cxx:
+./intiVk.cxx:    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+./intiVk.cxx:    VkDescriptorSetAllocateInfo allocInfo{};
+./intiVk.cxx:    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+./intiVk.cxx:    allocInfo.descriptorPool = descriptorPool;
+./intiVk.cxx:    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:    allocInfo.pSetLayouts = layouts.data();
+./intiVk.cxx:
+./intiVk.cxx:    descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:    if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("failed to allocate descriptor sets!");
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+./intiVk.cxx:    {
+./intiVk.cxx:        VkDescriptorBufferInfo bufferInfo{};
+./intiVk.cxx:        bufferInfo.buffer = uniformBuffers[i];
+./intiVk.cxx:        bufferInfo.offset = 0;
+./intiVk.cxx:        bufferInfo.range = sizeof(UniformBufferObject);
+./intiVk.cxx:
+./intiVk.cxx:        VkDescriptorImageInfo imageInfo{};
+./intiVk.cxx:        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+./intiVk.cxx:        imageInfo.imageView = texture.textureImageView;
+./intiVk.cxx:        imageInfo.sampler = texture.textureSampler;
+./intiVk.cxx:
+./intiVk.cxx:        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+./intiVk.cxx:
+./intiVk.cxx:        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+./intiVk.cxx:        descriptorWrites[0].dstSet = descriptorSets[i];
+./intiVk.cxx:        descriptorWrites[0].dstBinding = 0;
+./intiVk.cxx:        descriptorWrites[0].dstArrayElement = 0;
+./intiVk.cxx:        descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+./intiVk.cxx:        descriptorWrites[0].descriptorCount = 1;
+./intiVk.cxx:        descriptorWrites[0].pBufferInfo = &bufferInfo;
+./intiVk.cxx:
+./intiVk.cxx:        descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+./intiVk.cxx:        descriptorWrites[1].dstSet = descriptorSets[i];
+./intiVk.cxx:        descriptorWrites[1].dstBinding = 1;
+./intiVk.cxx:        descriptorWrites[1].dstArrayElement = 0;
+./intiVk.cxx:        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+./intiVk.cxx:        descriptorWrites[1].descriptorCount = 1;
+./intiVk.cxx:        descriptorWrites[1].pImageInfo = &imageInfo;
+./intiVk.cxx:
+./intiVk.cxx:        vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// Memory trasnfer opertation are done using command buffer just like drawing
+./intiVk.cxx:void HelloTriangleApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+./intiVk.cxx:{
+./intiVk.cxx:    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+./intiVk.cxx:
+./intiVk.cxx:    VkBufferCopy copyRegion{};
+./intiVk.cxx:    copyRegion.size = size;
+./intiVk.cxx:    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+./intiVk.cxx:
+./intiVk.cxx:    endSingleTimeCommands(commandBuffer);
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:uint32_t HelloTriangleApplication::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+./intiVk.cxx:{
+./intiVk.cxx:    VkPhysicalDeviceMemoryProperties memProperties;
+./intiVk.cxx:    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+./intiVk.cxx:
+./intiVk.cxx:    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+./intiVk.cxx:    {
+./intiVk.cxx:        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+./intiVk.cxx:        {
+./intiVk.cxx:            return i;
+./intiVk.cxx:        }
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    throw std::runtime_error("failed to find suitable memory type!");
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:// A command buffer is a queue of commands to send to the GPU
+./intiVk.cxx:void HelloTriangleApplication::createCommandBuffers()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Creating Command Buffers..." << std::endl;
+./intiVk.cxx:
+./intiVk.cxx:    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:
+./intiVk.cxx:    VkCommandBufferAllocateInfo allocInfo{};
+./intiVk.cxx:    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+./intiVk.cxx:    allocInfo.commandPool = commandPool;
+./intiVk.cxx:    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+./intiVk.cxx:    allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+./intiVk.cxx:
+./intiVk.cxx:    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("failed to allocate command buffers");
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+./intiVk.cxx:{
+./intiVk.cxx:    VkCommandBufferBeginInfo beginInfo{};
+./intiVk.cxx:    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+./intiVk.cxx:    beginInfo.flags = 0;
+./intiVk.cxx:    beginInfo.pInheritanceInfo = nullptr;
+./intiVk.cxx:
+./intiVk.cxx:    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("failed to begin recording command buffer!");
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    VkRenderPassBeginInfo renderPassInfo{};
+./intiVk.cxx:    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+./intiVk.cxx:    renderPassInfo.renderPass = renderPass;
+./intiVk.cxx:    renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+./intiVk.cxx:
+./intiVk.cxx:    renderPassInfo.renderArea.offset = {0, 0};
+./intiVk.cxx:    renderPassInfo.renderArea.extent = swapChainExtent;
+./intiVk.cxx:
+./intiVk.cxx:    std::array<VkClearValue, 2> clearValues{};
+./intiVk.cxx:    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+./intiVk.cxx:    clearValues[1].depthStencil = {1.0f, 0};
+./intiVk.cxx:
+./intiVk.cxx:    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+./intiVk.cxx:    renderPassInfo.pClearValues = clearValues.data();
+./intiVk.cxx:
+./intiVk.cxx:    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+./intiVk.cxx:
+./intiVk.cxx:    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.graphicsPipeline);
+./intiVk.cxx:    c.value().draw(commandBuffer, graphicsPipeline.pipelineLayout, graphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+./intiVk.cxx:
+./intiVk.cxx:    // gameObjectPool.drawIndexed(commandBuffer, descriptorSets, graphicsPipeline, swapChainExtent, 3, currentFrame);
+./intiVk.cxx:
+./intiVk.cxx:    vkCmdEndRenderPass(commandBuffer);
+./intiVk.cxx:
+./intiVk.cxx:    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("failed to record command buffer!");
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::createSyncObject() {
+./intiVk.cxx:    // 1️⃣ Per-frame semaphores for acquiring images
+./intiVk.cxx:    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:
+./intiVk.cxx:    // 2️⃣ Per-swapchain-image semaphores for rendering completion
+./intiVk.cxx:    renderFinishedSemaphores.resize(swapChainImages.size());
+./intiVk.cxx:
+./intiVk.cxx:    // 3️⃣ Fences to limit frames in flight
+./intiVk.cxx:    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:
+./intiVk.cxx:    VkSemaphoreCreateInfo semaphoreInfo{};
+./intiVk.cxx:    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+./intiVk.cxx:
+./intiVk.cxx:    VkFenceCreateInfo fenceInfo{};
+./intiVk.cxx:    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+./intiVk.cxx:    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT; // start signaled
+./intiVk.cxx:
+./intiVk.cxx:    // Create per-frame semaphores and fences
+./intiVk.cxx:    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+./intiVk.cxx:        if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
+./intiVk.cxx:            vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+./intiVk.cxx:            throw std::runtime_error("failed to create semaphore or fence!");
+./intiVk.cxx:        }
+./intiVk.cxx:    }
+./intiVk.cxx:
+./intiVk.cxx:    // Create per-swapchain-image render-finished semaphores
+./intiVk.cxx:    for (size_t i = 0; i < swapChainImages.size(); i++) {
+./intiVk.cxx:        if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS) {
+./intiVk.cxx:            throw std::runtime_error("failed to create renderFinished semaphore!");
+./intiVk.cxx:        }
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./HelloTriangleApplication.hpp:#pragma once
+./HelloTriangleApplication.hpp:#define GLFW_INCLUDE_VULKAN
+./HelloTriangleApplication.hpp:#include <GLFW/glfw3.h>
+./HelloTriangleApplication.hpp:#include <vector>
+./HelloTriangleApplication.hpp:#include <optional>
+./HelloTriangleApplication.hpp:#include <chrono>
+./HelloTriangleApplication.hpp:#include "Textures.hpp"
+./HelloTriangleApplication.hpp:#include "GraphicsPipeline.h"
+./HelloTriangleApplication.hpp:#include "GameObjectPool.h"
+./HelloTriangleApplication.hpp:#include "Chunk.h"
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:class HelloTriangleApplication
+./HelloTriangleApplication.hpp:{
+./HelloTriangleApplication.hpp:private:
+./HelloTriangleApplication.hpp:    const int MAX_FRAMES_IN_FLIGHT = 2;
+./HelloTriangleApplication.hpp:    std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkInstance instance;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    GameObjectPool gameObjectPool;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::optional<Chunk> c;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    struct QueueFamilyIndices
+./HelloTriangleApplication.hpp:    {
+./HelloTriangleApplication.hpp:        std::optional<uint32_t> graphicsFamily;
+./HelloTriangleApplication.hpp:        std::optional<uint32_t> presentFamily;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:        bool isComplete() { return graphicsFamily.has_value() && presentFamily.has_value(); }
+./HelloTriangleApplication.hpp:    };
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    struct SwapChainSupportDetails
+./HelloTriangleApplication.hpp:    {
+./HelloTriangleApplication.hpp:        VkSurfaceCapabilitiesKHR capabilities;
+./HelloTriangleApplication.hpp:        std::vector<VkSurfaceFormatKHR> formats;
+./HelloTriangleApplication.hpp:        std::vector<VkPresentModeKHR> presentModes;
+./HelloTriangleApplication.hpp:    };
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkSurfaceKHR surface;
+./HelloTriangleApplication.hpp:    VkQueue presentQueue;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkPhysicalDevice physicalDevice;
+./HelloTriangleApplication.hpp:    VkDevice device;       // logical device
+./HelloTriangleApplication.hpp:    VkQueue graphicsQueue; // implicitly cleaned up
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkSwapchainKHR swapChain;
+./HelloTriangleApplication.hpp:    std::vector<VkImage> swapChainImages; // implicitly cleaned up
+./HelloTriangleApplication.hpp:    VkFormat swapChainImageFormat;
+./HelloTriangleApplication.hpp:    VkExtent2D swapChainExtent;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::vector<VkImageView> swapChainImageViews; // explicit cleanup
+./HelloTriangleApplication.hpp:    VkCommandPool commandPool;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::vector<VkSemaphore> imageAvailableSemaphores;
+./HelloTriangleApplication.hpp:    std::vector<VkSemaphore> renderFinishedSemaphores;
+./HelloTriangleApplication.hpp:    std::vector<VkFence> inFlightFences;
+./HelloTriangleApplication.hpp:    uint32_t currentFrame = 0;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::vector<Vertex> vertices;
+./HelloTriangleApplication.hpp:    std::vector<uint32_t> indices;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    // Vertex Buffer(VBO)
+./HelloTriangleApplication.hpp:    VkBuffer vertexBuffer;
+./HelloTriangleApplication.hpp:    VkDeviceMemory vertexBufferMemory;
+./HelloTriangleApplication.hpp:    VkBuffer indexBuffer;
+./HelloTriangleApplication.hpp:    VkDeviceMemory indexBufferMemory;
+./HelloTriangleApplication.hpp:    std::vector<VkBuffer> uniformBuffers;
+./HelloTriangleApplication.hpp:    std::vector<VkDeviceMemory> uniformBuffersMemory;
+./HelloTriangleApplication.hpp:    std::vector<void *> uniformBuffersMapped;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkImage depthImage;
+./HelloTriangleApplication.hpp:    VkDeviceMemory depthImageMemory;
+./HelloTriangleApplication.hpp:    VkImageView depthImageView;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    //MSAA
+./HelloTriangleApplication.hpp:    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+./HelloTriangleApplication.hpp:    VkSampleCountFlagBits getMaxUsableSampleCount();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkImage colorImage;
+./HelloTriangleApplication.hpp:    VkDeviceMemory colorImageMemory;
+./HelloTriangleApplication.hpp:    VkImageView colorImageView;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void initWindow();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void initVulkan();
+./HelloTriangleApplication.hpp:    void createInstance();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    bool checkValidationLayerSupport();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void createSurface();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void pickPhysicalDevice();
+./HelloTriangleApplication.hpp:    int rateDeviceSuitablity(VkPhysicalDevice device);
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void createLogicalDevice();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+./HelloTriangleApplication.hpp:    bool isDeviceSuitable(VkPhysicalDevice device);
+./HelloTriangleApplication.hpp:    bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+./HelloTriangleApplication.hpp:    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    // Surface format
+./HelloTriangleApplication.hpp:    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capablities);
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkRenderPass renderPass;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::vector<VkFramebuffer> swapChainFramebuffers;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::vector<VkCommandBuffer> commandBuffers;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void createSwapChain();
+./HelloTriangleApplication.hpp:    void createImageViews();
+./HelloTriangleApplication.hpp:    void createRenderPass();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkCommandBuffer beginSingleTimeCommands();
+./HelloTriangleApplication.hpp:    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkDescriptorSetLayout descriptorSetLayout;
+./HelloTriangleApplication.hpp:    void createDescriptorSetLayout();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    u_GraphicsPipeline graphicsPipeline;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void initGameObjects();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void createFramebuffers();
+./HelloTriangleApplication.hpp:    void createCommandPool();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void createColorResources();
+./HelloTriangleApplication.hpp:    void createDepthResources();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    u_Texture texture;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+./HelloTriangleApplication.hpp:    void loadModel();
+./HelloTriangleApplication.hpp:    void createVertexBuffer();
+./HelloTriangleApplication.hpp:    void createIndexBuffer();
+./HelloTriangleApplication.hpp:    void createUniformBuffers();
+./HelloTriangleApplication.hpp:    void createDescriptorPool();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    VkDescriptorPool descriptorPool;
+./HelloTriangleApplication.hpp:    std::vector<VkDescriptorSet> descriptorSets;
+./HelloTriangleApplication.hpp:    void createDescriptorSets();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBufferm, VkDeviceSize size);
+./HelloTriangleApplication.hpp:    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void createCommandBuffers();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void createSyncObject();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void mainLoop();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void updateUniformBuffer(uint32_t currentImage);
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void drawFrame();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    void cleanup();
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    const int WIDTH = 1080;
+./HelloTriangleApplication.hpp:    const int HEIGHT = 720;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::string PROCESS_NAME = "Vulkos";
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    const std::string MODEL_PATH = "models/Cube.obj";
+./HelloTriangleApplication.hpp:    const std::string TEXTURE_PATH = "textures/atlas.png";
+./HelloTriangleApplication.hpp:    
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    const std::vector<const char *> validationLayers = {
+./HelloTriangleApplication.hpp:        "VK_LAYER_KHRONOS_validation"};
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:#ifndef NDEBUG
+./HelloTriangleApplication.hpp:    const bool enableValidationLayers = true;
+./HelloTriangleApplication.hpp:#else
+./HelloTriangleApplication.hpp:    const bool enableValidationLayers = false;
+./HelloTriangleApplication.hpp:#endif
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    GLFWwindow *_window;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:public:
+./HelloTriangleApplication.hpp:    HelloTriangleApplication();
+./HelloTriangleApplication.hpp:    HelloTriangleApplication(std::string processName);
+./HelloTriangleApplication.hpp:    void run();
+./HelloTriangleApplication.hpp:    ~HelloTriangleApplication();
+./HelloTriangleApplication.hpp:};
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:// Future todos:
+./HelloTriangleApplication.hpp:// Allocate a single buffer and re use it later using offstes(Vertex buffer 2.4)
+./HelloTriangleApplication.hpp:// And also same for memory allocation(Vertex buffer 2.2)
+./PassInfo.hpp:#ifndef PASSINFO_HPP
+./PassInfo.hpp:#define PASSINFO_HPP
+./PassInfo.hpp:
+./PassInfo.hpp:#define GLFW_INCLUDE_VULKAN
+./PassInfo.hpp:#include <string>
+./PassInfo.hpp:#include <GLFW/glfw3.h>
+./PassInfo.hpp:
+./PassInfo.hpp:struct VulkanContext {
+./PassInfo.hpp:    VkInstance instance;
+./PassInfo.hpp:    VkPhysicalDevice physicalDevice;
+./PassInfo.hpp:    VkDevice device;
+./PassInfo.hpp:    VkQueue graphicsQueue;
+./PassInfo.hpp:    VkQueue presentQueue;
+./PassInfo.hpp:    VkCommandPool commandPool;
+./PassInfo.hpp:};
+./PassInfo.hpp:
+./PassInfo.hpp:struct u_GraphicsPipelineCreateInfo
+./PassInfo.hpp:{
+./PassInfo.hpp:    VkDevice device;
+./PassInfo.hpp:    int height, width;
+./PassInfo.hpp:    VkExtent2D swapChainExtent;
+./PassInfo.hpp:    VkRenderPass renderPass;
+./PassInfo.hpp:    VkDescriptorSetLayout* descriptorSetLayout;
+./PassInfo.hpp:    VkSampleCountFlagBits msaaSamples;
+./PassInfo.hpp:};
+./PassInfo.hpp:
+./PassInfo.hpp:struct u_TexturePassInfo
+./PassInfo.hpp:{
+./PassInfo.hpp:    int height, width;
+./PassInfo.hpp:    VkPhysicalDevice physicalDevice;
+./PassInfo.hpp:    VkDevice device;
+./PassInfo.hpp:    VkQueue graphicsQueue;
+./PassInfo.hpp:    VkExtent2D swapChainExtent;
+./PassInfo.hpp:    VkRenderPass renderPass;
+./PassInfo.hpp:    VkCommandPool commandPool;
+./PassInfo.hpp:    std::string texturePath;
+./PassInfo.hpp:};
+./PassInfo.hpp:
+./PassInfo.hpp:
+./PassInfo.hpp:#endif
+./main.cxx:#include "HelloTriangleApplication.hpp"
+./main.cxx:#include <stdexcept>
+./main.cxx:#include <iostream>
+./main.cxx:#include <cstdlib>
+./main.cxx:
+./main.cxx://for PID
+./main.cxx:#include <unistd.h>
+./main.cxx:int main(int argc, char const *argv[])
+./main.cxx:{
+./main.cxx:    pid_t pid = getpid();
+./main.cxx:    std::cout << "process ID: " << pid << std::endl;
+./main.cxx:
+./main.cxx:    std::string processName = argv[0];
+./main.cxx:    std::cout << "Process Name: " << processName << std::endl;
+./main.cxx:    HelloTriangleApplication application(processName);
+./main.cxx:    try
+./main.cxx:    {
+./main.cxx:        application.run();
+./main.cxx:    }
+./main.cxx:    catch(const std::exception& e)
+./main.cxx:    {
+./main.cxx:        std::cerr << e.what() << '\n';
+./main.cxx:        return EXIT_FAILURE;
+./main.cxx:    }
+./main.cxx:
+./main.cxx:    return EXIT_SUCCESS;
+./main.cxx:    
+./main.cxx:}
+./GraphicsPipeline.cxx:#include "GraphicsPipeline.h"
+./GraphicsPipeline.cxx:#include <iostream>
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:u_GraphicsPipeline::u_GraphicsPipeline()
+./GraphicsPipeline.cxx:{
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:u_GraphicsPipeline::~u_GraphicsPipeline()
+./GraphicsPipeline.cxx:{
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:void u_GraphicsPipeline::destroyPipelineLayout()
+./GraphicsPipeline.cxx:{
+./GraphicsPipeline.cxx:    vkDestroyPipeline(device, graphicsPipeline, nullptr);
+./GraphicsPipeline.cxx:    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:void u_GraphicsPipeline::createGraphicsPipeline()
+./GraphicsPipeline.cxx:{
+./GraphicsPipeline.cxx:    std::cout << "Creating Graphics Pipeline..." << std::endl;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    auto vertShaderCode = readFile("shaders/simple_shader_v.spv");
+./GraphicsPipeline.cxx:    auto fragShaderCode = readFile("shaders/simple_shader_f.spv");
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+./GraphicsPipeline.cxx:    VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    // shaderStageCreation
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+./GraphicsPipeline.cxx:    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+./GraphicsPipeline.cxx:    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT; // telling vulkan 'which stage must this shader go'
+./GraphicsPipeline.cxx:    vertShaderStageInfo.module = vertShaderModule;
+./GraphicsPipeline.cxx:    vertShaderStageInfo.pName = "main";
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+./GraphicsPipeline.cxx:    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+./GraphicsPipeline.cxx:    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+./GraphicsPipeline.cxx:    fragShaderStageInfo.module = fragShaderModule;
+./GraphicsPipeline.cxx:    fragShaderStageInfo.pName = "main";
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    auto bindingDescription = Vertex::getBindingDescription();
+./GraphicsPipeline.cxx:    auto attributeDescriptions = Vertex::getAttributeDescriptions();
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+./GraphicsPipeline.cxx:    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:    vertexInputInfo.vertexBindingDescriptionCount = 1;
+./GraphicsPipeline.cxx:    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+./GraphicsPipeline.cxx:    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+./GraphicsPipeline.cxx:    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    // input assembly
+./GraphicsPipeline.cxx:    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+./GraphicsPipeline.cxx:    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+./GraphicsPipeline.cxx:    inputAssembly.primitiveRestartEnable = VK_FALSE;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    // viewport and scissors
+./GraphicsPipeline.cxx:    VkViewport viewport{};
+./GraphicsPipeline.cxx:    viewport.x = .0f;
+./GraphicsPipeline.cxx:    viewport.y = .0f;
+./GraphicsPipeline.cxx:    viewport.width = (float)swapChainExtent.width;
+./GraphicsPipeline.cxx:    viewport.height = (float)swapChainExtent.height; // this swapchain is used as a framebuffer hensforth using it as the size for our viewport
+./GraphicsPipeline.cxx:    viewport.minDepth = .0f;
+./GraphicsPipeline.cxx:    viewport.maxDepth = 1.0f;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkRect2D scissor{};
+./GraphicsPipeline.cxx:    scissor.offset = {0, 0};
+./GraphicsPipeline.cxx:    scissor.extent = swapChainExtent;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    // //dyanmic scissor and viewport
+./GraphicsPipeline.cxx:    // std::vector<VkDynamicState> dynamicStates =
+./GraphicsPipeline.cxx:    // {
+./GraphicsPipeline.cxx:    //     VK_DYNAMIC_STATE_VIEWPORT,
+./GraphicsPipeline.cxx:    //     VK_DYNAMIC_STATE_SCISSOR
+./GraphicsPipeline.cxx:    // };
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    // VkPipelineDynamicStateCreateInfo dynamicState{};
+./GraphicsPipeline.cxx:    // dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:    // dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+./GraphicsPipeline.cxx:    // dynamicState.pDynamicStates = dynamicStates.data();
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkPipelineViewportStateCreateInfo viewportState{};
+./GraphicsPipeline.cxx:    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:    viewportState.viewportCount = 1;
+./GraphicsPipeline.cxx:    viewportState.pViewports = &viewport;
+./GraphicsPipeline.cxx:    viewportState.scissorCount = 1;
+./GraphicsPipeline.cxx:    viewportState.pScissors = &scissor;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    // Rasterizer
+./GraphicsPipeline.cxx:    VkPipelineRasterizationStateCreateInfo rasterizer{};
+./GraphicsPipeline.cxx:    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:    rasterizer.depthClampEnable = VK_FALSE;
+./GraphicsPipeline.cxx:    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+./GraphicsPipeline.cxx:    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    rasterizer.lineWidth = 1.0f;
+./GraphicsPipeline.cxx:    rasterizer.cullMode = VK_CULL_MODE_NONE;
+./GraphicsPipeline.cxx:    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    rasterizer.depthBiasEnable = VK_FALSE;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    // MSSA(disabled for now)
+./GraphicsPipeline.cxx:    VkPipelineMultisampleStateCreateInfo multisampling{};
+./GraphicsPipeline.cxx:    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:    multisampling.sampleShadingEnable = VK_TRUE;
+./GraphicsPipeline.cxx:    multisampling.rasterizationSamples = msaaSamples;
+./GraphicsPipeline.cxx:    multisampling.minSampleShading = .2f;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkPipelineDepthStencilStateCreateInfo depthStencil{};
+./GraphicsPipeline.cxx:    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:    depthStencil.depthTestEnable = VK_TRUE;
+./GraphicsPipeline.cxx:    depthStencil.depthWriteEnable = VK_TRUE;
+./GraphicsPipeline.cxx:    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+./GraphicsPipeline.cxx:    depthStencil.depthBoundsTestEnable = VK_FALSE;
+./GraphicsPipeline.cxx:    depthStencil.minDepthBounds = 0.0f; // Optional
+./GraphicsPipeline.cxx:    depthStencil.maxDepthBounds = 1.0f; // Optional
+./GraphicsPipeline.cxx:    depthStencil.stencilTestEnable = VK_FALSE;
+./GraphicsPipeline.cxx:    depthStencil.front = {}; // Optional
+./GraphicsPipeline.cxx:    depthStencil.back = {};  // Optional
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    /// color blending
+./GraphicsPipeline.cxx:    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+./GraphicsPipeline.cxx:    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+./GraphicsPipeline.cxx:    colorBlendAttachment.blendEnable = VK_FALSE;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkPipelineColorBlendStateCreateInfo colorBlending{};
+./GraphicsPipeline.cxx:    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:    colorBlending.logicOpEnable = VK_FALSE;
+./GraphicsPipeline.cxx:    colorBlending.attachmentCount = 1;
+./GraphicsPipeline.cxx:    colorBlending.pAttachments = &colorBlendAttachment;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    // Pipeline Layout
+./GraphicsPipeline.cxx:    //(passing data to uniform objects in shaders)
+./GraphicsPipeline.cxx:    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+./GraphicsPipeline.cxx:    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+./GraphicsPipeline.cxx:    pipelineLayoutInfo.setLayoutCount = 1;
+./GraphicsPipeline.cxx:    pipelineLayoutInfo.pSetLayouts = descriptorSetLayout;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkPushConstantRange pushConstatn;
+./GraphicsPipeline.cxx:    pushConstatn.offset = 0;
+./GraphicsPipeline.cxx:    pushConstatn.size = sizeof(PushConstantC1);
+./GraphicsPipeline.cxx:    pushConstatn.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    pipelineLayoutInfo.pPushConstantRanges = &pushConstatn;
+./GraphicsPipeline.cxx:    pipelineLayoutInfo.pushConstantRangeCount = 1;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+./GraphicsPipeline.cxx:    {
+./GraphicsPipeline.cxx:        throw std::runtime_error("failed to create pipeline layout!");
+./GraphicsPipeline.cxx:    }
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    // creating graphics pipeline
+./GraphicsPipeline.cxx:    VkGraphicsPipelineCreateInfo pipelineInfo{};
+./GraphicsPipeline.cxx:    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+./GraphicsPipeline.cxx:    pipelineInfo.stageCount = 2; // the shader stage count
+./GraphicsPipeline.cxx:    pipelineInfo.pStages = shaderStages;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    pipelineInfo.pVertexInputState = &vertexInputInfo;
+./GraphicsPipeline.cxx:    pipelineInfo.pInputAssemblyState = &inputAssembly;
+./GraphicsPipeline.cxx:    pipelineInfo.pViewportState = &viewportState;
+./GraphicsPipeline.cxx:    pipelineInfo.pRasterizationState = &rasterizer;
+./GraphicsPipeline.cxx:    pipelineInfo.pMultisampleState = &multisampling;
+./GraphicsPipeline.cxx:    pipelineInfo.pDepthStencilState = &depthStencil; // disabled
+./GraphicsPipeline.cxx:    pipelineInfo.pColorBlendState = &colorBlending;
+./GraphicsPipeline.cxx:    // pipelineInfo.pDynamicState = &dynamic_state;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    pipelineInfo.layout = pipelineLayout;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    pipelineInfo.renderPass = renderPass; // passs the render pass
+./GraphicsPipeline.cxx:    pipelineInfo.subpass = 0;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+./GraphicsPipeline.cxx:    {
+./GraphicsPipeline.cxx:        throw std::runtime_error("failed to create graphics pipeline!");
+./GraphicsPipeline.cxx:    }
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    vkDestroyShaderModule(device, fragShaderModule, nullptr);
+./GraphicsPipeline.cxx:    vkDestroyShaderModule(device, vertShaderModule, nullptr);
+./GraphicsPipeline.cxx:    // vulkan copies it internally so it can be destroid safely
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:void u_GraphicsPipeline::u_PassGraphicsPipelineCreateInfo(u_GraphicsPipelineCreateInfo pCreateInfo)
+./GraphicsPipeline.cxx:{
+./GraphicsPipeline.cxx:    device = pCreateInfo.device;
+./GraphicsPipeline.cxx:    height = pCreateInfo.height;
+./GraphicsPipeline.cxx:    width = pCreateInfo.width;
+./GraphicsPipeline.cxx:    swapChainExtent = pCreateInfo.swapChainExtent;
+./GraphicsPipeline.cxx:    renderPass = pCreateInfo.renderPass;
+./GraphicsPipeline.cxx:    descriptorSetLayout = pCreateInfo.descriptorSetLayout;
+./GraphicsPipeline.cxx:    msaaSamples = pCreateInfo.msaaSamples;
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:std::vector<char> u_GraphicsPipeline::readFile(const std::string &filename)
+./GraphicsPipeline.cxx:{
+./GraphicsPipeline.cxx:    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    if (!file.is_open())
+./GraphicsPipeline.cxx:    {
+./GraphicsPipeline.cxx:        std::cout << "File: " << filename << std::endl;
+./GraphicsPipeline.cxx:        throw std::runtime_error("Failed to open file");
+./GraphicsPipeline.cxx:    }
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    size_t fileSize = (size_t)file.tellg();
+./GraphicsPipeline.cxx:    std::vector<char> buffer(fileSize);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    file.seekg(0);
+./GraphicsPipeline.cxx:    file.read(buffer.data(), fileSize);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    file.close();
+./GraphicsPipeline.cxx:    return buffer;
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:VkShaderModule u_GraphicsPipeline::createShaderModule(const std::vector<char> &code)
+./GraphicsPipeline.cxx:{
+./GraphicsPipeline.cxx:    VkShaderModuleCreateInfo createInfo{};
+./GraphicsPipeline.cxx:    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+./GraphicsPipeline.cxx:    createInfo.codeSize = code.size();
+./GraphicsPipeline.cxx:    createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    VkShaderModule shaderModule;
+./GraphicsPipeline.cxx:    if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+./GraphicsPipeline.cxx:    {
+./GraphicsPipeline.cxx:        throw std::runtime_error("Failed to create shader module");
+./GraphicsPipeline.cxx:    }
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    return shaderModule;
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:// Telling vulkan how to pass data to the vertex shader once it's been uploaded into the GPU
+./GraphicsPipeline.cxx:VkVertexInputBindingDescription Vertex::getBindingDescription()
+./GraphicsPipeline.cxx:{
+./GraphicsPipeline.cxx:    VkVertexInputBindingDescription bindingDescription{};
+./GraphicsPipeline.cxx:    // A vertex binding describes at which rate to load data from memory throughout the verticies.
+./GraphicsPipeline.cxx:    // It specifies the number of bytes between data entries and whether to move to the next data entery after each vertex or after each instance.
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    bindingDescription.binding = 0; // binding index to zero
+./GraphicsPipeline.cxx:    bindingDescription.stride = sizeof(Vertex);
+./GraphicsPipeline.cxx:    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX; // advance to the next input per vertex
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    return bindingDescription;
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:// this structure describies how to handle vertex input
+./GraphicsPipeline.cxx:// each attribute required its own description
+./GraphicsPipeline.cxx:std::array<VkVertexInputAttributeDescription, 3> Vertex::getAttributeDescriptions()
+./GraphicsPipeline.cxx:{
+./GraphicsPipeline.cxx:    std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+./GraphicsPipeline.cxx:    attributeDescriptions[0].binding = 0;                         // same as getBindingDescription
+./GraphicsPipeline.cxx:    attributeDescriptions[0].location = 0;                        // directly co-relates to 'layout(location = 0)'
+./GraphicsPipeline.cxx:    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
+./GraphicsPipeline.cxx:    attributeDescriptions[0].offset = offsetof(Vertex, pos);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    attributeDescriptions[1].binding = 0;
+./GraphicsPipeline.cxx:    attributeDescriptions[1].location = 1;
+./GraphicsPipeline.cxx:    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
+./GraphicsPipeline.cxx:    attributeDescriptions[1].offset = offsetof(Vertex, color);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    attributeDescriptions[2].binding = 0;
+./GraphicsPipeline.cxx:    attributeDescriptions[2].location = 2;
+./GraphicsPipeline.cxx:    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+./GraphicsPipeline.cxx:    attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    // Formats
+./GraphicsPipeline.cxx:    //  float -> VK_FORMAT_R32_SFLOAT
+./GraphicsPipeline.cxx:    //  vec2  -> VK_FORMAT_R32G32_SFLOAT
+./GraphicsPipeline.cxx:    //  vec3  -> VK_FORMAT_R32G32B32_SFLOAT
+./GraphicsPipeline.cxx:    //  vec4  -> VK_FORMAT_R32G32B32A32_SFLOAT
+./GraphicsPipeline.cxx:    // ivec2  -> VK_FORMAT_R32G32_SINT
+./GraphicsPipeline.cxx:    // uvec4  -> VK_FORMAT_R32G32B32A32_UINT
+./GraphicsPipeline.cxx:    // double -> VK_FORMAT_R64_SFLOAT
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:    return attributeDescriptions;
+./GraphicsPipeline.cxx:}
+./Textures.cxx:#include "Textures.hpp"
+./Textures.cxx:#include <stdexcept>
+./Textures.cxx:
+./Textures.cxx:#define STB_IMAGE_IMPLEMENTATION
+./Textures.cxx:#include "include/stb-master/stb_image.h"
+./Textures.cxx:#include <cmath>
+./Textures.cxx:
+./Textures.cxx:u_Texture::u_Texture()
+./Textures.cxx:{
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:u_Texture::~u_Texture()
+./Textures.cxx:{
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::passTextureCreateInfo(const u_TexturePassInfo &pCreateInfo)
+./Textures.cxx:{
+./Textures.cxx:    height = pCreateInfo.height;
+./Textures.cxx:    width = pCreateInfo.width;
+./Textures.cxx:    physicalDevice = pCreateInfo.physicalDevice;
+./Textures.cxx:    device = pCreateInfo.device;
+./Textures.cxx:    graphicsQueue = pCreateInfo.graphicsQueue;
+./Textures.cxx:    swapChainExtent = pCreateInfo.swapChainExtent;
+./Textures.cxx:    renderPass = pCreateInfo.renderPass;
+./Textures.cxx:    commandPool = pCreateInfo.commandPool;
+./Textures.cxx:    texturePath = pCreateInfo.texturePath;
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory)
+./Textures.cxx:{
+./Textures.cxx:    VkBufferCreateInfo bufferInfo{};
+./Textures.cxx:    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+./Textures.cxx:    bufferInfo.size = size;
+./Textures.cxx:    bufferInfo.usage = usage;
+./Textures.cxx:    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+./Textures.cxx:
+./Textures.cxx:    if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+./Textures.cxx:    {
+./Textures.cxx:        throw std::runtime_error("failed to create buffer!");
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    VkMemoryRequirements memRequirements;
+./Textures.cxx:    vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+./Textures.cxx:
+./Textures.cxx:    VkMemoryAllocateInfo allocInfo{};
+./Textures.cxx:    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+./Textures.cxx:    allocInfo.allocationSize = memRequirements.size;
+./Textures.cxx:    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+./Textures.cxx:
+./Textures.cxx:    if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+./Textures.cxx:    {
+./Textures.cxx:        throw std::runtime_error("failed to allocate buffer memory!");
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    vkBindBufferMemory(device, buffer, bufferMemory, 0);
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::createBuffer(VulkanContext vkContext, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory)
+./Textures.cxx:{
+./Textures.cxx:    VkBufferCreateInfo bufferInfo{};
+./Textures.cxx:    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+./Textures.cxx:    bufferInfo.size = size;
+./Textures.cxx:    bufferInfo.usage = usage;
+./Textures.cxx:    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+./Textures.cxx:
+./Textures.cxx:    if (vkCreateBuffer(vkContext.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+./Textures.cxx:    {
+./Textures.cxx:        throw std::runtime_error("failed to create buffer!");
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    VkMemoryRequirements memRequirements;
+./Textures.cxx:    vkGetBufferMemoryRequirements(vkContext.device, buffer, &memRequirements);
+./Textures.cxx:
+./Textures.cxx:    VkMemoryAllocateInfo allocInfo{};
+./Textures.cxx:    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+./Textures.cxx:    allocInfo.allocationSize = memRequirements.size;
+./Textures.cxx:    uint32_t typeFilter = memRequirements.memoryTypeBits;
+./Textures.cxx:
+./Textures.cxx:    VkPhysicalDeviceMemoryProperties memProperties;
+./Textures.cxx:    vkGetPhysicalDeviceMemoryProperties(vkContext.physicalDevice, &memProperties);
+./Textures.cxx:
+./Textures.cxx:    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+./Textures.cxx:    {
+./Textures.cxx:        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+./Textures.cxx:        {
+./Textures.cxx:            allocInfo.memoryTypeIndex = i;
+./Textures.cxx:        }
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    throw std::runtime_error("failed to find suitable memory type!");
+./Textures.cxx:
+./Textures.cxx:    if (vkAllocateMemory(vkContext.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+./Textures.cxx:    {
+./Textures.cxx:        throw std::runtime_error("failed to allocate buffer memory!");
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    vkBindBufferMemory(vkContext.device, buffer, bufferMemory, 0);
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:uint32_t u_Texture::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+./Textures.cxx:{
+./Textures.cxx:    VkPhysicalDeviceMemoryProperties memProperties;
+./Textures.cxx:    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+./Textures.cxx:
+./Textures.cxx:    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+./Textures.cxx:    {
+./Textures.cxx:        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+./Textures.cxx:        {
+./Textures.cxx:            return i;
+./Textures.cxx:        }
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    throw std::runtime_error("failed to find suitable memory type!");
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::createImage(uint32_t width, uint32_t height, VkSampleCountFlagBits msaaSamples, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory)
+./Textures.cxx:{
+./Textures.cxx:
+./Textures.cxx:    VkImageCreateInfo imageInfo{};
+./Textures.cxx:    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+./Textures.cxx:    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+./Textures.cxx:    imageInfo.extent.width = width;
+./Textures.cxx:    imageInfo.extent.height = height;
+./Textures.cxx:    imageInfo.extent.depth = 1;
+./Textures.cxx:    imageInfo.mipLevels = mipLevels;
+./Textures.cxx:    imageInfo.arrayLayers = 1;
+./Textures.cxx:
+./Textures.cxx:    imageInfo.format = format;
+./Textures.cxx:    imageInfo.tiling = tiling;
+./Textures.cxx:
+./Textures.cxx:    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+./Textures.cxx:
+./Textures.cxx:    imageInfo.usage = usage;
+./Textures.cxx:    // VK_IMAGE_USAGE_SAMPLED_BIT -> make it accesseble to the fragment shader
+./Textures.cxx:
+./Textures.cxx:    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // used by the same queue family
+./Textures.cxx:
+./Textures.cxx:    imageInfo.samples = msaaSamples;
+./Textures.cxx:
+./Textures.cxx:    if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
+./Textures.cxx:    {
+./Textures.cxx:        throw std::runtime_error("failed to create image");
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    VkMemoryRequirements memRequirements;
+./Textures.cxx:    vkGetImageMemoryRequirements(device, image, &memRequirements);
+./Textures.cxx:
+./Textures.cxx:    VkMemoryAllocateInfo allocInfo{};
+./Textures.cxx:    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+./Textures.cxx:    allocInfo.allocationSize = memRequirements.size;
+./Textures.cxx:    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+./Textures.cxx:
+./Textures.cxx:    if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+./Textures.cxx:    {
+./Textures.cxx:        throw std::runtime_error("Failed to allocate image memory");
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    vkBindImageMemory(device, image, imageMemory, 0);
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::createTextureImage()
+./Textures.cxx:{
+./Textures.cxx:    int texWidth, texHeight, texChannels;
+./Textures.cxx:    stbi_uc *pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+./Textures.cxx:
+./Textures.cxx:    mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+./Textures.cxx:
+./Textures.cxx:    VkDeviceSize imageSize = texWidth * texHeight * 4; // 4 -> r,g,b,a
+./Textures.cxx:
+./Textures.cxx:    if (!pixels)
+./Textures.cxx:    {
+./Textures.cxx:        throw std::runtime_error("Failed to load image");
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    VkBuffer stagingBuffer;
+./Textures.cxx:    VkDeviceMemory stagingBufferMemory;
+./Textures.cxx:
+./Textures.cxx:    createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+./Textures.cxx:
+./Textures.cxx:    void *data;
+./Textures.cxx:    vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+./Textures.cxx:    memcpy(data, pixels, static_cast<size_t>(imageSize));
+./Textures.cxx:    vkUnmapMemory(device, stagingBufferMemory);
+./Textures.cxx:
+./Textures.cxx:    stbi_image_free(pixels);
+./Textures.cxx:
+./Textures.cxx:    createImage(texWidth, texHeight, VK_SAMPLE_COUNT_1_BIT, mipLevels, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+./Textures.cxx:    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+./Textures.cxx:    copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+./Textures.cxx:
+./Textures.cxx:    generateMipmaps(textureImage, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
+./Textures.cxx:
+./Textures.cxx:    vkDestroyBuffer(device, stagingBuffer, nullptr);
+./Textures.cxx:    vkFreeMemory(device, stagingBufferMemory, nullptr);
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:VkCommandBuffer u_Texture::beginSingleTimeCommands()
+./Textures.cxx:{
+./Textures.cxx:    VkCommandBufferAllocateInfo allocInfo{};
+./Textures.cxx:    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+./Textures.cxx:    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+./Textures.cxx:    allocInfo.commandPool = commandPool;
+./Textures.cxx:    allocInfo.commandBufferCount = 1;
+./Textures.cxx:
+./Textures.cxx:    VkCommandBuffer commandBuffer;
+./Textures.cxx:    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+./Textures.cxx:
+./Textures.cxx:    VkCommandBufferBeginInfo beginInfo{};
+./Textures.cxx:    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+./Textures.cxx:    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+./Textures.cxx:
+./Textures.cxx:    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+./Textures.cxx:
+./Textures.cxx:    return commandBuffer;
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::endSingleTimeCommands(VkCommandBuffer commandBuffer)
+./Textures.cxx:{
+./Textures.cxx:    vkEndCommandBuffer(commandBuffer);
+./Textures.cxx:
+./Textures.cxx:    VkSubmitInfo submitInfo{};
+./Textures.cxx:    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+./Textures.cxx:    submitInfo.commandBufferCount = 1;
+./Textures.cxx:    submitInfo.pCommandBuffers = &commandBuffer;
+./Textures.cxx:
+./Textures.cxx:    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+./Textures.cxx:    vkQueueWaitIdle(graphicsQueue);
+./Textures.cxx:
+./Textures.cxx:    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:// before copying the image to the buffer we need to set it into the right layout
+./Textures.cxx:void u_Texture::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
+./Textures.cxx:{
+./Textures.cxx:    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+./Textures.cxx:
+./Textures.cxx:    VkImageMemoryBarrier barrier{};
+./Textures.cxx:    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+./Textures.cxx:    barrier.oldLayout = oldLayout;
+./Textures.cxx:    barrier.newLayout = newLayout;
+./Textures.cxx:
+./Textures.cxx:    // We are not transfering queue family ownership rn!!!
+./Textures.cxx:    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+./Textures.cxx:    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+./Textures.cxx:
+./Textures.cxx:    barrier.image = image;
+./Textures.cxx:    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+./Textures.cxx:    barrier.subresourceRange.baseMipLevel = 0;
+./Textures.cxx:    barrier.subresourceRange.levelCount = mipLevels;
+./Textures.cxx:    barrier.subresourceRange.baseArrayLayer = 0;
+./Textures.cxx:    barrier.subresourceRange.layerCount = 1;
+./Textures.cxx:
+./Textures.cxx:    barrier.srcAccessMask = 0; // todo
+./Textures.cxx:    barrier.dstAccessMask = 0; // todo
+./Textures.cxx:
+./Textures.cxx:    VkPipelineStageFlags sourceStage;
+./Textures.cxx:    VkPipelineStageFlags destinationStage;
+./Textures.cxx:
+./Textures.cxx:    if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+./Textures.cxx:    {
+./Textures.cxx:        barrier.srcAccessMask = 0;
+./Textures.cxx:        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+./Textures.cxx:
+./Textures.cxx:        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+./Textures.cxx:        destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+./Textures.cxx:    }
+./Textures.cxx:    else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+./Textures.cxx:    {
+./Textures.cxx:        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+./Textures.cxx:        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+./Textures.cxx:
+./Textures.cxx:        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+./Textures.cxx:        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+./Textures.cxx:    }
+./Textures.cxx:    else
+./Textures.cxx:    {
+./Textures.cxx:        throw std::invalid_argument("unsupported layout transition!");
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    vkCmdPipelineBarrier(
+./Textures.cxx:        commandBuffer,
+./Textures.cxx:        sourceStage, destinationStage,
+./Textures.cxx:        0,
+./Textures.cxx:        0, nullptr,
+./Textures.cxx:        0, nullptr,
+./Textures.cxx:        1, &barrier);
+./Textures.cxx:
+./Textures.cxx:    endSingleTimeCommands(commandBuffer);
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+./Textures.cxx:{
+./Textures.cxx:    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+./Textures.cxx:
+./Textures.cxx:    VkBufferImageCopy region{};
+./Textures.cxx:    region.bufferOffset = 0;
+./Textures.cxx:    region.bufferRowLength = 0;
+./Textures.cxx:    region.bufferImageHeight = 0;
+./Textures.cxx:
+./Textures.cxx:    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+./Textures.cxx:    region.imageSubresource.mipLevel = 0;
+./Textures.cxx:    region.imageSubresource.baseArrayLayer = 0;
+./Textures.cxx:    region.imageSubresource.layerCount = 1;
+./Textures.cxx:
+./Textures.cxx:    region.imageOffset = {0, 0, 0};
+./Textures.cxx:    region.imageExtent = {width, height, 1};
+./Textures.cxx:
+./Textures.cxx:    vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+./Textures.cxx:
+./Textures.cxx:    endSingleTimeCommands(commandBuffer);
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
+./Textures.cxx:{
+./Textures.cxx:    // Check if image format supports linear blitting
+./Textures.cxx:    VkFormatProperties formatProperties;
+./Textures.cxx:    vkGetPhysicalDeviceFormatProperties(physicalDevice, imageFormat, &formatProperties);
+./Textures.cxx:
+./Textures.cxx:    if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
+./Textures.cxx:    {
+./Textures.cxx:        throw std::runtime_error("texture image format does not support linear blitting!");
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+./Textures.cxx:
+./Textures.cxx:    VkImageMemoryBarrier barrier{};
+./Textures.cxx:    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+./Textures.cxx:    barrier.image = image;
+./Textures.cxx:    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+./Textures.cxx:    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+./Textures.cxx:    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+./Textures.cxx:    barrier.subresourceRange.baseArrayLayer = 0;
+./Textures.cxx:    barrier.subresourceRange.layerCount = 1;
+./Textures.cxx:    barrier.subresourceRange.levelCount = 1;
+./Textures.cxx:
+./Textures.cxx:    int32_t mipWidth = texWidth;
+./Textures.cxx:    int32_t mipHeight = texHeight;
+./Textures.cxx:
+./Textures.cxx:    for (uint32_t i = 1; i < mipLevels; i++)
+./Textures.cxx:    {
+./Textures.cxx:        barrier.subresourceRange.baseMipLevel = i - 1;
+./Textures.cxx:        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+./Textures.cxx:        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+./Textures.cxx:        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+./Textures.cxx:        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+./Textures.cxx:
+./Textures.cxx:        vkCmdPipelineBarrier(commandBuffer,
+./Textures.cxx:                             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+./Textures.cxx:                             0, nullptr,
+./Textures.cxx:                             0, nullptr,
+./Textures.cxx:                             1, &barrier);
+./Textures.cxx:
+./Textures.cxx:        VkImageBlit blit{};
+./Textures.cxx:        blit.srcOffsets[0] = {0, 0, 0};
+./Textures.cxx:        blit.srcOffsets[1] = {mipWidth, mipHeight, 1};
+./Textures.cxx:        blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+./Textures.cxx:        blit.srcSubresource.mipLevel = i - 1;
+./Textures.cxx:        blit.srcSubresource.baseArrayLayer = 0;
+./Textures.cxx:        blit.srcSubresource.layerCount = 1;
+./Textures.cxx:        blit.dstOffsets[0] = {0, 0, 0};
+./Textures.cxx:        blit.dstOffsets[1] = {mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1};
+./Textures.cxx:        blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+./Textures.cxx:        blit.dstSubresource.mipLevel = i;
+./Textures.cxx:        blit.dstSubresource.baseArrayLayer = 0;
+./Textures.cxx:        blit.dstSubresource.layerCount = 1;
+./Textures.cxx:
+./Textures.cxx:        vkCmdBlitImage(commandBuffer,
+./Textures.cxx:                       image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+./Textures.cxx:                       image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+./Textures.cxx:                       1, &blit,
+./Textures.cxx:                       VK_FILTER_LINEAR);
+./Textures.cxx:
+./Textures.cxx:        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+./Textures.cxx:        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+./Textures.cxx:        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+./Textures.cxx:        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+./Textures.cxx:
+./Textures.cxx:        vkCmdPipelineBarrier(commandBuffer,
+./Textures.cxx:                             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+./Textures.cxx:                             0, nullptr,
+./Textures.cxx:                             0, nullptr,
+./Textures.cxx:                             1, &barrier);
+./Textures.cxx:
+./Textures.cxx:        if (mipWidth > 1)
+./Textures.cxx:            mipWidth /= 2;
+./Textures.cxx:        if (mipHeight > 1)
+./Textures.cxx:            mipHeight /= 2;
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    barrier.subresourceRange.baseMipLevel = mipLevels - 1;
+./Textures.cxx:    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+./Textures.cxx:    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+./Textures.cxx:    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+./Textures.cxx:    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+./Textures.cxx:
+./Textures.cxx:    vkCmdPipelineBarrier(commandBuffer,
+./Textures.cxx:                         VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+./Textures.cxx:                         0, nullptr,
+./Textures.cxx:                         0, nullptr,
+./Textures.cxx:                         1, &barrier);
+./Textures.cxx:
+./Textures.cxx:    endSingleTimeCommands(commandBuffer);
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:VkImageView u_Texture::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
+./Textures.cxx:{
+./Textures.cxx:    VkImageViewCreateInfo viewInfo{};
+./Textures.cxx:    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+./Textures.cxx:    viewInfo.image = image;
+./Textures.cxx:    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+./Textures.cxx:    viewInfo.format = format;
+./Textures.cxx:    viewInfo.subresourceRange.aspectMask = aspectFlags;
+./Textures.cxx:    viewInfo.subresourceRange.baseMipLevel = 0;
+./Textures.cxx:    viewInfo.subresourceRange.levelCount = mipLevels;
+./Textures.cxx:    viewInfo.subresourceRange.baseArrayLayer = 0;
+./Textures.cxx:    viewInfo.subresourceRange.layerCount = 1;
+./Textures.cxx:
+./Textures.cxx:    VkImageView imageView;
+./Textures.cxx:    if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
+./Textures.cxx:    {
+./Textures.cxx:        throw std::runtime_error("failed to create image view!");
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    return imageView;
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::createTextureSampler()
+./Textures.cxx:{
+./Textures.cxx:    VkSamplerCreateInfo samplerInfo{};
+./Textures.cxx:    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+./Textures.cxx:
+./Textures.cxx:    // 🔥 Pixel-perfect sampling
+./Textures.cxx:    samplerInfo.magFilter = VK_FILTER_NEAREST;
+./Textures.cxx:    samplerInfo.minFilter = VK_FILTER_NEAREST;
+./Textures.cxx:
+./Textures.cxx:    // 🔥 NO anisotropy
+./Textures.cxx:    samplerInfo.anisotropyEnable = VK_FALSE;
+./Textures.cxx:    samplerInfo.maxAnisotropy = 1.0f;
+./Textures.cxx:
+./Textures.cxx:    // 🔥 Addressing
+./Textures.cxx:    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+./Textures.cxx:    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+./Textures.cxx:    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+./Textures.cxx:
+./Textures.cxx:    // 🔥 NO mipmaps
+./Textures.cxx:    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+./Textures.cxx:    samplerInfo.minLod = 0.0f;
+./Textures.cxx:    samplerInfo.maxLod = 0.0f;
+./Textures.cxx:    samplerInfo.mipLodBias = 0.0f;
+./Textures.cxx:
+./Textures.cxx:    // 🔥 Standard
+./Textures.cxx:    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+./Textures.cxx:    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+./Textures.cxx:    samplerInfo.compareEnable = VK_FALSE;
+./Textures.cxx:    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+./Textures.cxx:
+./Textures.cxx:    if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS)
+./Textures.cxx:    {
+./Textures.cxx:        throw std::runtime_error("failed to create texture sampler!");
+./Textures.cxx:    }
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::createTextureView()
+./Textures.cxx:{
+./Textures.cxx:    textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+./Textures.cxx:}
+./Textures.cxx:
+./Textures.cxx:void u_Texture::destroy()
+./Textures.cxx:{
+./Textures.cxx:    if (textureSampler != VK_NULL_HANDLE)
+./Textures.cxx:    {
+./Textures.cxx:        vkDestroySampler(device, textureSampler, nullptr);
+./Textures.cxx:        textureSampler = VK_NULL_HANDLE;
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    if (textureImageView != VK_NULL_HANDLE)
+./Textures.cxx:    {
+./Textures.cxx:        vkDestroyImageView(device, textureImageView, nullptr);
+./Textures.cxx:        textureImageView = VK_NULL_HANDLE;
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    if (textureImage != VK_NULL_HANDLE)
+./Textures.cxx:    {
+./Textures.cxx:        vkDestroyImage(device, textureImage, nullptr);
+./Textures.cxx:        textureImage = VK_NULL_HANDLE;
+./Textures.cxx:    }
+./Textures.cxx:
+./Textures.cxx:    if (textureImageMemory != VK_NULL_HANDLE)
+./Textures.cxx:    {
+./Textures.cxx:        vkFreeMemory(device, textureImageMemory, nullptr);
+./Textures.cxx:        textureImageMemory = VK_NULL_HANDLE;
+./Textures.cxx:    }
+./Textures.cxx:}
+./utils.h:#pragma once
+./utils.h:#include "PassInfo.hpp"
+./utils.h:#include "Structs.h"
+./utils.h:
+./utils.h:namespace utils
+./utils.h:{
+./utils.h:    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory, VulkanContext &vkContext);
+./utils.h:    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VulkanContext &vkContext);
+./utils.h:} // namespace utils
+./Voxel.h:#pragma once
+./Voxel.h:#include "PassInfo.hpp"
+./Voxel.h:#include "Structs.h"
+./Voxel.h:
+./Voxel.h:class Voxel
+./Voxel.h:{
+./Voxel.h:private:
+./Voxel.h:    VulkanContext &vkContext;
+./Voxel.h:    Transform transform;
+./Voxel.h:    int blockType = AIR;
+./Voxel.h:
+./Voxel.h:public:
+./Voxel.h:    Voxel(VulkanContext &vkContext, BlockType blockType = AIR);
+./Voxel.h:
+./Voxel.h:    void setType(BlockType blockType);
+./Voxel.h:    void setPosition(glm::vec3 position);
+./Voxel.h:    void setRotation(glm::vec3 rotation);
+./Voxel.h:    void setScale(glm::vec3 scale);
+./Voxel.h:    BlockType getBlockType();
+./Voxel.h:
+./Voxel.h:    ~Voxel();
+./Voxel.h:};
+./HelloTriangleApplication.cxx:#include "HelloTriangleApplication.hpp"
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:void HelloTriangleApplication::mainLoop()
+./HelloTriangleApplication.cxx:{
+./HelloTriangleApplication.cxx:    while (!glfwWindowShouldClose(_window))
+./HelloTriangleApplication.cxx:    {
+./HelloTriangleApplication.cxx:        glfwPollEvents();
+./HelloTriangleApplication.cxx:        drawFrame();
+./HelloTriangleApplication.cxx:    }
+./HelloTriangleApplication.cxx:}
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:void HelloTriangleApplication::drawFrame()
+./HelloTriangleApplication.cxx:{
+./HelloTriangleApplication.cxx:    // 1️⃣ Wait for previous frame to finish
+./HelloTriangleApplication.cxx:    vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+./HelloTriangleApplication.cxx:    vkResetFences(device, 1, &inFlightFences[currentFrame]);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    // 2️⃣ Acquire an image from the swapchain
+./HelloTriangleApplication.cxx:    uint32_t imageIndex;
+./HelloTriangleApplication.cxx:    VkResult res = vkAcquireNextImageKHR(
+./HelloTriangleApplication.cxx:        device,
+./HelloTriangleApplication.cxx:        swapChain,
+./HelloTriangleApplication.cxx:        UINT64_MAX,
+./HelloTriangleApplication.cxx:        imageAvailableSemaphores[currentFrame], // still per-frame
+./HelloTriangleApplication.cxx:        VK_NULL_HANDLE,
+./HelloTriangleApplication.cxx:        &imageIndex);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) {
+./HelloTriangleApplication.cxx:        throw std::runtime_error("failed to acquire swap chain image!");
+./HelloTriangleApplication.cxx:    }
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    // 3️⃣ Reset the command buffer for this frame
+./HelloTriangleApplication.cxx:    vkResetCommandBuffer(commandBuffers[currentFrame], 0); // or VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    // 4️⃣ Record drawing commands into the command buffer
+./HelloTriangleApplication.cxx:    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    updateUniformBuffer(currentFrame);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    // 5️⃣ Submit the command buffer to the graphics queue
+./HelloTriangleApplication.cxx:    VkSubmitInfo submitInfo{};
+./HelloTriangleApplication.cxx:    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+./HelloTriangleApplication.cxx:    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+./HelloTriangleApplication.cxx:    submitInfo.waitSemaphoreCount = 1;
+./HelloTriangleApplication.cxx:    submitInfo.pWaitSemaphores = waitSemaphores;
+./HelloTriangleApplication.cxx:    submitInfo.pWaitDstStageMask = waitStages;
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    submitInfo.commandBufferCount = 1;
+./HelloTriangleApplication.cxx:    submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    // ✅ Use renderFinishedSemaphore per swapchain image
+./HelloTriangleApplication.cxx:    VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[imageIndex]};
+./HelloTriangleApplication.cxx:    submitInfo.signalSemaphoreCount = 1;
+./HelloTriangleApplication.cxx:    submitInfo.pSignalSemaphores = signalSemaphores;
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
+./HelloTriangleApplication.cxx:        throw std::runtime_error("failed to submit draw command buffer!");
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    // 6️⃣ Present the image
+./HelloTriangleApplication.cxx:    VkPresentInfoKHR presentInfo{};
+./HelloTriangleApplication.cxx:    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+./HelloTriangleApplication.cxx:    presentInfo.waitSemaphoreCount = 1;
+./HelloTriangleApplication.cxx:    presentInfo.pWaitSemaphores = signalSemaphores;
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    VkSwapchainKHR swapChains[] = {swapChain};
+./HelloTriangleApplication.cxx:    presentInfo.swapchainCount = 1;
+./HelloTriangleApplication.cxx:    presentInfo.pSwapchains = swapChains;
+./HelloTriangleApplication.cxx:    presentInfo.pImageIndices = &imageIndex;
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    vkQueuePresentKHR(presentQueue, &presentInfo);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    // 7️⃣ Advance frame
+./HelloTriangleApplication.cxx:    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+./HelloTriangleApplication.cxx:}
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:void HelloTriangleApplication::cleanup()
+./HelloTriangleApplication.cxx:{
+./HelloTriangleApplication.cxx:    vkDeviceWaitIdle(device);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    gameObjectPool.cleanUpResources();
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    vkDestroyBuffer(device, indexBuffer, nullptr);
+./HelloTriangleApplication.cxx:    vkFreeMemory(device, indexBufferMemory, nullptr);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    vkDestroyBuffer(device, vertexBuffer, nullptr);
+./HelloTriangleApplication.cxx:    vkFreeMemory(device, vertexBufferMemory, nullptr);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    c.value().cleanup();
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    // Destroy per-frame semaphores and fences
+./HelloTriangleApplication.cxx:for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+./HelloTriangleApplication.cxx:    vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+./HelloTriangleApplication.cxx:    vkDestroyFence(device, inFlightFences[i], nullptr);
+./HelloTriangleApplication.cxx:}
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:// Destroy per-swapchain-image render-finished semaphores
+./HelloTriangleApplication.cxx:for (size_t i = 0; i < renderFinishedSemaphores.size(); i++) {
+./HelloTriangleApplication.cxx:    vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+./HelloTriangleApplication.cxx:}
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    vkDestroyCommandPool(device, commandPool, nullptr);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    for (auto framebuffer : swapChainFramebuffers)
+./HelloTriangleApplication.cxx:        vkDestroyFramebuffer(device, framebuffer, nullptr);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    graphicsPipeline.destroyPipelineLayout();
+./HelloTriangleApplication.cxx:    vkDestroyRenderPass(device, renderPass, nullptr);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    for (auto imageView : swapChainImageViews)
+./HelloTriangleApplication.cxx:        vkDestroyImageView(device, imageView, nullptr);
+./HelloTriangleApplication.cxx:    vkDestroyImageView(device, colorImageView, nullptr);
+./HelloTriangleApplication.cxx:    vkDestroyImage(device, colorImage, nullptr);
+./HelloTriangleApplication.cxx:    vkFreeMemory(device, colorImageMemory, nullptr);
+./HelloTriangleApplication.cxx:    vkDestroyImageView(device, depthImageView, nullptr);
+./HelloTriangleApplication.cxx:    vkDestroyImage(device, depthImage, nullptr);
+./HelloTriangleApplication.cxx:    vkFreeMemory(device, depthImageMemory, nullptr);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    vkDestroySwapchainKHR(device, swapChain, nullptr);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    texture.destroy();
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+./HelloTriangleApplication.cxx:    {
+./HelloTriangleApplication.cxx:        vkDestroyBuffer(device, uniformBuffers[i], nullptr);
+./HelloTriangleApplication.cxx:        vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+./HelloTriangleApplication.cxx:    }
+./HelloTriangleApplication.cxx:    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    vkDestroyDevice(device, nullptr);
+./HelloTriangleApplication.cxx:    vkDestroySurfaceKHR(instance, surface, nullptr);
+./HelloTriangleApplication.cxx:    vkDestroyInstance(instance, nullptr);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    glfwDestroyWindow(_window);
+./HelloTriangleApplication.cxx:    glfwTerminate();
+./HelloTriangleApplication.cxx:}
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:HelloTriangleApplication::HelloTriangleApplication()
+./HelloTriangleApplication.cxx:{
+./HelloTriangleApplication.cxx:}
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:HelloTriangleApplication::HelloTriangleApplication(std::string processName)
+./HelloTriangleApplication.cxx:{
+./HelloTriangleApplication.cxx:    this->PROCESS_NAME = processName;
+./HelloTriangleApplication.cxx:}
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:void HelloTriangleApplication::run()
+./HelloTriangleApplication.cxx:{
+./HelloTriangleApplication.cxx:    initWindow();
+./HelloTriangleApplication.cxx:    initVulkan();
+./HelloTriangleApplication.cxx:    mainLoop();
+./HelloTriangleApplication.cxx:    cleanup();
+./HelloTriangleApplication.cxx:}
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:HelloTriangleApplication::~HelloTriangleApplication()
+./HelloTriangleApplication.cxx:{
+./HelloTriangleApplication.cxx:}
+./intiVK2.cxx:#include "HelloTriangleApplication.hpp"
+./intiVK2.cxx:#include <iostream>
+./intiVK2.cxx:#include <stdexcept>
+./intiVK2.cxx:#include <cstdlib>
+./intiVK2.cxx:#include <vector>
+./intiVK2.cxx:#include <iostream>
+./intiVK2.cxx:#include <limits>
+./intiVK2.cxx:#include <algorithm>
+./intiVK2.cxx:#include <unordered_map>
+./intiVK2.cxx:#include <chrono>
+./intiVK2.cxx:#include <map>
+./intiVK2.cxx:#include <set>
+./intiVK2.cxx:
+./intiVK2.cxx:
+./intiVK2.cxx:#define TINYOBJLOADER_IMPLEMENTATION
+./intiVK2.cxx:#include "include/tinyobjloader/tiny_obj_loader.h"
+./intiVK2.cxx:// In a swapchain we only use color images as that is all the is need to simply draw on the screen
+./intiVK2.cxx:// Depth buffers and other stuff is handled in other places
+./intiVK2.cxx:void HelloTriangleApplication::createSwapChain()
+./intiVK2.cxx:{
+./intiVK2.cxx:    std::cout << "Creating Swap Chain..." << std::endl;
+./intiVK2.cxx:    // ---- get the swapchain capabilities
+./intiVK2.cxx:    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
+./intiVK2.cxx:
+./intiVK2.cxx:    // pick the best options
+./intiVK2.cxx:    VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+./intiVK2.cxx:    VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+./intiVK2.cxx:    VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+./intiVK2.cxx:
+./intiVK2.cxx:    // ---- save the format and extent ----
+./intiVK2.cxx:    swapChainImageFormat = surfaceFormat.format;
+./intiVK2.cxx:    swapChainExtent = extent;
+./intiVK2.cxx:
+./intiVK2.cxx:    // add one to allow triple buffering
+./intiVK2.cxx:    // Metal limits the max to 3 so only +1 one is allowed while NVIDIA and AMD has no limits
+./intiVK2.cxx:    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+./intiVK2.cxx:
+./intiVK2.cxx:    // Check to not exeed the maximum
+./intiVK2.cxx:    // 0 is a special number meaning that there is not upper limit
+./intiVK2.cxx:    if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        imageCount = swapChainSupport.capabilities.maxImageCount;
+./intiVK2.cxx:    }
+./intiVK2.cxx:
+./intiVK2.cxx:    VkSwapchainCreateInfoKHR createInfo{};
+./intiVK2.cxx:    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+./intiVK2.cxx:    createInfo.surface = surface; // surface
+./intiVK2.cxx:
+./intiVK2.cxx:    // ---- Image settings ----
+./intiVK2.cxx:    createInfo.minImageCount = imageCount;
+./intiVK2.cxx:    createInfo.imageFormat = surfaceFormat.format;
+./intiVK2.cxx:    createInfo.imageColorSpace = surfaceFormat.colorSpace;
+./intiVK2.cxx:    createInfo.imageExtent = extent;
+./intiVK2.cxx:    createInfo.imageArrayLayers = 1;
+./intiVK2.cxx:    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // for post VFX use VK_IMAGE_TRANSFER_DST_BIT
+./intiVK2.cxx:
+./intiVK2.cxx:    // ---- graphics and present queue familiy equality check
+./intiVK2.cxx:    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+./intiVK2.cxx:    uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+./intiVK2.cxx:
+./intiVK2.cxx:    // If not same then use concurrent which means that we dont have to worry about the manual ownership
+./intiVK2.cxx:    // If same then use exclusive which is faster
+./intiVK2.cxx:    if (indices.graphicsFamily != indices.presentFamily)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+./intiVK2.cxx:        createInfo.queueFamilyIndexCount = 2;
+./intiVK2.cxx:        createInfo.pQueueFamilyIndices = queueFamilyIndices;
+./intiVK2.cxx:    }
+./intiVK2.cxx:    else
+./intiVK2.cxx:    {
+./intiVK2.cxx:        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+./intiVK2.cxx:        createInfo.queueFamilyIndexCount = 0;     // Optional
+./intiVK2.cxx:        createInfo.pQueueFamilyIndices = nullptr; // Optional
+./intiVK2.cxx:    }
+./intiVK2.cxx:
+./intiVK2.cxx:    // how to transform the present
+./intiVK2.cxx:    // IE: tell vulkan how to handle rotations. We just use what the windowing system provides
+./intiVK2.cxx:    createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+./intiVK2.cxx:    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // how shall this window blend with other windows
+./intiVK2.cxx:
+./intiVK2.cxx:    createInfo.presentMode = presentMode;
+./intiVK2.cxx:    createInfo.clipped = VK_TRUE; // don't care about the pixels that are not seen on the screen
+./intiVK2.cxx:
+./intiVK2.cxx:    createInfo.oldSwapchain = VK_NULL_HANDLE; // later stuff
+./intiVK2.cxx:
+./intiVK2.cxx:    if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        throw std::runtime_error("failed to create swap chain!");
+./intiVK2.cxx:    }
+./intiVK2.cxx:
+./intiVK2.cxx:    // ---- Retrive the images ----
+./intiVK2.cxx:    vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+./intiVK2.cxx:    swapChainImages.resize(imageCount);
+./intiVK2.cxx:    vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:// Images views: VkImage is just raw memory. Image views provide the GPU with all the neseccary context and information to present the data correctly
+./intiVK2.cxx:// We did specify in the swapchain what formats and options to use, then why an image view?
+./intiVK2.cxx:// Because a VkImage by itself proved no indication of the location and size of the contents
+./intiVK2.cxx:// An Image view providies those important information to the GPU
+./intiVK2.cxx:
+./intiVK2.cxx:void HelloTriangleApplication::createImageViews()
+./intiVK2.cxx:{
+./intiVK2.cxx:    std::cout << "Creating Image Views..." << std::endl;
+./intiVK2.cxx:    swapChainImageViews.resize(swapChainImages.size());
+./intiVK2.cxx:
+./intiVK2.cxx:    for (size_t i = 0; i < swapChainImages.size(); i++)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        VkImageViewCreateInfo createInfo{};
+./intiVK2.cxx:        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+./intiVK2.cxx:        createInfo.image = swapChainImages[i];
+./intiVK2.cxx:
+./intiVK2.cxx:        // specifing how shall the images be interpreted
+./intiVK2.cxx:        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+./intiVK2.cxx:        createInfo.format = swapChainImageFormat;
+./intiVK2.cxx:
+./intiVK2.cxx:        // mapping the color channels to defaults
+./intiVK2.cxx:        // VK_COMPONENT_SWIZZLE_IDENTITY → use the original channel layout.
+./intiVK2.cxx:        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+./intiVK2.cxx:        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+./intiVK2.cxx:        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+./intiVK2.cxx:        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+./intiVK2.cxx:
+./intiVK2.cxx:        // specifing how shall the images be use(their purpose)
+./intiVK2.cxx:        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; // color targets
+./intiVK2.cxx:        createInfo.subresourceRange.baseMipLevel = 0;
+./intiVK2.cxx:        createInfo.subresourceRange.levelCount = 1;
+./intiVK2.cxx:        createInfo.subresourceRange.baseArrayLayer = 0;
+./intiVK2.cxx:        createInfo.subresourceRange.layerCount = 1;
+./intiVK2.cxx:
+./intiVK2.cxx:        if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS)
+./intiVK2.cxx:        {
+./intiVK2.cxx:            throw std::runtime_error("Failed to create image views");
+./intiVK2.cxx:        }
+./intiVK2.cxx:    }
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:// Render pass
+./intiVK2.cxx:// It tells vulkan what attachment to use
+./intiVK2.cxx:// How to use
+./intiVK2.cxx:// Layout transitions
+./intiVK2.cxx:void HelloTriangleApplication::createRenderPass()
+./intiVK2.cxx:{
+./intiVK2.cxx:    std::cout << "Creating Render Pass..." << std::endl;
+./intiVK2.cxx:    // ---- describing what rescources we will be using ----
+./intiVK2.cxx:    VkAttachmentDescription depthAttachment{};
+./intiVK2.cxx:    depthAttachment.format = VK_FORMAT_D32_SFLOAT;
+./intiVK2.cxx:    depthAttachment.samples = msaaSamples;
+./intiVK2.cxx:    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+./intiVK2.cxx:    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+./intiVK2.cxx:    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+./intiVK2.cxx:    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+./intiVK2.cxx:    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+./intiVK2.cxx:    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkAttachmentReference depthAttachmentRef{};
+./intiVK2.cxx:    depthAttachmentRef.attachment = 1;
+./intiVK2.cxx:    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkAttachmentDescription colorAttachment{};
+./intiVK2.cxx:    colorAttachment.format = swapChainImageFormat;
+./intiVK2.cxx:    colorAttachment.samples = msaaSamples;
+./intiVK2.cxx:
+./intiVK2.cxx:    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;   // what to do with the framebuffer after the render pass has started
+./intiVK2.cxx:    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // what to do with the memory(store it in the vram or not)
+./intiVK2.cxx:
+./intiVK2.cxx:    // don't care about the stencil
+./intiVK2.cxx:    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+./intiVK2.cxx:    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+./intiVK2.cxx:
+./intiVK2.cxx:    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+./intiVK2.cxx:    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkAttachmentReference colorAttachmentRef{};
+./intiVK2.cxx:    colorAttachmentRef.attachment = 0; // IDX to the attachment
+./intiVK2.cxx:    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkAttachmentDescription colorAttachmentResolve{};
+./intiVK2.cxx:    colorAttachmentResolve.format = swapChainImageFormat;
+./intiVK2.cxx:    colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+./intiVK2.cxx:    colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+./intiVK2.cxx:    colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+./intiVK2.cxx:    colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+./intiVK2.cxx:    colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+./intiVK2.cxx:    colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+./intiVK2.cxx:    colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkAttachmentReference colorAttachmentResolveRef{};
+./intiVK2.cxx:    colorAttachmentResolveRef.attachment = 2;
+./intiVK2.cxx:    colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkSubpassDescription subpass{};
+./intiVK2.cxx:    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // alternative is compute
+./intiVK2.cxx:
+./intiVK2.cxx:    subpass.colorAttachmentCount = 1;
+./intiVK2.cxx:    subpass.pColorAttachments = &colorAttachmentRef;
+./intiVK2.cxx:    subpass.pDepthStencilAttachment = &depthAttachmentRef;
+./intiVK2.cxx:    subpass.pResolveAttachments = &colorAttachmentResolveRef;
+./intiVK2.cxx:
+./intiVK2.cxx:    std::array<VkAttachmentDescription, 3> attachments = {colorAttachment, depthAttachment, colorAttachmentResolve};
+./intiVK2.cxx:    VkRenderPassCreateInfo renderPassInfo{};
+./intiVK2.cxx:    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+./intiVK2.cxx:    renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+./intiVK2.cxx:    renderPassInfo.pAttachments = attachments.data();
+./intiVK2.cxx:    renderPassInfo.subpassCount = 1;
+./intiVK2.cxx:    renderPassInfo.pSubpasses = &subpass;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkSubpassDependency dependency{};
+./intiVK2.cxx:    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+./intiVK2.cxx:    dependency.dstSubpass = 0;
+./intiVK2.cxx:
+./intiVK2.cxx:    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+./intiVK2.cxx:    dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+./intiVK2.cxx:    ;
+./intiVK2.cxx:
+./intiVK2.cxx:    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+./intiVK2.cxx:    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+./intiVK2.cxx:
+./intiVK2.cxx:    renderPassInfo.dependencyCount = 1;
+./intiVK2.cxx:    renderPassInfo.pDependencies = &dependency;
+./intiVK2.cxx:
+./intiVK2.cxx:    if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        throw std::runtime_error("failed to create render pass!");
+./intiVK2.cxx:    }
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:VkCommandBuffer HelloTriangleApplication::beginSingleTimeCommands()
+./intiVK2.cxx:{
+./intiVK2.cxx:    VkCommandBufferAllocateInfo allocInfo{};
+./intiVK2.cxx:    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+./intiVK2.cxx:    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+./intiVK2.cxx:    allocInfo.commandPool = commandPool;
+./intiVK2.cxx:    allocInfo.commandBufferCount = 1;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkCommandBuffer commandBuffer;
+./intiVK2.cxx:    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+./intiVK2.cxx:
+./intiVK2.cxx:    VkCommandBufferBeginInfo beginInfo{};
+./intiVK2.cxx:    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+./intiVK2.cxx:    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+./intiVK2.cxx:
+./intiVK2.cxx:    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+./intiVK2.cxx:
+./intiVK2.cxx:    return commandBuffer;
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:void HelloTriangleApplication::endSingleTimeCommands(VkCommandBuffer commandBuffer)
+./intiVK2.cxx:{
+./intiVK2.cxx:    vkEndCommandBuffer(commandBuffer);
+./intiVK2.cxx:
+./intiVK2.cxx:    VkSubmitInfo submitInfo{};
+./intiVK2.cxx:    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+./intiVK2.cxx:    submitInfo.commandBufferCount = 1;
+./intiVK2.cxx:    submitInfo.pCommandBuffers = &commandBuffer;
+./intiVK2.cxx:
+./intiVK2.cxx:    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+./intiVK2.cxx:    vkQueueWaitIdle(graphicsQueue);
+./intiVK2.cxx:
+./intiVK2.cxx:    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:void HelloTriangleApplication::createDescriptorSetLayout()
+./intiVK2.cxx:{
+./intiVK2.cxx:    std::cout << "Creating Descriptor Set Layout..." << std::endl;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkDescriptorSetLayoutBinding uboLayoutBinding{};
+./intiVK2.cxx:    uboLayoutBinding.binding = 0;
+./intiVK2.cxx:    uboLayoutBinding.descriptorCount = 1;
+./intiVK2.cxx:    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+./intiVK2.cxx:    uboLayoutBinding.pImmutableSamplers = nullptr;
+./intiVK2.cxx:    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+./intiVK2.cxx:    samplerLayoutBinding.binding = 1;
+./intiVK2.cxx:    samplerLayoutBinding.descriptorCount = 1;
+./intiVK2.cxx:    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+./intiVK2.cxx:    samplerLayoutBinding.pImmutableSamplers = nullptr;
+./intiVK2.cxx:    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+./intiVK2.cxx:
+./intiVK2.cxx:    std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+./intiVK2.cxx:    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+./intiVK2.cxx:    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+./intiVK2.cxx:    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+./intiVK2.cxx:    layoutInfo.pBindings = bindings.data();
+./intiVK2.cxx:
+./intiVK2.cxx:    if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        throw std::runtime_error("failed to create descriptor set layout!");
+./intiVK2.cxx:    }
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:// ----creating framebuffers----
+./intiVK2.cxx:void HelloTriangleApplication::createFramebuffers()
+./intiVK2.cxx:{
+./intiVK2.cxx:    std::cout << "Creating Framebuffers..." << std::endl;
+./intiVK2.cxx:
+./intiVK2.cxx:    swapChainFramebuffers.resize(swapChainImageViews.size());
+./intiVK2.cxx:
+./intiVK2.cxx:    for (size_t i = 0; i < swapChainImageViews.size(); i++)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        std::array<VkImageView, 3> attachments = {
+./intiVK2.cxx:            colorImageView,
+./intiVK2.cxx:            depthImageView,
+./intiVK2.cxx:            swapChainImageViews[i]};
+./intiVK2.cxx:
+./intiVK2.cxx:        VkFramebufferCreateInfo framebufferInfo{};
+./intiVK2.cxx:        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+./intiVK2.cxx:        framebufferInfo.renderPass = renderPass;
+./intiVK2.cxx:        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+./intiVK2.cxx:        framebufferInfo.pAttachments = attachments.data();
+./intiVK2.cxx:        framebufferInfo.width = swapChainExtent.width;
+./intiVK2.cxx:        framebufferInfo.height = swapChainExtent.height;
+./intiVK2.cxx:        framebufferInfo.layers = 1;
+./intiVK2.cxx:
+./intiVK2.cxx:        if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS)
+./intiVK2.cxx:        {
+./intiVK2.cxx:            throw std::runtime_error("failed to create framebuffer");
+./intiVK2.cxx:        }
+./intiVK2.cxx:    }
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:// Allocator for command buffers
+./intiVK2.cxx:void HelloTriangleApplication::createCommandPool()
+./intiVK2.cxx:{
+./intiVK2.cxx:    std::cout << "Creating Command Pool..." << std::endl;
+./intiVK2.cxx:
+./intiVK2.cxx:    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+./intiVK2.cxx:
+./intiVK2.cxx:    VkCommandPoolCreateInfo poolInfo{};
+./intiVK2.cxx:    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+./intiVK2.cxx:    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+./intiVK2.cxx:    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+./intiVK2.cxx:
+./intiVK2.cxx:    if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        throw std::runtime_error("failed to create command pool");
+./intiVK2.cxx:    }
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:void HelloTriangleApplication::createColorResources()
+./intiVK2.cxx:{
+./intiVK2.cxx:    VkFormat colorImageFormat = swapChainImageFormat;
+./intiVK2.cxx:    texture.createImage(swapChainExtent.width, swapChainExtent.height, msaaSamples, 1, colorImageFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, colorImageMemory);
+./intiVK2.cxx:    colorImageView = texture.createImageView(colorImage, colorImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:void HelloTriangleApplication::createDepthResources()
+./intiVK2.cxx:{
+./intiVK2.cxx:    std::cout << "Creating Depth Resources..." << std::endl;
+./intiVK2.cxx:
+./intiVK2.cxx:    VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
+./intiVK2.cxx:    texture.createImage(swapChainExtent.width, swapChainExtent.height, msaaSamples, 1, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
+./intiVK2.cxx:    depthImageView = texture.createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:void HelloTriangleApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory)
+./intiVK2.cxx:{
+./intiVK2.cxx:    VkBufferCreateInfo bufferInfo{};
+./intiVK2.cxx:    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+./intiVK2.cxx:    bufferInfo.size = size;
+./intiVK2.cxx:    bufferInfo.usage = usage;
+./intiVK2.cxx:    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+./intiVK2.cxx:
+./intiVK2.cxx:    if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        throw std::runtime_error("failed to create buffer!");
+./intiVK2.cxx:    }
+./intiVK2.cxx:
+./intiVK2.cxx:    VkMemoryRequirements memRequirements;
+./intiVK2.cxx:    vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+./intiVK2.cxx:
+./intiVK2.cxx:    VkMemoryAllocateInfo allocInfo{};
+./intiVK2.cxx:    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+./intiVK2.cxx:    allocInfo.allocationSize = memRequirements.size;
+./intiVK2.cxx:    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+./intiVK2.cxx:
+./intiVK2.cxx:    if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        throw std::runtime_error("failed to allocate buffer memory!");
+./intiVK2.cxx:    }
+./intiVK2.cxx:
+./intiVK2.cxx:    vkBindBufferMemory(device, buffer, bufferMemory, 0);
+./intiVK2.cxx:}
+./intiVK2.cxx:
+./intiVK2.cxx:void HelloTriangleApplication::loadModel()
+./intiVK2.cxx:{
+./intiVK2.cxx:    tinyobj::attrib_t attrib;
+./intiVK2.cxx:    std::vector<tinyobj::shape_t> shapes;
+./intiVK2.cxx:    std::vector<tinyobj::material_t> materials;
+./intiVK2.cxx:    std::string err, warn;
+./intiVK2.cxx:
+./intiVK2.cxx:    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str()))
+./intiVK2.cxx:    {
+./intiVK2.cxx:        throw std::runtime_error(err);
+./intiVK2.cxx:    }
+./intiVK2.cxx:    if (warn.empty() == false)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        std::cout << "WARN: " << warn << std::endl;
+./intiVK2.cxx:    }
+./intiVK2.cxx:
+./intiVK2.cxx:    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+./intiVK2.cxx:
+./intiVK2.cxx:    for (const auto &shape : shapes)
+./intiVK2.cxx:    {
+./intiVK2.cxx:        for (const auto &index : shape.mesh.indices)
+./intiVK2.cxx:        {
+./intiVK2.cxx:            Vertex vertex{};
+./intiVK2.cxx:
+./intiVK2.cxx:            vertex.pos = {
+./intiVK2.cxx:                attrib.vertices[3 * index.vertex_index + 0],
+./intiVK2.cxx:                attrib.vertices[3 * index.vertex_index + 1],
+./intiVK2.cxx:                attrib.vertices[3 * index.vertex_index + 2]};
+./intiVK2.cxx:
+./intiVK2.cxx:            vertex.texCoord = {
+./intiVK2.cxx:                attrib.texcoords[2 * index.texcoord_index + 0],
+./intiVK2.cxx:                1.0f - attrib.texcoords[2 * index.texcoord_index + 1]};
+./intiVK2.cxx:
+./intiVK2.cxx:            vertex.color = {1.0f, 1.0f, 1.0f};
+./intiVK2.cxx:
+./intiVK2.cxx:            if (uniqueVertices.count(vertex) == 0)
+./intiVK2.cxx:            {
+./intiVK2.cxx:                uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+./intiVK2.cxx:                vertices.push_back(vertex);
+./intiVK2.cxx:            }
+./intiVK2.cxx:
+./intiVK2.cxx:            indices.push_back(uniqueVertices[vertex]);
+./intiVK2.cxx:        }
+./intiVK2.cxx:    }
+./intiVK2.cxx:}
+./Chunk.cxx:#include "Chunk.h"
+./Chunk.cxx:#include <chrono>
+./Chunk.cxx:#include <iostream>
+./Chunk.cxx:
+./Chunk.cxx:#define TIMER_START(name) \
+./Chunk.cxx:    auto name##_start = std::chrono::high_resolution_clock::now();
+./Chunk.cxx:
+./Chunk.cxx:#define TIMER_END(name)                                                                                             \
+./Chunk.cxx:    {                                                                                                               \
+./Chunk.cxx:        auto name##_end = std::chrono::high_resolution_clock::now();                                                \
+./Chunk.cxx:        auto name##_dur = std::chrono::duration_cast<std::chrono::milliseconds>(name##_end - name##_start).count(); \
+./Chunk.cxx:        std::cout << #name << " took " << name##_dur << " ms\n";                                                    \
+./Chunk.cxx:    }
+./Chunk.cxx:
+./Chunk.cxx:Chunk::Chunk(VulkanContext &vkContext) : vkContext{vkContext}, chunkMesh{vkContext}
+./Chunk.cxx:{
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:void Chunk::setOffset(int x, int y)
+./Chunk.cxx:{
+./Chunk.cxx:    this->chunkOffsetX = x;
+./Chunk.cxx:    this->chunkOffsetY = y;
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:void Chunk::populateBlocks()
+./Chunk.cxx:{
+./Chunk.cxx:    TIMER_START(POPULATING_BLOCKS)
+./Chunk.cxx:
+./Chunk.cxx:    voxels.reserve(16 * 16 * 256);
+./Chunk.cxx:
+./Chunk.cxx:    for (int z = 0; z < 256; z++)
+./Chunk.cxx:    {
+./Chunk.cxx:        for (int x = 0; x < 16; x++)
+./Chunk.cxx:        {
+./Chunk.cxx:            for (int y = 0; y < 16; y++)
+./Chunk.cxx:            {
+./Chunk.cxx:                int blockType;
+./Chunk.cxx:
+./Chunk.cxx:                if (y <= 50)
+./Chunk.cxx:                    blockType = STONE; // bottom layers
+./Chunk.cxx:                else if (y <= 64)
+./Chunk.cxx:                    blockType = GRASS; // top layers
+./Chunk.cxx:                else
+./Chunk.cxx:                    blockType = AIR; // above
+./Chunk.cxx:
+./Chunk.cxx:                voxels.emplace_back(
+./Chunk.cxx:                    vkContext,
+./Chunk.cxx:                    BlockType(blockType));
+./Chunk.cxx:            }
+./Chunk.cxx:        }
+./Chunk.cxx:    }
+./Chunk.cxx:
+./Chunk.cxx:    TIMER_END(POPULATING_BLOCKS)
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:void Chunk::buildChunkMesh()
+./Chunk.cxx:{
+./Chunk.cxx:    TIMER_START(BUILD_CHUNK_MESH)
+./Chunk.cxx:
+./Chunk.cxx:    std::vector<Vertex> vertices = {
+./Chunk.cxx:        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+./Chunk.cxx:        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+./Chunk.cxx:        {{0.0f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.5f, 1.0f}},
+./Chunk.cxx:    };
+./Chunk.cxx:
+./Chunk.cxx:    std::vector<uint32_t> indices = {
+./Chunk.cxx:        0, 1, 2 // single triangle
+./Chunk.cxx:    };
+./Chunk.cxx:    chunkMesh.vertices = vertices;
+./Chunk.cxx:    chunkMesh.indices = indices;
+./Chunk.cxx:
+./Chunk.cxx:    chunkMesh.createVertexBuffer();
+./Chunk.cxx:    chunkMesh.createIndexBuffer();
+./Chunk.cxx:
+./Chunk.cxx:    TIMER_END(BUILD_CHUNK_MESH)
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
+./Chunk.cxx:{
+./Chunk.cxx:    VkBuffer vertexBuffers[] = {chunkMesh.vertexBuffer};
+./Chunk.cxx:    VkDeviceSize offsets[] = {0};
+./Chunk.cxx:    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+./Chunk.cxx:    vkCmdBindIndexBuffer(commandBuffer, chunkMesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+./Chunk.cxx:
+./Chunk.cxx:    PushConstantC1 c1;
+./Chunk.cxx:    c1.data = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+./Chunk.cxx:    // c1.data[1][1] *= -1;
+./Chunk.cxx:
+./Chunk.cxx:    vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantC1), &c1);
+./Chunk.cxx:
+./Chunk.cxx:    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &(descriptorSets[currentFrame]), 0, nullptr);
+./Chunk.cxx:
+./Chunk.cxx:    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(chunkMesh.indices.size()), 1, 0, 0, 0);
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:void Chunk::cleanup()
+./Chunk.cxx:{
+./Chunk.cxx:    chunkMesh.cleanup();
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:Voxel *Chunk::getVoxelChunkLocal(BlockCoordinates coords)
+./Chunk.cxx:{
+./Chunk.cxx:    // Check bounds first
+./Chunk.cxx:    if (coords.x < 0 || coords.x >= 16 ||
+./Chunk.cxx:        coords.y < 0 || coords.y >= 16 ||
+./Chunk.cxx:        coords.z < 0 || coords.z >= 256)
+./Chunk.cxx:        return nullptr;
+./Chunk.cxx:
+./Chunk.cxx:    int idx = coords.x + coords.y * 16 + coords.z * 16 * 16;
+./Chunk.cxx:    return &voxels[idx];
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:Chunk::~Chunk()
+./Chunk.cxx:{
+./Chunk.cxx:}
+./GameObjectPool.cxx:#include "GameObjectPool.h"
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:GameObjectPool::GameObjectPool()
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:}
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:void GameObjectPool::init(VulkanContext context)
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:    this->vkContext = context;  
+./GameObjectPool.cxx:}
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:void GameObjectPool::uploadVBOsAndIBOs()
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:    
+./GameObjectPool.cxx:}
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:void GameObjectPool::drawIndexed(VkCommandBuffer &commandBuffer, std::vector<VkDescriptorSet> &descriptorSets, u_GraphicsPipeline &graphicsPipeline, VkExtent2D &swapChainExtent, uint64_t instanceCount, uint32_t &currentFrame)
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:    
+./GameObjectPool.cxx:}
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:void GameObjectPool::cleanUpResources()
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:    
+./GameObjectPool.cxx:}
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:GameObjectPool::~GameObjectPool()
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:}
+./Structs.h:#pragma once
+./Structs.h:
+./Structs.h:#define GLFW_INCLUDE_VULKAN
+./Structs.h:#include <GLFW/glfw3.h>
+./Structs.h:#define GLM_FORCE_RADIANS
+./Structs.h:#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+./Structs.h:#define GLM_ENABLE_EXPERIMENTAL
+./Structs.h:#include <glm/glm.hpp>
+./Structs.h:#include <glm/gtc/matrix_transform.hpp>
+./Structs.h:#include <glm/gtx/hash.hpp>
+./Structs.h:
+./Structs.h:// UBO
+./Structs.h:struct UniformBufferObject
+./Structs.h:{
+./Structs.h:    glm::mat4 model;
+./Structs.h:    glm::mat4 view;
+./Structs.h:    glm::mat4 proj;
+./Structs.h:};
+./Structs.h:
+./Structs.h:// PCS
+./Structs.h:struct PushConstantC1
+./Structs.h:{
+./Structs.h:    glm::mat4 data;
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct Transform
+./Structs.h:{
+./Structs.h:    glm::vec3 position;
+./Structs.h:    glm::vec3 rotation;
+./Structs.h:    glm::vec3 scale;
+./Structs.h:};
+./Structs.h:
+./Structs.h:enum BlockType
+./Structs.h:{
+./Structs.h:    AIR = 0,
+./Structs.h:    GRASS,
+./Structs.h:    DIRT,
+./Structs.h:    STONE
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct BlockCoordinates
+./Structs.h:{
+./Structs.h:    int x{0}, y{0}, z{0};
+./Structs.h:     bool operator==(const BlockCoordinates& other) const {
+./Structs.h:        return x == other.x && y == other.y && z == other.z;
+./Structs.h:    }
+./Structs.h:};
+./Chunk.h:#pragma once
+./Chunk.h:#include "PassInfo.hpp"
+./Chunk.h:#include "Structs.h"
+./Chunk.h:#include <memory>
+./Chunk.h:#include "Voxel.h"
+./Chunk.h:#include "Mesh.h"
+./Chunk.h:#include <unordered_map>
+./Chunk.h:class Voxel;
+./Chunk.h:
+./Chunk.h:struct BlockCoordinatesHash
+./Chunk.h:{
+./Chunk.h:    std::size_t operator()(const BlockCoordinates &b) const noexcept
+./Chunk.h:    {
+./Chunk.h:        std::size_t h1 = std::hash<int>{}(b.x);
+./Chunk.h:        std::size_t h2 = std::hash<int>{}(b.y);
+./Chunk.h:        std::size_t h3 = std::hash<int>{}(b.z);
+./Chunk.h:
+./Chunk.h:        return h1 ^ (h2 << 1) ^ (h3 << 2);
+./Chunk.h:    }
+./Chunk.h:};
+./Chunk.h:
+./Chunk.h:class Chunk
+./Chunk.h:{
+./Chunk.h:private:
+./Chunk.h:    VulkanContext &vkContext;
+./Chunk.h:    std::vector<Voxel> voxels;
+./Chunk.h:    int chunkOffsetX{0};
+./Chunk.h:    int chunkOffsetY{0};
+./Chunk.h:
+./Chunk.h:    Mesh chunkMesh;
+./Chunk.h:
+./Chunk.h:public:
+./Chunk.h:    Chunk(VulkanContext &vkContext);
+./Chunk.h:    Chunk(const Chunk &) = delete;
+./Chunk.h:    Chunk &operator=(const Chunk &other)
+./Chunk.h:    {
+./Chunk.h:        // allocate new Vulkan buffers, copy data
+./Chunk.h:        return *this;
+./Chunk.h:    }
+./Chunk.h:
+./Chunk.h:    Chunk(Chunk &&) = default; // allow moves
+./Chunk.h:    Chunk &operator=(Chunk &&) = default;
+./Chunk.h:
+./Chunk.h:    void setOffset(int x, int y);
+./Chunk.h:    void populateBlocks();
+./Chunk.h:
+./Chunk.h:    void buildChunkMesh();
+./Chunk.h:    void draw(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
+./Chunk.h:
+./Chunk.h:    void cleanup();
+./Chunk.h:
+./Chunk.h:    [[nodiscard]] Voxel *getVoxelChunkLocal(BlockCoordinates);
+./Chunk.h:
+./Chunk.h:    ~Chunk();
+./Chunk.h:};
+./GraphicsPipeline.h:#ifndef H_GPIPE
+./GraphicsPipeline.h:#define H_GPIPE
+./GraphicsPipeline.h:#include <array>
+./GraphicsPipeline.h:#include "PassInfo.hpp"
+./GraphicsPipeline.h:#include "Structs.h"
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:#include <vector>
+./GraphicsPipeline.h:#include <fstream>
+./GraphicsPipeline.h:#include <functional>
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:struct Vertex {
+./GraphicsPipeline.h:    glm::vec3 pos;
+./GraphicsPipeline.h:    glm::vec3 color;
+./GraphicsPipeline.h:    glm::vec2 texCoord;
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:    //Telling vulkan how to setup binding
+./GraphicsPipeline.h:    //Struct 1/2
+./GraphicsPipeline.h:    static VkVertexInputBindingDescription getBindingDescription();
+./GraphicsPipeline.h:    //Struct 2/2
+./GraphicsPipeline.h:    static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:    bool operator==(const Vertex& other) const {
+./GraphicsPipeline.h:    return pos == other.pos && color == other.color && texCoord == other.texCoord;
+./GraphicsPipeline.h:}
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:};
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:namespace std {
+./GraphicsPipeline.h:    template<>
+./GraphicsPipeline.h:    struct hash<Vertex> {
+./GraphicsPipeline.h:        size_t operator()(Vertex const& vertex) const {
+./GraphicsPipeline.h:            size_t seed = 0;
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:            auto hashCombine = [&seed](auto const& v) {
+./GraphicsPipeline.h:                seed ^= std::hash<float>()(v)
+./GraphicsPipeline.h:                      + 0x9e3779b97f4a7c15
+./GraphicsPipeline.h:                      + (seed << 6)
+./GraphicsPipeline.h:                      + (seed >> 2);
+./GraphicsPipeline.h:            };
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:            hashCombine(vertex.pos.x);
+./GraphicsPipeline.h:            hashCombine(vertex.pos.y);
+./GraphicsPipeline.h:            hashCombine(vertex.pos.z);
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:            hashCombine(vertex.color.r);
+./GraphicsPipeline.h:            hashCombine(vertex.color.g);
+./GraphicsPipeline.h:            hashCombine(vertex.color.b);
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:            hashCombine(vertex.texCoord.x);
+./GraphicsPipeline.h:            hashCombine(vertex.texCoord.y);
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:            return seed;
+./GraphicsPipeline.h:        }
+./GraphicsPipeline.h:    };
+./GraphicsPipeline.h:}
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:class u_GraphicsPipeline
+./GraphicsPipeline.h:{
+./GraphicsPipeline.h:private:
+./GraphicsPipeline.h:    VkDevice device;
+./GraphicsPipeline.h:    int height, width;
+./GraphicsPipeline.h:    VkExtent2D swapChainExtent;
+./GraphicsPipeline.h:    VkRenderPass renderPass;
+./GraphicsPipeline.h:    VkDescriptorSetLayout* descriptorSetLayout;
+./GraphicsPipeline.h:    VkSampleCountFlagBits msaaSamples;
+./GraphicsPipeline.h:    
+./GraphicsPipeline.h:    public:
+./GraphicsPipeline.h:    VkPipelineLayout pipelineLayout;
+./GraphicsPipeline.h:    VkPipeline graphicsPipeline;//shared
+./GraphicsPipeline.h:    
+./GraphicsPipeline.h:    u_GraphicsPipeline();
+./GraphicsPipeline.h:    ~u_GraphicsPipeline();
+./GraphicsPipeline.h:    void destroyPipelineLayout();
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:    void u_PassGraphicsPipelineCreateInfo(u_GraphicsPipelineCreateInfo pCreateInfo);
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:    static std::vector<char> readFile(const std::string &filename);
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:    void createGraphicsPipeline();
+./GraphicsPipeline.h:    VkShaderModule createShaderModule(const std::vector<char> &code);
+./GraphicsPipeline.h:};
+./GraphicsPipeline.h:#endif
+./Mesh.h:#pragma once
+./Mesh.h:#include "PassInfo.hpp"
+./Mesh.h:#include "Structs.h"
+./Mesh.h:#include "GraphicsPipeline.h"
+./Mesh.h:
+./Mesh.h:class Mesh
+./Mesh.h:{
+./Mesh.h:private:
+./Mesh.h:    VulkanContext &vkContext;
+./Mesh.h:
+./Mesh.h:    std::vector<Vertex> vertices;
+./Mesh.h:    std::vector<uint32_t> indices;
+./Mesh.h:    VkBuffer vertexBuffer;
+./Mesh.h:    VkDeviceMemory vertexBufferMemory;
+./Mesh.h:
+./Mesh.h:    VkBuffer indexBuffer;
+./Mesh.h:    VkDeviceMemory indexBufferMemory;
+./Mesh.h:
+./Mesh.h:    friend class Chunk;
+./Mesh.h:
+./Mesh.h:public:
+./Mesh.h:    Mesh(VulkanContext &vkContext);
+./Mesh.h:    void createVertexBuffer();
+./Mesh.h:    void createIndexBuffer();
+./Mesh.h:
+./Mesh.h:    void cleanup();
+./Mesh.h:    ~Mesh();
+./Mesh.h:};
+./utils.cxx:#include "utils.h"
+./utils.cxx:#include <stdexcept>
+./utils.cxx:
+./utils.cxx:void utils::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory, VulkanContext &vkContext)
+./utils.cxx:{
+./utils.cxx:    VkBufferCreateInfo bufferInfo{};
+./utils.cxx:    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+./utils.cxx:    bufferInfo.size = size;
+./utils.cxx:    bufferInfo.usage = usage;
+./utils.cxx:    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+./utils.cxx:
+./utils.cxx:    if (vkCreateBuffer(vkContext.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+./utils.cxx:    {
+./utils.cxx:        throw std::runtime_error("failed to create buffer!");
+./utils.cxx:    }
+./utils.cxx:
+./utils.cxx:    VkMemoryRequirements memRequirements;
+./utils.cxx:    vkGetBufferMemoryRequirements(vkContext.device, buffer, &memRequirements);
+./utils.cxx:
+./utils.cxx:    VkMemoryAllocateInfo allocInfo{};
+./utils.cxx:    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+./utils.cxx:    allocInfo.allocationSize = memRequirements.size;
+./utils.cxx:    uint32_t typeFilter = memRequirements.memoryTypeBits;
+./utils.cxx:
+./utils.cxx:    VkPhysicalDeviceMemoryProperties memProperties;
+./utils.cxx:    vkGetPhysicalDeviceMemoryProperties(vkContext.physicalDevice, &memProperties);
+./utils.cxx:
+./utils.cxx:    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+./utils.cxx:    {
+./utils.cxx:        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+./utils.cxx:        {
+./utils.cxx:            allocInfo.memoryTypeIndex = i;
+./utils.cxx:            goto _ok;
+./utils.cxx:        }
+./utils.cxx:    }
+./utils.cxx:
+./utils.cxx:    throw std::runtime_error("failed to find suitable memory type!");
+./utils.cxx:    _ok:;
+./utils.cxx:
+./utils.cxx:    if (vkAllocateMemory(vkContext.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+./utils.cxx:    {
+./utils.cxx:        throw std::runtime_error("failed to allocate buffer memory!");
+./utils.cxx:    }
+./utils.cxx:
+./utils.cxx:    vkBindBufferMemory(vkContext.device, buffer, bufferMemory, 0);
+./utils.cxx:}
+./utils.cxx:
+./utils.cxx:void utils::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VulkanContext &vkContext)
+./utils.cxx:{
+./utils.cxx:    // 1. Create a temporary command buffer
+./utils.cxx:    VkCommandBufferAllocateInfo allocInfo{};
+./utils.cxx:    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+./utils.cxx:    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+./utils.cxx:    allocInfo.commandPool = vkContext.commandPool; // your command pool
+./utils.cxx:    allocInfo.commandBufferCount = 1;
+./utils.cxx:
+./utils.cxx:    VkCommandBuffer commandBuffer;
+./utils.cxx:    if (vkAllocateCommandBuffers(vkContext.device, &allocInfo, &commandBuffer) != VK_SUCCESS) {
+./utils.cxx:        throw std::runtime_error("failed to allocate command buffer!");
+./utils.cxx:    }
+./utils.cxx:
+./utils.cxx:    // 2. Begin the command buffer
+./utils.cxx:    VkCommandBufferBeginInfo beginInfo{};
+./utils.cxx:    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+./utils.cxx:    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+./utils.cxx:
+./utils.cxx:    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+./utils.cxx:        throw std::runtime_error("failed to begin command buffer!");
+./utils.cxx:    }
+./utils.cxx:
+./utils.cxx:    // 3. Define the copy region
+./utils.cxx:    VkBufferCopy copyRegion{};
+./utils.cxx:    copyRegion.srcOffset = 0; // optional
+./utils.cxx:    copyRegion.dstOffset = 0; // optional
+./utils.cxx:    copyRegion.size = size;
+./utils.cxx:
+./utils.cxx:    // 4. Record the copy command
+./utils.cxx:    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+./utils.cxx:
+./utils.cxx:    // 5. End the command buffer
+./utils.cxx:    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+./utils.cxx:        throw std::runtime_error("failed to end command buffer!");
+./utils.cxx:    }
+./utils.cxx:
+./utils.cxx:    // 6. Submit the command buffer and wait
+./utils.cxx:    VkSubmitInfo submitInfo{};
+./utils.cxx:    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+./utils.cxx:    submitInfo.commandBufferCount = 1;
+./utils.cxx:    submitInfo.pCommandBuffers = &commandBuffer;
+./utils.cxx:
+./utils.cxx:    if (vkQueueSubmit(vkContext.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+./utils.cxx:        throw std::runtime_error("failed to submit copy command buffer!");
+./utils.cxx:    }
+./utils.cxx:    vkQueueWaitIdle(vkContext.graphicsQueue);
+./utils.cxx:
+./utils.cxx:    // 7. Free the temporary command buffer
+./utils.cxx:    vkFreeCommandBuffers(vkContext.device, vkContext.commandPool, 1, &commandBuffer);
+./utils.cxx:}
+./Mesh.cxx:#include "Mesh.h"
+./Mesh.cxx:#include "utils.h"
+./Mesh.cxx:#include <iostream>
+./Mesh.cxx:#include <cstring>
+./Mesh.cxx:
+./Mesh.cxx:Mesh::Mesh(VulkanContext &vkContext) : vkContext{vkContext}
+./Mesh.cxx:{
+./Mesh.cxx:}
+./Mesh.cxx:
+./Mesh.cxx:void Mesh::createVertexBuffer()
+./Mesh.cxx:{
+./Mesh.cxx:    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+./Mesh.cxx:
+./Mesh.cxx:    if(bufferSize == 0)
+./Mesh.cxx:        return;
+./Mesh.cxx:
+./Mesh.cxx:    VkBuffer stagingBuffer;
+./Mesh.cxx:    VkDeviceMemory stagingBufferMemory;
+./Mesh.cxx:    // TX
+./Mesh.cxx:    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, stagingBuffer, stagingBufferMemory, vkContext);
+./Mesh.cxx:
+./Mesh.cxx:    // filling in the vertex buffer
+./Mesh.cxx:    void *data;
+./Mesh.cxx:    vkMapMemory(vkContext.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+./Mesh.cxx:    memcpy(data, vertices.data(), (size_t)bufferSize);
+./Mesh.cxx:    vkUnmapMemory(vkContext.device, stagingBufferMemory);
+./Mesh.cxx:
+./Mesh.cxx:    // creating the actul VBO and setting it up so the it is the destionation of the transfer source
+./Mesh.cxx:    // TX
+./Mesh.cxx:    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, vkContext);
+./Mesh.cxx:
+./Mesh.cxx:    // but we still have to copy the memory contents manully
+./Mesh.cxx:    utils::copyBuffer(stagingBuffer, vertexBuffer, bufferSize, vkContext);
+./Mesh.cxx:
+./Mesh.cxx:    vkDestroyBuffer(vkContext.device, stagingBuffer, nullptr);
+./Mesh.cxx:    vkFreeMemory(vkContext.device, stagingBufferMemory, nullptr);
+./Mesh.cxx:}
+./Mesh.cxx:
+./Mesh.cxx:void Mesh::createIndexBuffer()
+./Mesh.cxx:{
+./Mesh.cxx:    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+./Mesh.cxx:
+./Mesh.cxx:    if(bufferSize == 0)
+./Mesh.cxx:        return;
+./Mesh.cxx:
+./Mesh.cxx:    VkBuffer stagingBuffer;
+./Mesh.cxx:    VkDeviceMemory stagingBufferMemory;
+./Mesh.cxx:
+./Mesh.cxx:    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, vkContext);
+./Mesh.cxx:
+./Mesh.cxx:    void *data;
+./Mesh.cxx:    vkMapMemory(vkContext.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+./Mesh.cxx:    memcpy(data, indices.data(), (size_t)bufferSize);
+./Mesh.cxx:    vkUnmapMemory(vkContext.device, stagingBufferMemory);
+./Mesh.cxx:
+./Mesh.cxx:    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, vkContext);
+./Mesh.cxx:
+./Mesh.cxx:    utils::copyBuffer(stagingBuffer, indexBuffer, bufferSize, vkContext);
+./Mesh.cxx:
+./Mesh.cxx:    vkDestroyBuffer(vkContext.device, stagingBuffer, nullptr);
+./Mesh.cxx:    vkFreeMemory(vkContext.device, stagingBufferMemory, nullptr);
+./Mesh.cxx:}
+./Mesh.cxx:
+./Mesh.cxx:void Mesh::cleanup()
+./Mesh.cxx:{
+./Mesh.cxx:    vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
+./Mesh.cxx:    vkFreeMemory(vkContext.device, indexBufferMemory, nullptr);
+./Mesh.cxx:
+./Mesh.cxx:    vkDestroyBuffer(vkContext.device, vertexBuffer, nullptr);
+./Mesh.cxx:    vkFreeMemory(vkContext.device, vertexBufferMemory, nullptr);
+./Mesh.cxx:}
+./Mesh.cxx:
+./Mesh.cxx:Mesh::~Mesh()
+./Mesh.cxx:{
+./Mesh.cxx:
+./Mesh.cxx:}
+./Textures.hpp:#ifndef TEXTURES_HPP
+./Textures.hpp:#define TEXTURES_HPP
+./Textures.hpp:
+./Textures.hpp:#define GLFW_INCLUDE_VULKAN
+./Textures.hpp:#include <GLFW/glfw3.h>
+./Textures.hpp:#include "PassInfo.hpp"
+./Textures.hpp:#include "include/stb-master/stb_image.h"
+./Textures.hpp:
+./Textures.hpp:class u_Texture
+./Textures.hpp:{
+./Textures.hpp:private:
+./Textures.hpp:    int height, width;
+./Textures.hpp:    VkPhysicalDevice physicalDevice;
+./Textures.hpp:    VkDevice device;
+./Textures.hpp:    VkQueue graphicsQueue;
+./Textures.hpp:    VkExtent2D swapChainExtent;
+./Textures.hpp:    VkRenderPass renderPass;
+./Textures.hpp:    VkCommandPool commandPool;
+./Textures.hpp:
+./Textures.hpp:public:
+./Textures.hpp:    uint32_t mipLevels;
+./Textures.hpp:    VkImage textureImage;
+./Textures.hpp:    VkDeviceMemory textureImageMemory;
+./Textures.hpp:    VkImageView textureImageView;
+./Textures.hpp:    VkSampler textureSampler;
+./Textures.hpp:    std::string texturePath;
+./Textures.hpp:    u_Texture();
+./Textures.hpp:    ~u_Texture();
+./Textures.hpp:    void passTextureCreateInfo(const u_TexturePassInfo &pCreateInfo);
+./Textures.hpp:
+./Textures.hpp:    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+./Textures.hpp:    static void createBuffer(VulkanContext vkContext, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+./Textures.hpp:    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+./Textures.hpp:
+./Textures.hpp:    void createImage(uint32_t width, uint32_t height, VkSampleCountFlagBits msaaSamples, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory);
+./Textures.hpp:    void createTextureImage();
+./Textures.hpp:
+./Textures.hpp:    VkCommandBuffer beginSingleTimeCommands();
+./Textures.hpp:    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+./Textures.hpp:
+./Textures.hpp:    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
+./Textures.hpp:    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+./Textures.hpp:
+./Textures.hpp:    void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+./Textures.hpp:
+./Textures.hpp:    void createTextureView();
+./Textures.hpp:    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+./Textures.hpp:    void createTextureSampler();
+./Textures.hpp:
+./Textures.hpp:    void destroy();
+./Textures.hpp:};
+./Textures.hpp:
+./Textures.hpp:#endif
+./Update.cxx:#include "HelloTriangleApplication.hpp"
+./Update.cxx:#include "Chunk.h"
+./Update.cxx:#include <cstdlib>
+./Update.cxx:#include <cstring>
+./Update.cxx:#include <memory>
+./Update.cxx:
+./Update.cxx:void HelloTriangleApplication::initGameObjects()
+./Update.cxx:{
+./Update.cxx:    static VulkanContext context{};
+./Update.cxx:    context.device = device;
+./Update.cxx:    context.physicalDevice = physicalDevice;
+./Update.cxx:    context.graphicsQueue = graphicsQueue;
+./Update.cxx:    context.instance = instance;
+./Update.cxx:    context.presentQueue = presentQueue;
+./Update.cxx:    context.commandPool = commandPool;
+./Update.cxx:
+./Update.cxx:    gameObjectPool.uploadVBOsAndIBOs();
+./Update.cxx:    c = std::move(Chunk(context));
+./Update.cxx:    c.value().populateBlocks(); 
+./Update.cxx:    c.value().buildChunkMesh();
+./Update.cxx:}
+./Update.cxx:
+./Update.cxx:void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
+./Update.cxx:{
+./Update.cxx:    static auto startTime = std::chrono::high_resolution_clock::now();
+./Update.cxx:
+./Update.cxx:    auto currentTime = std::chrono::high_resolution_clock::now();
+./Update.cxx:    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+./Update.cxx:
+./Update.cxx:    UniformBufferObject ubo{};
+./Update.cxx:
+./Update.cxx:    // Model 0
+./Update.cxx:    // ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+./Update.cxx:    ubo.model = glm::translate(glm::mat4(1.f), glm::vec3(0.f));
+./Update.cxx:    // ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+./Update.cxx:
+./Update.cxx:    ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 1.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+./Update.cxx:    ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.01f, 100.0f);
+./Update.cxx:
+./Update.cxx:    ubo.proj[1][1] *= -1; //-1 => y -> -y
+./Update.cxx:    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+./Update.cxx:}

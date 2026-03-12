@@ -84,11 +84,12 @@ void u_Texture::createBuffer(VulkanContext vkContext, VkDeviceSize size, VkBuffe
         if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
         {
             allocInfo.memoryTypeIndex = i;
+            goto _ok;
         }
     }
 
     throw std::runtime_error("failed to find suitable memory type!");
-
+    _ok:;
     if (vkAllocateMemory(vkContext.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate buffer memory!");
