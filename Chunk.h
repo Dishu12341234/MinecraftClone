@@ -4,7 +4,19 @@
 #include <memory>
 #include "Voxel.h"
 #include "Mesh.h"
+#include "GameObjectPool.h"
 #include <unordered_map>
+
+#define TIMER_START(name) \
+    auto name##_start = std::chrono::high_resolution_clock::now();
+
+#define TIMER_END(name)                                                                                             \
+    {                                                                                                               \
+        auto name##_end = std::chrono::high_resolution_clock::now();                                                \
+        auto name##_dur = std::chrono::duration_cast<std::chrono::milliseconds>(name##_end - name##_start).count(); \
+        std::cout << #name << " took " << name##_dur << " ms\n";                                                    \
+    }
+
 class Voxel;
 
 struct BlockCoordinatesHash
@@ -28,9 +40,12 @@ private:
     int chunkOffsetY{0};
 
     Mesh chunkMesh;
+    GameObjectPool &gameObjectPool;
+
+    friend class GameObjectPool;
 
 public:
-    Chunk(VulkanContext &vkContext);
+    Chunk(VulkanContext &vkContext, GameObjectPool &gameObjectPool);
     Chunk(const Chunk &) = delete;
     Chunk &operator=(const Chunk &other)
     {
@@ -41,6 +56,7 @@ public:
     Chunk(Chunk &&) = default; // allow moves
     Chunk &operator=(Chunk &&) = default;
 
+    bool isFaceVisible(int x, int y, int z);
     void setOffset(int x, int y);
     void populateBlocks();
 

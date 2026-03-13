@@ -15,13 +15,21 @@ void HelloTriangleApplication::initGameObjects()
     context.commandPool = commandPool;
 
     gameObjectPool.uploadVBOsAndIBOs();
-    c = std::move(Chunk(context));
-    c.value().populateBlocks(); 
-    c.value().buildChunkMesh();
+
+    camera = std::make_unique<Camera>(context, gameObjectPool);
+
+    terrain = std::move(Terrain(context, gameObjectPool));
+    gameObjectPool.terrain = &terrain.value();
+    terrain.value().generateChunks();
+
 }
 
 void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 {
+
+    if (event->getKeyPressed(GLFW_KEY_ESCAPE))
+        glfwSetWindowShouldClose(_window, GLFW_TRUE);
+
     static auto startTime = std::chrono::high_resolution_clock::now();
 
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -33,10 +41,12 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
     // ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
     ubo.model = glm::translate(glm::mat4(1.f), glm::vec3(0.f));
     ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+    ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
 
-    ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 1.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.01f, 100.0f);
+    camera->updateUBO(ubo, swapChainExtent, *event.get());
 
-    ubo.proj[1][1] *= -1; //-1 => y -> -y
+    // ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 1.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+    // ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.01f, 100.0f);
+
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }

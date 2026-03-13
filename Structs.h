@@ -38,10 +38,19 @@ enum BlockType
     STONE
 };
 
+struct FaceDef
+{
+    glm::vec3 corners[4]; // vertex positions relative to block origin
+    glm::vec2 uvs[4];
+    float light;
+    int dx, dy, dz; // direction toward the neighbour
+};
+
 struct BlockCoordinates
 {
     int x{0}, y{0}, z{0};
-     bool operator==(const BlockCoordinates& other) const {
+    bool operator==(const BlockCoordinates &other) const
+    {
         return x == other.x && y == other.y && z == other.z;
     }
 };

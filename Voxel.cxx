@@ -30,6 +30,8 @@ BlockType Voxel::getBlockType()
     return BlockType(blockType);
 }
 
+
+
 Voxel::~Voxel()
 {
 }

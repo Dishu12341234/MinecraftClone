@@ -1,6 +1,13 @@
-build/GameObjectPool.o: GameObjectPool.cxx GameObjectPool.h PassInfo.hpp \
- GraphicsPipeline.h Structs.h
+build/GameObjectPool.o: GameObjectPool.cxx GameObjectPool.h \
+ GraphicsPipeline.h PassInfo.hpp Structs.h Voxel.h Terrain.h blocks.h \
+ utils.h Chunk.h Mesh.h
 GameObjectPool.h:
-PassInfo.hpp:
 GraphicsPipeline.h:
+PassInfo.hpp:
 Structs.h:
+Voxel.h:
+Terrain.h:
+blocks.h:
+utils.h:
+Chunk.h:
+Mesh.h:

@@ -19,18 +19,18 @@ VkSampleCountFlagBits HelloTriangleApplication::getMaxUsableSampleCount()
     vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 
     VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
-    if (counts & VK_SAMPLE_COUNT_64_BIT)
-    {
-        return VK_SAMPLE_COUNT_64_BIT;
-    }
-    if (counts & VK_SAMPLE_COUNT_32_BIT)
-    {
-        return VK_SAMPLE_COUNT_32_BIT;
-    }
-    if (counts & VK_SAMPLE_COUNT_16_BIT)
-    {
-        return VK_SAMPLE_COUNT_16_BIT;
-    }
+    // if (counts & VK_SAMPLE_COUNT_64_BIT)
+    // {
+    //     return VK_SAMPLE_COUNT_64_BIT;
+    // }
+    // if (counts & VK_SAMPLE_COUNT_32_BIT)
+    // {
+    //     return VK_SAMPLE_COUNT_32_BIT;
+    // }
+    // if (counts & VK_SAMPLE_COUNT_16_BIT)
+    // {
+    //     return VK_SAMPLE_COUNT_16_BIT;
+    // }
     if (counts & VK_SAMPLE_COUNT_8_BIT)
     {
         return VK_SAMPLE_COUNT_8_BIT;
@@ -55,6 +55,11 @@ void HelloTriangleApplication::initWindow()
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     _window = glfwCreateWindow(WIDTH, HEIGHT, PROCESS_NAME.c_str(), nullptr, nullptr);
+
+    this->event = std::make_unique<Event>(*_window);
+    glfwSetWindowUserPointer(_window, event.get());
+
+    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 void HelloTriangleApplication::initVulkan()
@@ -742,49 +747,6 @@ void HelloTriangleApplication::createCommandBuffers()
         throw std::runtime_error("failed to allocate command buffers");
     }
 }
-
-void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
-{
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = 0;
-    beginInfo.pInheritanceInfo = nullptr;
-
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to begin recording command buffer!");
-    }
-
-    VkRenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;
-    renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
-
-    renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = swapChainExtent;
-
-    std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-    clearValues[1].depthStencil = {1.0f, 0};
-
-    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-    renderPassInfo.pClearValues = clearValues.data();
-
-    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.graphicsPipeline);
-    c.value().draw(commandBuffer, graphicsPipeline.pipelineLayout, graphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
-
-    // gameObjectPool.drawIndexed(commandBuffer, descriptorSets, graphicsPipeline, swapChainExtent, 3, currentFrame);
-
-    vkCmdEndRenderPass(commandBuffer);
-
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to record command buffer!");
-    }
-}
-
 void HelloTriangleApplication::createSyncObject() {
     // 1️⃣ Per-frame semaphores for acquiring images
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);

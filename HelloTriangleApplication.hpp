@@ -7,7 +7,9 @@
 #include "Textures.hpp"
 #include "GraphicsPipeline.h"
 #include "GameObjectPool.h"
-#include "Chunk.h"
+#include "Event.h"
+#include "Camera.h"
+#include "Terrain.h"
 
 class HelloTriangleApplication
 {
@@ -16,10 +18,14 @@ private:
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
     VkInstance instance;
+    GLFWwindow *_window;
+
+    std::optional<Terrain> terrain;
 
     GameObjectPool gameObjectPool;
+    std::unique_ptr<Event> event;
+    std::unique_ptr<Camera> camera;
 
-    std::optional<Chunk> c;
 
     struct QueueFamilyIndices
     {
@@ -72,7 +78,7 @@ private:
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
 
-    //MSAA
+    // MSAA
     VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
     VkSampleCountFlagBits getMaxUsableSampleCount();
 
@@ -169,7 +175,6 @@ private:
 
     const std::string MODEL_PATH = "models/Cube.obj";
     const std::string TEXTURE_PATH = "textures/atlas.png";
-    
 
     const std::vector<const char *> validationLayers = {
         "VK_LAYER_KHRONOS_validation"};
@@ -181,8 +186,6 @@ private:
 #else
     const bool enableValidationLayers = false;
 #endif
-
-    GLFWwindow *_window;
 
 public:
     HelloTriangleApplication();

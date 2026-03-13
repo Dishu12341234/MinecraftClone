@@ -9,9 +9,11 @@ layout(binding = 0) uniform UniformBufferObject {
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inColor;
 layout(location = 2) in vec2 inTexCoord;
+layout(location = 3) in float brightness;
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
+layout(location = 2) out float brightnessO;
 
 //inside the c++ code for sake of learning I have use a push constant for ubo.proj as pc.data
 
@@ -21,7 +23,8 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
     //gl_Position = pc.data * ubo.view * ubo.model[gl_InstanceIndex] * vec4(inPosition, 1.0);
-    gl_Position = pc.data * ubo.view * ubo.model * vec4(inPosition, 1.0);
+    gl_Position = ubo.proj * ubo.view * pc.data * vec4(inPosition, 1.0);
     fragColor = inColor;
     fragTexCoord = inTexCoord * .05f;
+    brightnessO = brightness;
 }
