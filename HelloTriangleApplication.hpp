@@ -6,10 +6,13 @@
 #include <chrono>
 #include "Textures.hpp"
 #include "GraphicsPipeline.h"
+#include "RayGraphicsPipeline.h"
 #include "GameObjectPool.h"
 #include "Event.h"
 #include "Camera.h"
 #include "Terrain.h"
+
+class Ray;
 
 class HelloTriangleApplication
 {
@@ -17,10 +20,12 @@ private:
     const int MAX_FRAMES_IN_FLIGHT = 2;
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
+    std::optional<Terrain> terrain;
     VkInstance instance;
     GLFWwindow *_window;
 
-    std::optional<Terrain> terrain;
+    Ray *ray;
+
 
     GameObjectPool gameObjectPool;
     std::unique_ptr<Event> event;
@@ -129,6 +134,8 @@ private:
     void createDescriptorSetLayout();
 
     u_GraphicsPipeline graphicsPipeline;
+    RayGraphicsPipeline rayGraphicsPipeline;
+
 
     void initGameObjects();
 

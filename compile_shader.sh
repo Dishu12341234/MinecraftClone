@@ -34,8 +34,8 @@ for shader in shaders/*.vert shaders/*.frag; do
         echo "  [OK]   $shader"
         echo "         Output : $output"
         echo "         Time   : ${elapsed}ms"
-        echo "         Input  : ${size_in} bytes"
-        echo "         Output : ${size_out} bytes (SPIR-V)"
+        echo "         Input  : ${size_in}b"
+        echo "         Output : ${size_out}b (SPIR-V)"
         echo "         Type   : $([ "$ext" = "vert" ] && echo "Vertex shader" || echo "Fragment shader")"
     fi
     echo ""

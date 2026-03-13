@@ -1,0 +1,31 @@
+#pragma once
+#include "GraphicsPipeline.h"
+#include "RayGraphicsPipeline.h"
+
+class RayMesher
+{
+private:
+    VulkanContext &vkContext;
+
+    std::vector<RayPoints> vertices;
+    std::vector<uint32_t> indices;
+    VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMemory;
+
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
+
+public:
+    RayMesher(VulkanContext &vkContext);
+    void loadRayPoints(const std::vector<RayPoints> &vertices);
+    void loadIndices(const std::vector<uint32_t> &indices);
+
+    void createVertexBuffer();
+    void createIndexBuffer();
+
+    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
+              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1);
+
+    void cleanup();
+    ~RayMesher();
+};

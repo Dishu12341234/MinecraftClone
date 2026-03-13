@@ -59,32 +59,32 @@ void Chunk::buildChunkMesh()
     static const FaceDef faces[6] = {
         // Top (normal +z): cross((1,0,0),(1,1,0)) = (0,0,1) ✓
         {{{0,0,1}, {1,0,1}, {1,1,1}, {0,1,1}},
-         {{0,0}, {1,0}, {1,1}, {0,1}},
+         0,
          1.0f, 0, 0, 1},
 
         // Bottom (normal -z): cross((0,1,0),(1,1,0)) = (0,0,-1) ✓
         {{{0,0,0}, {0,1,0}, {1,1,0}, {1,0,0}},
-         {{0,0}, {0,1}, {1,1}, {1,0}},
+         1,
          0.5f, 0, 0, -1},
 
         // Front (normal +y): cross((0,0,1),(1,0,1)) = (0,1,0) ✓
         {{{0,1,0}, {0,1,1}, {1,1,1}, {1,1,0}},
-         {{0,0}, {0,1}, {1,1}, {1,0}},
+         2,
          0.75f, 0, 1, 0},
 
         // Back (normal -y): cross((0,0,1),(-1,0,1)) = (0,-1,0) ✓
         {{{1,0,0}, {1,0,1}, {0,0,1}, {0,0,0}},
-         {{0,0}, {0,1}, {1,1}, {1,0}},
+         3,
          0.85f, 0, -1, 0},
 
         // Right (normal +x): cross((0,1,0),(0,1,1)) = (1,0,0) ✓
         {{{1,0,0}, {1,1,0}, {1,1,1}, {1,0,1}},
-         {{0,0}, {1,0}, {1,1}, {0,1}},
+         4,
          0.7f, 1, 0, 0},
 
         // Left (normal -x): cross((0,-1,0),(0,-1,1)) = (-1,0,0) ✓
         {{{0,1,0}, {0,0,0}, {0,0,1}, {0,1,1}},
-         {{0,0}, {1,0}, {1,1}, {0,1}},
+         5,
          0.8f, -1, 0, 0},
     };
 
@@ -106,6 +106,7 @@ void Chunk::buildChunkMesh()
             {
                 const int idx = x + y * 16 + z * 256;
                 const BlockType type = voxels[idx].getBlockType();
+                const int* faceTexture = BlockFaces::grassFaceTexture;
 
                 if (type == AIR)
                     continue;
@@ -120,10 +121,10 @@ void Chunk::buildChunkMesh()
 
                     const uint32_t base = static_cast<uint32_t>(vertices.size());
 
-                    vertices.push_back({origin + face.corners[0], color, face.uvs[0], face.light});
-                    vertices.push_back({origin + face.corners[1], color, face.uvs[1], face.light});
-                    vertices.push_back({origin + face.corners[2], color, face.uvs[2], face.light});
-                    vertices.push_back({origin + face.corners[3], color, face.uvs[3], face.light});
+                    vertices.push_back({origin + face.corners[0], color, glm::vec2(faceTexture[face.tileOffset],0), face.light});
+                    vertices.push_back({origin + face.corners[1], color, glm::vec2(faceTexture[face.tileOffset],1), face.light});
+                    vertices.push_back({origin + face.corners[2], color, glm::vec2(faceTexture[face.tileOffset],2), face.light});
+                    vertices.push_back({origin + face.corners[3], color, glm::vec2(faceTexture[face.tileOffset],3), face.light});
 
                     indices.insert(indices.end(), {base, base+1, base+2, base+2, base+3, base});
                 }

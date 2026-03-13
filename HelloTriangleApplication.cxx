@@ -1,4 +1,5 @@
 #include "HelloTriangleApplication.hpp"
+#include "Ray.h"
 
 void HelloTriangleApplication::mainLoop()
 {
@@ -107,6 +108,10 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.graphicsPipeline);
     terrain.value().draw(commandBuffer, graphicsPipeline.pipelineLayout, graphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+    
+    
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
+    ray->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
     // 
     // gameObjectPool.drawIndexed(commandBuffer, descriptorSets, graphicsPipeline, swapChainExtent, 3, currentFrame);
 
@@ -124,6 +129,9 @@ void HelloTriangleApplication::cleanup()
 
     gameObjectPool.cleanUpResources();
     terrain.value().cleanup();
+    ray->cleanup();
+
+    delete ray;
 
     vkDestroyBuffer(device, indexBuffer, nullptr);
     vkFreeMemory(device, indexBufferMemory, nullptr);
@@ -150,6 +158,8 @@ void HelloTriangleApplication::cleanup()
         vkDestroyFramebuffer(device, framebuffer, nullptr);
 
     graphicsPipeline.destroyPipelineLayout();
+    rayGraphicsPipeline.destroyPipelineLayout();
+
     vkDestroyRenderPass(device, renderPass, nullptr);
 
     for (auto imageView : swapChainImageViews)

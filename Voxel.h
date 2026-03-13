@@ -2,13 +2,17 @@
 #include "PassInfo.hpp"
 #include "Structs.h"
 
+
+
 class Voxel
 {
 private:
     VulkanContext &vkContext;
     Transform transform;
     int blockType = AIR;
+    const int* faceTexture = BlockFaces::corruptFaceTexture; // default to a bright pink texture to easily spot untextured blocks
 
+    friend class Chunk;
 public:
     Voxel(VulkanContext &vkContext, BlockType blockType = AIR);
 

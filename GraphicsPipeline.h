@@ -66,6 +66,7 @@ private:
     VkDescriptorSetLayout* descriptorSetLayout;
     VkSampleCountFlagBits msaaSamples;
     
+    friend class RayGraphicsPipeline;
     public:
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;//shared
@@ -78,7 +79,7 @@ private:
 
     static std::vector<char> readFile(const std::string &filename);
 
-    void createGraphicsPipeline();
+    virtual void createGraphicsPipeline();
     VkShaderModule createShaderModule(const std::vector<char> &code);
 };
 #endif

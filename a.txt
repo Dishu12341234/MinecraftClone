@@ -30,28 +30,37 @@
 ./Voxel.cxx:    return BlockType(blockType);
 ./Voxel.cxx:}
 ./Voxel.cxx:
+./Voxel.cxx:
+./Voxel.cxx:
 ./Voxel.cxx:Voxel::~Voxel()
 ./Voxel.cxx:{
 ./Voxel.cxx:}
 ./GameObjectPool.h:#ifndef GAME_OBJECT_POOL
 ./GameObjectPool.h:#define GAME_OBJECT_POOL
-./GameObjectPool.h:#include "PassInfo.hpp"
 ./GameObjectPool.h:#include "GraphicsPipeline.h"
 ./GameObjectPool.h:#include <vector>
 ./GameObjectPool.h:#include <string.h>
+./GameObjectPool.h:#include "Voxel.h"
+./GameObjectPool.h:
+./GameObjectPool.h:class Terrain;
 ./GameObjectPool.h:
 ./GameObjectPool.h:class GameObjectPool
 ./GameObjectPool.h:{
 ./GameObjectPool.h:private:
 ./GameObjectPool.h:    VulkanContext vkContext;
-./GameObjectPool.h:    
+./GameObjectPool.h:    Terrain *terrain{nullptr};
 ./GameObjectPool.h:
-./GameObjectPool.h:public:
+./GameObjectPool.h:    friend class HelloTriangleApplication;
+./GameObjectPool.h:    
+./GameObjectPool.h:    public:
 ./GameObjectPool.h:    GameObjectPool();
 ./GameObjectPool.h:    void init(VulkanContext context);
 ./GameObjectPool.h:    void uploadVBOsAndIBOs();
 ./GameObjectPool.h:    void drawIndexed(VkCommandBuffer &commandBuffer, std::vector<VkDescriptorSet> &descriptorSets, u_GraphicsPipeline &graphicsPipeline, VkExtent2D &swapChainExtent, uint64_t instanceCount, uint32_t &currentFrame);
 ./GameObjectPool.h:    void cleanUpResources();
+./GameObjectPool.h:
+./GameObjectPool.h:    Voxel *getVoxelGlobal(BlockCoordinates globalCoords);
+./GameObjectPool.h:
 ./GameObjectPool.h:    ~GameObjectPool();
 ./GameObjectPool.h:};
 ./GameObjectPool.h:
@@ -77,18 +86,18 @@
 ./intiVk.cxx:    vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 ./intiVk.cxx:
 ./intiVk.cxx:    VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
-./intiVk.cxx:    if (counts & VK_SAMPLE_COUNT_64_BIT)
-./intiVk.cxx:    {
-./intiVk.cxx:        return VK_SAMPLE_COUNT_64_BIT;
-./intiVk.cxx:    }
-./intiVk.cxx:    if (counts & VK_SAMPLE_COUNT_32_BIT)
-./intiVk.cxx:    {
-./intiVk.cxx:        return VK_SAMPLE_COUNT_32_BIT;
-./intiVk.cxx:    }
-./intiVk.cxx:    if (counts & VK_SAMPLE_COUNT_16_BIT)
-./intiVk.cxx:    {
-./intiVk.cxx:        return VK_SAMPLE_COUNT_16_BIT;
-./intiVk.cxx:    }
+./intiVk.cxx:    // if (counts & VK_SAMPLE_COUNT_64_BIT)
+./intiVk.cxx:    // {
+./intiVk.cxx:    //     return VK_SAMPLE_COUNT_64_BIT;
+./intiVk.cxx:    // }
+./intiVk.cxx:    // if (counts & VK_SAMPLE_COUNT_32_BIT)
+./intiVk.cxx:    // {
+./intiVk.cxx:    //     return VK_SAMPLE_COUNT_32_BIT;
+./intiVk.cxx:    // }
+./intiVk.cxx:    // if (counts & VK_SAMPLE_COUNT_16_BIT)
+./intiVk.cxx:    // {
+./intiVk.cxx:    //     return VK_SAMPLE_COUNT_16_BIT;
+./intiVk.cxx:    // }
 ./intiVk.cxx:    if (counts & VK_SAMPLE_COUNT_8_BIT)
 ./intiVk.cxx:    {
 ./intiVk.cxx:        return VK_SAMPLE_COUNT_8_BIT;
@@ -113,6 +122,11 @@
 ./intiVk.cxx:    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 ./intiVk.cxx:
 ./intiVk.cxx:    _window = glfwCreateWindow(WIDTH, HEIGHT, PROCESS_NAME.c_str(), nullptr, nullptr);
+./intiVk.cxx:
+./intiVk.cxx:    this->event = std::make_unique<Event>(*_window);
+./intiVk.cxx:    glfwSetWindowUserPointer(_window, event.get());
+./intiVk.cxx:
+./intiVk.cxx:    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 ./intiVk.cxx:}
 ./intiVk.cxx:
 ./intiVk.cxx:void HelloTriangleApplication::initVulkan()
@@ -138,6 +152,9 @@
 ./intiVk.cxx:
 ./intiVk.cxx:    graphicsPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
 ./intiVk.cxx:    graphicsPipeline.createGraphicsPipeline();
+./intiVk.cxx:
+./intiVk.cxx:    rayGraphicsPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
+./intiVk.cxx:    rayGraphicsPipeline.createGraphicsPipeline();
 ./intiVk.cxx:
 ./intiVk.cxx:    u_TexturePassInfo texturePassInfo{};
 ./intiVk.cxx:    texturePassInfo.device = device;
@@ -800,49 +817,6 @@
 ./intiVk.cxx:        throw std::runtime_error("failed to allocate command buffers");
 ./intiVk.cxx:    }
 ./intiVk.cxx:}
-./intiVk.cxx:
-./intiVk.cxx:void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
-./intiVk.cxx:{
-./intiVk.cxx:    VkCommandBufferBeginInfo beginInfo{};
-./intiVk.cxx:    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-./intiVk.cxx:    beginInfo.flags = 0;
-./intiVk.cxx:    beginInfo.pInheritanceInfo = nullptr;
-./intiVk.cxx:
-./intiVk.cxx:    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
-./intiVk.cxx:    {
-./intiVk.cxx:        throw std::runtime_error("failed to begin recording command buffer!");
-./intiVk.cxx:    }
-./intiVk.cxx:
-./intiVk.cxx:    VkRenderPassBeginInfo renderPassInfo{};
-./intiVk.cxx:    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-./intiVk.cxx:    renderPassInfo.renderPass = renderPass;
-./intiVk.cxx:    renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
-./intiVk.cxx:
-./intiVk.cxx:    renderPassInfo.renderArea.offset = {0, 0};
-./intiVk.cxx:    renderPassInfo.renderArea.extent = swapChainExtent;
-./intiVk.cxx:
-./intiVk.cxx:    std::array<VkClearValue, 2> clearValues{};
-./intiVk.cxx:    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-./intiVk.cxx:    clearValues[1].depthStencil = {1.0f, 0};
-./intiVk.cxx:
-./intiVk.cxx:    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-./intiVk.cxx:    renderPassInfo.pClearValues = clearValues.data();
-./intiVk.cxx:
-./intiVk.cxx:    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-./intiVk.cxx:
-./intiVk.cxx:    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.graphicsPipeline);
-./intiVk.cxx:    c.value().draw(commandBuffer, graphicsPipeline.pipelineLayout, graphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
-./intiVk.cxx:
-./intiVk.cxx:    // gameObjectPool.drawIndexed(commandBuffer, descriptorSets, graphicsPipeline, swapChainExtent, 3, currentFrame);
-./intiVk.cxx:
-./intiVk.cxx:    vkCmdEndRenderPass(commandBuffer);
-./intiVk.cxx:
-./intiVk.cxx:    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
-./intiVk.cxx:    {
-./intiVk.cxx:        throw std::runtime_error("failed to record command buffer!");
-./intiVk.cxx:    }
-./intiVk.cxx:}
-./intiVk.cxx:
 ./intiVk.cxx:void HelloTriangleApplication::createSyncObject() {
 ./intiVk.cxx:    // 1️⃣ Per-frame semaphores for acquiring images
 ./intiVk.cxx:    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -876,6 +850,33 @@
 ./intiVk.cxx:    }
 ./intiVk.cxx:}
 ./intiVk.cxx:
+./Camera.h:#ifndef CAMERA_H
+./Camera.h:#define CAMERA_H
+./Camera.h:
+./Camera.h:#include "GraphicsPipeline.h"
+./Camera.h:#include "Event.h"
+./Camera.h:#include "GameObjectPool.h"
+./Camera.h:
+./Camera.h:class Camera
+./Camera.h:{
+./Camera.h:private:
+./Camera.h:    VulkanContext vkContext;
+./Camera.h:    glm::vec3 cameraPos{2.f, 2.f, 1.f};
+./Camera.h:    float pitch;
+./Camera.h:    float yaw;
+./Camera.h:    GameObjectPool &gameObjectPool;
+./Camera.h:    glm::vec3 forward;
+./Camera.h:    glm::vec3 worldUp{0, 0, 1};
+./Camera.h:
+./Camera.h:public:
+./Camera.h:    Camera(VulkanContext vkContext, GameObjectPool &gop);
+./Camera.h:    void updateUBO(UniformBufferObject &UBO, VkExtent2D &swapChainExtent, Event &event);
+./Camera.h:    glm::vec3 gePositionInWorldCoords();
+./Camera.h:
+./Camera.h:    ~Camera();
+./Camera.h:};
+./Camera.h:
+./Camera.h:#endif
 ./HelloTriangleApplication.hpp:#pragma once
 ./HelloTriangleApplication.hpp:#define GLFW_INCLUDE_VULKAN
 ./HelloTriangleApplication.hpp:#include <GLFW/glfw3.h>
@@ -884,8 +885,13 @@
 ./HelloTriangleApplication.hpp:#include <chrono>
 ./HelloTriangleApplication.hpp:#include "Textures.hpp"
 ./HelloTriangleApplication.hpp:#include "GraphicsPipeline.h"
+./HelloTriangleApplication.hpp:#include "RayGraphicsPipeline.h"
 ./HelloTriangleApplication.hpp:#include "GameObjectPool.h"
-./HelloTriangleApplication.hpp:#include "Chunk.h"
+./HelloTriangleApplication.hpp:#include "Event.h"
+./HelloTriangleApplication.hpp:#include "Camera.h"
+./HelloTriangleApplication.hpp:#include "Terrain.h"
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:class Ray;
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:class HelloTriangleApplication
 ./HelloTriangleApplication.hpp:{
@@ -893,11 +899,17 @@
 ./HelloTriangleApplication.hpp:    const int MAX_FRAMES_IN_FLIGHT = 2;
 ./HelloTriangleApplication.hpp:    std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 ./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::optional<Terrain> terrain;
 ./HelloTriangleApplication.hpp:    VkInstance instance;
+./HelloTriangleApplication.hpp:    GLFWwindow *_window;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    Ray *ray;
+./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    GameObjectPool gameObjectPool;
+./HelloTriangleApplication.hpp:    std::unique_ptr<Event> event;
+./HelloTriangleApplication.hpp:    std::unique_ptr<Camera> camera;
 ./HelloTriangleApplication.hpp:
-./HelloTriangleApplication.hpp:    std::optional<Chunk> c;
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    struct QueueFamilyIndices
 ./HelloTriangleApplication.hpp:    {
@@ -950,7 +962,7 @@
 ./HelloTriangleApplication.hpp:    VkDeviceMemory depthImageMemory;
 ./HelloTriangleApplication.hpp:    VkImageView depthImageView;
 ./HelloTriangleApplication.hpp:
-./HelloTriangleApplication.hpp:    //MSAA
+./HelloTriangleApplication.hpp:    // MSAA
 ./HelloTriangleApplication.hpp:    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 ./HelloTriangleApplication.hpp:    VkSampleCountFlagBits getMaxUsableSampleCount();
 ./HelloTriangleApplication.hpp:
@@ -1001,6 +1013,8 @@
 ./HelloTriangleApplication.hpp:    void createDescriptorSetLayout();
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    u_GraphicsPipeline graphicsPipeline;
+./HelloTriangleApplication.hpp:    RayGraphicsPipeline rayGraphicsPipeline;
+./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    void initGameObjects();
 ./HelloTriangleApplication.hpp:
@@ -1047,7 +1061,6 @@
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    const std::string MODEL_PATH = "models/Cube.obj";
 ./HelloTriangleApplication.hpp:    const std::string TEXTURE_PATH = "textures/atlas.png";
-./HelloTriangleApplication.hpp:    
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    const std::vector<const char *> validationLayers = {
 ./HelloTriangleApplication.hpp:        "VK_LAYER_KHRONOS_validation"};
@@ -1060,8 +1073,6 @@
 ./HelloTriangleApplication.hpp:    const bool enableValidationLayers = false;
 ./HelloTriangleApplication.hpp:#endif
 ./HelloTriangleApplication.hpp:
-./HelloTriangleApplication.hpp:    GLFWwindow *_window;
-./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:public:
 ./HelloTriangleApplication.hpp:    HelloTriangleApplication();
 ./HelloTriangleApplication.hpp:    HelloTriangleApplication(std::string processName);
@@ -1072,6 +1083,68 @@
 ./HelloTriangleApplication.hpp:// Future todos:
 ./HelloTriangleApplication.hpp:// Allocate a single buffer and re use it later using offstes(Vertex buffer 2.4)
 ./HelloTriangleApplication.hpp:// And also same for memory allocation(Vertex buffer 2.2)
+./Event.cxx:#include "Event.h"
+./Event.cxx:#include <iostream>
+./Event.cxx:#include <chrono>
+./Event.cxx:
+./Event.cxx:Event::Event(GLFWwindow &window) : window{window}
+./Event.cxx:{
+./Event.cxx:    glfwSetKeyCallback(&window, Event::keyPressedCallback);
+./Event.cxx:    glfwSetCursorPosCallback(&window, Event::cursorPositionCallback);
+./Event.cxx:    if (glfwRawMouseMotionSupported())
+./Event.cxx:    {
+./Event.cxx:        glfwSetInputMode(&window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+./Event.cxx:        std::cout << "RawInput" << std::endl;
+./Event.cxx:    }
+./Event.cxx:}
+./Event.cxx:
+./Event.cxx:void Event::keyPressedCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+./Event.cxx:{
+./Event.cxx:
+./Event.cxx:    if (action == GLFW_REPEAT)
+./Event.cxx:        return;
+./Event.cxx:    Event *event = static_cast<Event *>(glfwGetWindowUserPointer(window));
+./Event.cxx:    if (!event)
+./Event.cxx:        return;
+./Event.cxx:
+./Event.cxx:    event->lastKeyPressedInfo.key = key;
+./Event.cxx:    event->lastKeyPressedInfo.action = action;
+./Event.cxx:
+./Event.cxx:    event->keyDown[key] = (action == GLFW_PRESS);
+./Event.cxx:}
+./Event.cxx:void Event::cursorPositionCallback(GLFWwindow *window, double xpos, double ypos)
+./Event.cxx:{
+./Event.cxx:    Event *event = static_cast<Event *>(glfwGetWindowUserPointer(window));
+./Event.cxx:    if (!event)
+./Event.cxx:        return;
+./Event.cxx:
+./Event.cxx:    // std::cout << "MouseCB" << time(0) << std::endl;
+./Event.cxx:
+./Event.cxx:    event->mouseX = xpos;
+./Event.cxx:    event->mouseY = ypos;
+./Event.cxx:}
+./Event.cxx:// TODO cursor callback this wont work
+./Event.cxx:void Event::eventLoop()
+./Event.cxx:{
+./Event.cxx:    static auto lastTime = std::chrono::high_resolution_clock::now();
+./Event.cxx:    auto currentTime = std::chrono::high_resolution_clock::now();
+./Event.cxx:    auto delta = currentTime - lastTime;
+./Event.cxx:    lastTime = currentTime;
+./Event.cxx:
+./Event.cxx:    dt = std::chrono::duration<double, std::milli>(delta).count();
+./Event.cxx:    // std::cout << "Δt = " << dt << std::endl;
+./Event.cxx:    std::cout << "FPS: " << 1000.f / dt << std::endl;
+./Event.cxx:    glfwPollEvents();
+./Event.cxx:}
+./Event.cxx:
+./Event.cxx:bool Event::getKeyPressed(int key)
+./Event.cxx:{
+./Event.cxx:    return keyDown[key];
+./Event.cxx:}
+./Event.cxx:
+./Event.cxx:Event::~Event()
+./Event.cxx:{
+./Event.cxx:}
 ./PassInfo.hpp:#ifndef PASSINFO_HPP
 ./PassInfo.hpp:#define PASSINFO_HPP
 ./PassInfo.hpp:
@@ -1239,7 +1312,7 @@
 ./GraphicsPipeline.cxx:    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 ./GraphicsPipeline.cxx:
 ./GraphicsPipeline.cxx:    rasterizer.lineWidth = 1.0f;
-./GraphicsPipeline.cxx:    rasterizer.cullMode = VK_CULL_MODE_NONE;
+./GraphicsPipeline.cxx:    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 ./GraphicsPipeline.cxx:    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 ./GraphicsPipeline.cxx:
 ./GraphicsPipeline.cxx:    rasterizer.depthBiasEnable = VK_FALSE;
@@ -1387,9 +1460,9 @@
 ./GraphicsPipeline.cxx:
 ./GraphicsPipeline.cxx:// this structure describies how to handle vertex input
 ./GraphicsPipeline.cxx:// each attribute required its own description
-./GraphicsPipeline.cxx:std::array<VkVertexInputAttributeDescription, 3> Vertex::getAttributeDescriptions()
+./GraphicsPipeline.cxx:std::array<VkVertexInputAttributeDescription, 4> Vertex::getAttributeDescriptions()
 ./GraphicsPipeline.cxx:{
-./GraphicsPipeline.cxx:    std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+./GraphicsPipeline.cxx:    std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
 ./GraphicsPipeline.cxx:    attributeDescriptions[0].binding = 0;                         // same as getBindingDescription
 ./GraphicsPipeline.cxx:    attributeDescriptions[0].location = 0;                        // directly co-relates to 'layout(location = 0)'
 ./GraphicsPipeline.cxx:    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
@@ -1404,6 +1477,10 @@
 ./GraphicsPipeline.cxx:    attributeDescriptions[2].location = 2;
 ./GraphicsPipeline.cxx:    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
 ./GraphicsPipeline.cxx:    attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+./GraphicsPipeline.cxx:    
+./GraphicsPipeline.cxx:    attributeDescriptions[3].location = 3;
+./GraphicsPipeline.cxx:    attributeDescriptions[3].format = VK_FORMAT_R32_SFLOAT;
+./GraphicsPipeline.cxx:    attributeDescriptions[3].offset = offsetof(Vertex, brightness);
 ./GraphicsPipeline.cxx:
 ./GraphicsPipeline.cxx:    // Formats
 ./GraphicsPipeline.cxx:    //  float -> VK_FORMAT_R32_SFLOAT
@@ -1502,11 +1579,12 @@
 ./Textures.cxx:        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
 ./Textures.cxx:        {
 ./Textures.cxx:            allocInfo.memoryTypeIndex = i;
+./Textures.cxx:            goto _ok;
 ./Textures.cxx:        }
 ./Textures.cxx:    }
 ./Textures.cxx:
 ./Textures.cxx:    throw std::runtime_error("failed to find suitable memory type!");
-./Textures.cxx:
+./Textures.cxx:    _ok:;
 ./Textures.cxx:    if (vkAllocateMemory(vkContext.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
 ./Textures.cxx:    {
 ./Textures.cxx:        throw std::runtime_error("failed to allocate buffer memory!");
@@ -1909,6 +1987,99 @@
 ./Textures.cxx:        textureImageMemory = VK_NULL_HANDLE;
 ./Textures.cxx:    }
 ./Textures.cxx:}
+./RayGraphicsPipeline.h:#pragma once
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:#include "GraphicsPipeline.h"
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:struct RayPoints {
+./RayGraphicsPipeline.h:    glm::vec3 pos;
+./RayGraphicsPipeline.h:    glm::vec3 color;
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:    //Telling vulkan how to setup binding
+./RayGraphicsPipeline.h:    //Struct 1/2
+./RayGraphicsPipeline.h:    static VkVertexInputBindingDescription getBindingDescription();
+./RayGraphicsPipeline.h:    //Struct 2/2
+./RayGraphicsPipeline.h:    static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions();
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:    bool operator==(const RayPoints& other) const {
+./RayGraphicsPipeline.h:    return pos == other.pos && color == other.color;
+./RayGraphicsPipeline.h:}
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:};
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:namespace std {
+./RayGraphicsPipeline.h:    template<>
+./RayGraphicsPipeline.h:    struct hash<RayPoints> {
+./RayGraphicsPipeline.h:        size_t operator()(RayPoints const& vertex) const {
+./RayGraphicsPipeline.h:            size_t seed = 0;
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:            auto hashCombine = [&seed](auto const& v) {
+./RayGraphicsPipeline.h:                seed ^= std::hash<float>()(v)
+./RayGraphicsPipeline.h:                      + 0x9e3779b97f4a7c15
+./RayGraphicsPipeline.h:                      + (seed << 6)
+./RayGraphicsPipeline.h:                      + (seed >> 2);
+./RayGraphicsPipeline.h:            };
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:            hashCombine(vertex.pos.x);
+./RayGraphicsPipeline.h:            hashCombine(vertex.pos.y);
+./RayGraphicsPipeline.h:            hashCombine(vertex.pos.z);
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:            hashCombine(vertex.color.r);
+./RayGraphicsPipeline.h:            hashCombine(vertex.color.g);
+./RayGraphicsPipeline.h:            hashCombine(vertex.color.b);
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:            return seed;
+./RayGraphicsPipeline.h:        }
+./RayGraphicsPipeline.h:    };
+./RayGraphicsPipeline.h:}
+./RayGraphicsPipeline.h:
+./RayGraphicsPipeline.h:class RayGraphicsPipeline : public u_GraphicsPipeline
+./RayGraphicsPipeline.h:{
+./RayGraphicsPipeline.h:private:
+./RayGraphicsPipeline.h:    
+./RayGraphicsPipeline.h:public:
+./RayGraphicsPipeline.h:    RayGraphicsPipeline();
+./RayGraphicsPipeline.h:    void createGraphicsPipeline() override;
+./RayGraphicsPipeline.h:    ~RayGraphicsPipeline();
+./RayGraphicsPipeline.h:};
+./Terrain.h:#pragma once
+./Terrain.h:#include "PassInfo.hpp"
+./Terrain.h:#include "Structs.h"
+./Terrain.h:#include "blocks.h"
+./Terrain.h:#include "utils.h"
+./Terrain.h:#include "GameObjectPool.h"
+./Terrain.h:#include "Chunk.h"
+./Terrain.h:#include <vector>
+./Terrain.h:
+./Terrain.h:class Terrain
+./Terrain.h:{
+./Terrain.h:private:
+./Terrain.h:    VulkanContext &vkContext;
+./Terrain.h:    std::vector<Chunk> chunks;
+./Terrain.h:    GameObjectPool &gameObjectPool;
+./Terrain.h:
+./Terrain.h:    friend class GameObjectPool;
+./Terrain.h:
+./Terrain.h:public:
+./Terrain.h:    Terrain(const Terrain &) = delete;
+./Terrain.h:    Terrain &operator=(const Terrain &other)
+./Terrain.h:    {
+./Terrain.h:        // allocate new Vulkan buffers, copy data
+./Terrain.h:        return *this;
+./Terrain.h:    }
+./Terrain.h:
+./Terrain.h:    Terrain(Terrain &&) = default; // allow moves
+./Terrain.h:    Terrain &operator=(Terrain &&) = default;
+./Terrain.h:    Terrain(VulkanContext &vkContext, GameObjectPool &gameObjectPool);
+./Terrain.h:
+./Terrain.h:    void generateChunks();
+./Terrain.h:    void draw(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
+./Terrain.h:
+./Terrain.h:    void cleanup();
+./Terrain.h:    ~Terrain();
+./Terrain.h:};
 ./utils.h:#pragma once
 ./utils.h:#include "PassInfo.hpp"
 ./utils.h:#include "Structs.h"
@@ -1922,13 +2093,17 @@
 ./Voxel.h:#include "PassInfo.hpp"
 ./Voxel.h:#include "Structs.h"
 ./Voxel.h:
+./Voxel.h:
+./Voxel.h:
 ./Voxel.h:class Voxel
 ./Voxel.h:{
 ./Voxel.h:private:
 ./Voxel.h:    VulkanContext &vkContext;
 ./Voxel.h:    Transform transform;
 ./Voxel.h:    int blockType = AIR;
+./Voxel.h:    const int* faceTexture = BlockFaces::corruptFaceTexture; // default to a bright pink texture to easily spot untextured blocks
 ./Voxel.h:
+./Voxel.h:    friend class Chunk;
 ./Voxel.h:public:
 ./Voxel.h:    Voxel(VulkanContext &vkContext, BlockType blockType = AIR);
 ./Voxel.h:
@@ -1941,13 +2116,13 @@
 ./Voxel.h:    ~Voxel();
 ./Voxel.h:};
 ./HelloTriangleApplication.cxx:#include "HelloTriangleApplication.hpp"
-./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:#include "Ray.h"
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:void HelloTriangleApplication::mainLoop()
 ./HelloTriangleApplication.cxx:{
 ./HelloTriangleApplication.cxx:    while (!glfwWindowShouldClose(_window))
 ./HelloTriangleApplication.cxx:    {
-./HelloTriangleApplication.cxx:        glfwPollEvents();
+./HelloTriangleApplication.cxx:        event->eventLoop();
 ./HelloTriangleApplication.cxx:        drawFrame();
 ./HelloTriangleApplication.cxx:    }
 ./HelloTriangleApplication.cxx:}
@@ -1968,7 +2143,8 @@
 ./HelloTriangleApplication.cxx:        VK_NULL_HANDLE,
 ./HelloTriangleApplication.cxx:        &imageIndex);
 ./HelloTriangleApplication.cxx:
-./HelloTriangleApplication.cxx:    if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) {
+./HelloTriangleApplication.cxx:    if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR)
+./HelloTriangleApplication.cxx:    {
 ./HelloTriangleApplication.cxx:        throw std::runtime_error("failed to acquire swap chain image!");
 ./HelloTriangleApplication.cxx:    }
 ./HelloTriangleApplication.cxx:
@@ -2018,12 +2194,61 @@
 ./HelloTriangleApplication.cxx:    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 ./HelloTriangleApplication.cxx:}
 ./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+./HelloTriangleApplication.cxx:{
+./HelloTriangleApplication.cxx:    VkCommandBufferBeginInfo beginInfo{};
+./HelloTriangleApplication.cxx:    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+./HelloTriangleApplication.cxx:    beginInfo.flags = 0;
+./HelloTriangleApplication.cxx:    beginInfo.pInheritanceInfo = nullptr;
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+./HelloTriangleApplication.cxx:    {
+./HelloTriangleApplication.cxx:        throw std::runtime_error("failed to begin recording command buffer!");
+./HelloTriangleApplication.cxx:    }
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    VkRenderPassBeginInfo renderPassInfo{};
+./HelloTriangleApplication.cxx:    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+./HelloTriangleApplication.cxx:    renderPassInfo.renderPass = renderPass;
+./HelloTriangleApplication.cxx:    renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    renderPassInfo.renderArea.offset = {0, 0};
+./HelloTriangleApplication.cxx:    renderPassInfo.renderArea.extent = swapChainExtent;
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    std::array<VkClearValue, 2> clearValues{};
+./HelloTriangleApplication.cxx:    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+./HelloTriangleApplication.cxx:    clearValues[1].depthStencil = {1.0f, 0};
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+./HelloTriangleApplication.cxx:    renderPassInfo.pClearValues = clearValues.data();
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.graphicsPipeline);
+./HelloTriangleApplication.cxx:    terrain.value().draw(commandBuffer, graphicsPipeline.pipelineLayout, graphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+./HelloTriangleApplication.cxx:    
+./HelloTriangleApplication.cxx:    
+./HelloTriangleApplication.cxx:    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
+./HelloTriangleApplication.cxx:    ray->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+./HelloTriangleApplication.cxx:    // 
+./HelloTriangleApplication.cxx:    // gameObjectPool.drawIndexed(commandBuffer, descriptorSets, graphicsPipeline, swapChainExtent, 3, currentFrame);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    vkCmdEndRenderPass(commandBuffer);
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+./HelloTriangleApplication.cxx:    {
+./HelloTriangleApplication.cxx:        throw std::runtime_error("failed to record command buffer!");
+./HelloTriangleApplication.cxx:    }
+./HelloTriangleApplication.cxx:}
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:void HelloTriangleApplication::cleanup()
 ./HelloTriangleApplication.cxx:{
 ./HelloTriangleApplication.cxx:    vkDeviceWaitIdle(device);
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    gameObjectPool.cleanUpResources();
+./HelloTriangleApplication.cxx:    terrain.value().cleanup();
+./HelloTriangleApplication.cxx:    ray->cleanup();
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    delete ray;
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    vkDestroyBuffer(device, indexBuffer, nullptr);
 ./HelloTriangleApplication.cxx:    vkFreeMemory(device, indexBufferMemory, nullptr);
@@ -2031,19 +2256,18 @@
 ./HelloTriangleApplication.cxx:    vkDestroyBuffer(device, vertexBuffer, nullptr);
 ./HelloTriangleApplication.cxx:    vkFreeMemory(device, vertexBufferMemory, nullptr);
 ./HelloTriangleApplication.cxx:
-./HelloTriangleApplication.cxx:    c.value().cleanup();
-./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    // Destroy per-frame semaphores and fences
-./HelloTriangleApplication.cxx:for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-./HelloTriangleApplication.cxx:    vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-./HelloTriangleApplication.cxx:    vkDestroyFence(device, inFlightFences[i], nullptr);
-./HelloTriangleApplication.cxx:}
+./HelloTriangleApplication.cxx:    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+./HelloTriangleApplication.cxx:    {
+./HelloTriangleApplication.cxx:        vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+./HelloTriangleApplication.cxx:        vkDestroyFence(device, inFlightFences[i], nullptr);
+./HelloTriangleApplication.cxx:    }
 ./HelloTriangleApplication.cxx:
-./HelloTriangleApplication.cxx:// Destroy per-swapchain-image render-finished semaphores
-./HelloTriangleApplication.cxx:for (size_t i = 0; i < renderFinishedSemaphores.size(); i++) {
-./HelloTriangleApplication.cxx:    vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-./HelloTriangleApplication.cxx:}
-./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    // Destroy per-swapchain-image render-finished semaphores
+./HelloTriangleApplication.cxx:    for (size_t i = 0; i < renderFinishedSemaphores.size(); i++)
+./HelloTriangleApplication.cxx:    {
+./HelloTriangleApplication.cxx:        vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+./HelloTriangleApplication.cxx:    }
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    vkDestroyCommandPool(device, commandPool, nullptr);
 ./HelloTriangleApplication.cxx:
@@ -2051,6 +2275,8 @@
 ./HelloTriangleApplication.cxx:        vkDestroyFramebuffer(device, framebuffer, nullptr);
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    graphicsPipeline.destroyPipelineLayout();
+./HelloTriangleApplication.cxx:    rayGraphicsPipeline.destroyPipelineLayout();
+./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    vkDestroyRenderPass(device, renderPass, nullptr);
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    for (auto imageView : swapChainImageViews)
@@ -2074,8 +2300,6 @@
 ./HelloTriangleApplication.cxx:    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-./HelloTriangleApplication.cxx:
-./HelloTriangleApplication.cxx:    
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    vkDestroyDevice(device, nullptr);
 ./HelloTriangleApplication.cxx:    vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -2535,21 +2759,216 @@
 ./intiVK2.cxx:        }
 ./intiVK2.cxx:    }
 ./intiVK2.cxx:}
+./RayGraphicsPipeline.cxx:#include "RayGraphicsPipeline.h"
+./RayGraphicsPipeline.cxx:#include <iostream>
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:RayGraphicsPipeline::RayGraphicsPipeline()
+./RayGraphicsPipeline.cxx:{
+./RayGraphicsPipeline.cxx:}
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:void RayGraphicsPipeline::createGraphicsPipeline()
+./RayGraphicsPipeline.cxx:{
+./RayGraphicsPipeline.cxx:    std::cout << "Creating Ray Graphics Pipeline..." << std::endl;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    auto vertShaderCode = readFile("shaders/simple_shader_ray_v.spv");
+./RayGraphicsPipeline.cxx:    auto fragShaderCode = readFile("shaders/simple_shader_ray_f.spv");
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+./RayGraphicsPipeline.cxx:    VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    // shaderStageCreation
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+./RayGraphicsPipeline.cxx:    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT; // telling vulkan 'which stage must this shader go'
+./RayGraphicsPipeline.cxx:    vertShaderStageInfo.module = vertShaderModule;
+./RayGraphicsPipeline.cxx:    vertShaderStageInfo.pName = "main";
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+./RayGraphicsPipeline.cxx:    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+./RayGraphicsPipeline.cxx:    fragShaderStageInfo.module = fragShaderModule;
+./RayGraphicsPipeline.cxx:    fragShaderStageInfo.pName = "main";
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    auto bindingDescription = RayPoints::getBindingDescription();
+./RayGraphicsPipeline.cxx:    auto attributeDescriptions = RayPoints::getAttributeDescriptions();
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+./RayGraphicsPipeline.cxx:    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    vertexInputInfo.vertexBindingDescriptionCount = 1;
+./RayGraphicsPipeline.cxx:    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+./RayGraphicsPipeline.cxx:    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+./RayGraphicsPipeline.cxx:    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    // input assembly
+./RayGraphicsPipeline.cxx:    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+./RayGraphicsPipeline.cxx:    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+./RayGraphicsPipeline.cxx:    inputAssembly.primitiveRestartEnable = VK_FALSE;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    // viewport and scissors
+./RayGraphicsPipeline.cxx:    VkViewport viewport{};
+./RayGraphicsPipeline.cxx:    viewport.x = .0f;
+./RayGraphicsPipeline.cxx:    viewport.y = .0f;
+./RayGraphicsPipeline.cxx:    viewport.width = (float)swapChainExtent.width;
+./RayGraphicsPipeline.cxx:    viewport.height = (float)swapChainExtent.height; // this swapchain is used as a framebuffer hensforth using it as the size for our viewport
+./RayGraphicsPipeline.cxx:    viewport.minDepth = .0f;
+./RayGraphicsPipeline.cxx:    viewport.maxDepth = 1.0f;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    VkRect2D scissor{};
+./RayGraphicsPipeline.cxx:    scissor.offset = {0, 0};
+./RayGraphicsPipeline.cxx:    scissor.extent = swapChainExtent;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    // //dyanmic scissor and viewport
+./RayGraphicsPipeline.cxx:    // std::vector<VkDynamicState> dynamicStates =
+./RayGraphicsPipeline.cxx:    // {
+./RayGraphicsPipeline.cxx:    //     VK_DYNAMIC_STATE_VIEWPORT,
+./RayGraphicsPipeline.cxx:    //     VK_DYNAMIC_STATE_SCISSOR
+./RayGraphicsPipeline.cxx:    // };
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    // VkPipelineDynamicStateCreateInfo dynamicState{};
+./RayGraphicsPipeline.cxx:    // dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    // dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+./RayGraphicsPipeline.cxx:    // dynamicState.pDynamicStates = dynamicStates.data();
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    VkPipelineViewportStateCreateInfo viewportState{};
+./RayGraphicsPipeline.cxx:    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    viewportState.viewportCount = 1;
+./RayGraphicsPipeline.cxx:    viewportState.pViewports = &viewport;
+./RayGraphicsPipeline.cxx:    viewportState.scissorCount = 1;
+./RayGraphicsPipeline.cxx:    viewportState.pScissors = &scissor;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    // Rasterizer
+./RayGraphicsPipeline.cxx:    VkPipelineRasterizationStateCreateInfo rasterizer{};
+./RayGraphicsPipeline.cxx:    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    rasterizer.depthClampEnable = VK_FALSE;
+./RayGraphicsPipeline.cxx:    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+./RayGraphicsPipeline.cxx:    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    rasterizer.lineWidth = 1.0f;
+./RayGraphicsPipeline.cxx:    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+./RayGraphicsPipeline.cxx:    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    rasterizer.depthBiasEnable = VK_FALSE;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    // MSSA(disabled for now)
+./RayGraphicsPipeline.cxx:    VkPipelineMultisampleStateCreateInfo multisampling{};
+./RayGraphicsPipeline.cxx:    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    multisampling.sampleShadingEnable = VK_TRUE;
+./RayGraphicsPipeline.cxx:    multisampling.rasterizationSamples = msaaSamples;
+./RayGraphicsPipeline.cxx:    multisampling.minSampleShading = .2f;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    VkPipelineDepthStencilStateCreateInfo depthStencil{};
+./RayGraphicsPipeline.cxx:    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    depthStencil.depthTestEnable = VK_TRUE;
+./RayGraphicsPipeline.cxx:    depthStencil.depthWriteEnable = VK_TRUE;
+./RayGraphicsPipeline.cxx:    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+./RayGraphicsPipeline.cxx:    depthStencil.depthBoundsTestEnable = VK_FALSE;
+./RayGraphicsPipeline.cxx:    depthStencil.minDepthBounds = 0.0f; // Optional
+./RayGraphicsPipeline.cxx:    depthStencil.maxDepthBounds = 1.0f; // Optional
+./RayGraphicsPipeline.cxx:    depthStencil.stencilTestEnable = VK_FALSE;
+./RayGraphicsPipeline.cxx:    depthStencil.front = {}; // Optional
+./RayGraphicsPipeline.cxx:    depthStencil.back = {};  // Optional
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    /// color blending
+./RayGraphicsPipeline.cxx:    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+./RayGraphicsPipeline.cxx:    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+./RayGraphicsPipeline.cxx:    colorBlendAttachment.blendEnable = VK_FALSE;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    VkPipelineColorBlendStateCreateInfo colorBlending{};
+./RayGraphicsPipeline.cxx:    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    colorBlending.logicOpEnable = VK_FALSE;
+./RayGraphicsPipeline.cxx:    colorBlending.attachmentCount = 1;
+./RayGraphicsPipeline.cxx:    colorBlending.pAttachments = &colorBlendAttachment;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    // Pipeline Layout
+./RayGraphicsPipeline.cxx:    //(passing data to uniform objects in shaders)
+./RayGraphicsPipeline.cxx:    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+./RayGraphicsPipeline.cxx:    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    pipelineLayoutInfo.setLayoutCount = 1;
+./RayGraphicsPipeline.cxx:    pipelineLayoutInfo.pSetLayouts = descriptorSetLayout;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    VkPushConstantRange pushConstatn;
+./RayGraphicsPipeline.cxx:    pushConstatn.offset = 0;
+./RayGraphicsPipeline.cxx:    pushConstatn.size = sizeof(PushConstantC1);
+./RayGraphicsPipeline.cxx:    pushConstatn.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    pipelineLayoutInfo.pPushConstantRanges = &pushConstatn;
+./RayGraphicsPipeline.cxx:    pipelineLayoutInfo.pushConstantRangeCount = 1;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+./RayGraphicsPipeline.cxx:    {
+./RayGraphicsPipeline.cxx:        throw std::runtime_error("failed to create pipeline layout!");
+./RayGraphicsPipeline.cxx:    }
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    // creating graphics pipeline
+./RayGraphicsPipeline.cxx:    VkGraphicsPipelineCreateInfo pipelineInfo{};
+./RayGraphicsPipeline.cxx:    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+./RayGraphicsPipeline.cxx:    pipelineInfo.stageCount = 2; // the shader stage count
+./RayGraphicsPipeline.cxx:    pipelineInfo.pStages = shaderStages;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    pipelineInfo.pVertexInputState = &vertexInputInfo;
+./RayGraphicsPipeline.cxx:    pipelineInfo.pInputAssemblyState = &inputAssembly;
+./RayGraphicsPipeline.cxx:    pipelineInfo.pViewportState = &viewportState;
+./RayGraphicsPipeline.cxx:    pipelineInfo.pRasterizationState = &rasterizer;
+./RayGraphicsPipeline.cxx:    pipelineInfo.pMultisampleState = &multisampling;
+./RayGraphicsPipeline.cxx:    pipelineInfo.pDepthStencilState = &depthStencil; // disabled
+./RayGraphicsPipeline.cxx:    pipelineInfo.pColorBlendState = &colorBlending;
+./RayGraphicsPipeline.cxx:    // pipelineInfo.pDynamicState = &dynamic_state;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    pipelineInfo.layout = pipelineLayout;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    pipelineInfo.renderPass = renderPass; // passs the render pass
+./RayGraphicsPipeline.cxx:    pipelineInfo.subpass = 0;
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+./RayGraphicsPipeline.cxx:    {
+./RayGraphicsPipeline.cxx:        throw std::runtime_error("failed to create graphics pipeline!");
+./RayGraphicsPipeline.cxx:    }
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    vkDestroyShaderModule(device, fragShaderModule, nullptr);
+./RayGraphicsPipeline.cxx:    vkDestroyShaderModule(device, vertShaderModule, nullptr);
+./RayGraphicsPipeline.cxx:}
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:RayGraphicsPipeline::~RayGraphicsPipeline()
+./RayGraphicsPipeline.cxx:{
+./RayGraphicsPipeline.cxx:}
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:VkVertexInputBindingDescription RayPoints::getBindingDescription()
+./RayGraphicsPipeline.cxx:{
+./RayGraphicsPipeline.cxx:    VkVertexInputBindingDescription bindingDescription{};
+./RayGraphicsPipeline.cxx:    // A vertex binding describes at which rate to load data from memory throughout the verticies.
+./RayGraphicsPipeline.cxx:    // It specifies the number of bytes between data entries and whether to move to the next data entery after each vertex or after each instance.
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    bindingDescription.binding = 0; // binding index to zero
+./RayGraphicsPipeline.cxx:    bindingDescription.stride = sizeof(RayPoints);
+./RayGraphicsPipeline.cxx:    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX; // advance to the next input per vertex
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    return bindingDescription;
+./RayGraphicsPipeline.cxx:}
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:std::array<VkVertexInputAttributeDescription, 2> RayPoints::getAttributeDescriptions()
+./RayGraphicsPipeline.cxx:{
+./RayGraphicsPipeline.cxx:    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+./RayGraphicsPipeline.cxx:    attributeDescriptions[0].binding = 0;                         // same as getBindingDescription
+./RayGraphicsPipeline.cxx:    attributeDescriptions[0].location = 0;                        // directly co-relates to 'layout(location = 0)'
+./RayGraphicsPipeline.cxx:    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
+./RayGraphicsPipeline.cxx:    attributeDescriptions[0].offset = offsetof(RayPoints, pos);
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    attributeDescriptions[1].binding = 0;
+./RayGraphicsPipeline.cxx:    attributeDescriptions[1].location = 1;
+./RayGraphicsPipeline.cxx:    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
+./RayGraphicsPipeline.cxx:    attributeDescriptions[1].offset = offsetof(RayPoints, color);
+./RayGraphicsPipeline.cxx:
+./RayGraphicsPipeline.cxx:    return attributeDescriptions;
+./RayGraphicsPipeline.cxx:}
 ./Chunk.cxx:#include "Chunk.h"
 ./Chunk.cxx:#include <chrono>
 ./Chunk.cxx:#include <iostream>
 ./Chunk.cxx:
-./Chunk.cxx:#define TIMER_START(name) \
-./Chunk.cxx:    auto name##_start = std::chrono::high_resolution_clock::now();
-./Chunk.cxx:
-./Chunk.cxx:#define TIMER_END(name)                                                                                             \
-./Chunk.cxx:    {                                                                                                               \
-./Chunk.cxx:        auto name##_end = std::chrono::high_resolution_clock::now();                                                \
-./Chunk.cxx:        auto name##_dur = std::chrono::duration_cast<std::chrono::milliseconds>(name##_end - name##_start).count(); \
-./Chunk.cxx:        std::cout << #name << " took " << name##_dur << " ms\n";                                                    \
-./Chunk.cxx:    }
-./Chunk.cxx:
-./Chunk.cxx:Chunk::Chunk(VulkanContext &vkContext) : vkContext{vkContext}, chunkMesh{vkContext}
+./Chunk.cxx:Chunk::Chunk(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{vkContext}, chunkMesh{vkContext}, gameObjectPool{gameObjectPool}
 ./Chunk.cxx:{
 ./Chunk.cxx:}
 ./Chunk.cxx:
@@ -2561,8 +2980,6 @@
 ./Chunk.cxx:
 ./Chunk.cxx:void Chunk::populateBlocks()
 ./Chunk.cxx:{
-./Chunk.cxx:    TIMER_START(POPULATING_BLOCKS)
-./Chunk.cxx:
 ./Chunk.cxx:    voxels.reserve(16 * 16 * 256);
 ./Chunk.cxx:
 ./Chunk.cxx:    for (int z = 0; z < 256; z++)
@@ -2573,46 +2990,122 @@
 ./Chunk.cxx:            {
 ./Chunk.cxx:                int blockType;
 ./Chunk.cxx:
-./Chunk.cxx:                if (y <= 50)
-./Chunk.cxx:                    blockType = STONE; // bottom layers
-./Chunk.cxx:                else if (y <= 64)
-./Chunk.cxx:                    blockType = GRASS; // top layers
+./Chunk.cxx:                if (z <= 50)
+./Chunk.cxx:                    blockType = STONE;
+./Chunk.cxx:                else if (z <= 64)
+./Chunk.cxx:                    blockType = GRASS;
 ./Chunk.cxx:                else
-./Chunk.cxx:                    blockType = AIR; // above
+./Chunk.cxx:                    blockType = AIR;
 ./Chunk.cxx:
-./Chunk.cxx:                voxels.emplace_back(
-./Chunk.cxx:                    vkContext,
-./Chunk.cxx:                    BlockType(blockType));
+./Chunk.cxx:                voxels.emplace_back(vkContext, BlockType(blockType));
 ./Chunk.cxx:            }
 ./Chunk.cxx:        }
 ./Chunk.cxx:    }
+./Chunk.cxx:}
 ./Chunk.cxx:
-./Chunk.cxx:    TIMER_END(POPULATING_BLOCKS)
+./Chunk.cxx:bool Chunk::isFaceVisible(int x, int y, int z)
+./Chunk.cxx:{
+./Chunk.cxx:    Voxel *v = gameObjectPool.getVoxelGlobal({
+./Chunk.cxx:        x + chunkOffsetX * 16,
+./Chunk.cxx:        y + chunkOffsetY * 16,
+./Chunk.cxx:        z});
+./Chunk.cxx:    return v == nullptr || v->getBlockType() == AIR;
 ./Chunk.cxx:}
 ./Chunk.cxx:
 ./Chunk.cxx:void Chunk::buildChunkMesh()
 ./Chunk.cxx:{
-./Chunk.cxx:    TIMER_START(BUILD_CHUNK_MESH)
+./Chunk.cxx:    std::vector<Vertex> vertices;
+./Chunk.cxx:    std::vector<uint32_t> indices;
 ./Chunk.cxx:
-./Chunk.cxx:    std::vector<Vertex> vertices = {
-./Chunk.cxx:        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-./Chunk.cxx:        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-./Chunk.cxx:        {{0.0f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.5f, 1.0f}},
+./Chunk.cxx:    vertices.reserve(16 * 16 * 64 * 4);
+./Chunk.cxx:    indices.reserve(16 * 16 * 64 * 6);
+./Chunk.cxx:
+./Chunk.cxx:    // Each face wound CCW when viewed from OUTSIDE (normal = cross(e1, e2) points outward)
+./Chunk.cxx:    // Verified: cross(v1-v0, v2-v0) must point in the face's outward normal direction
+./Chunk.cxx:    static const FaceDef faces[6] = {
+./Chunk.cxx:        // Top (normal +z): cross((1,0,0),(1,1,0)) = (0,0,1) ✓
+./Chunk.cxx:        {{{0,0,1}, {1,0,1}, {1,1,1}, {0,1,1}},
+./Chunk.cxx:         0,
+./Chunk.cxx:         1.0f, 0, 0, 1},
+./Chunk.cxx:
+./Chunk.cxx:        // Bottom (normal -z): cross((0,1,0),(1,1,0)) = (0,0,-1) ✓
+./Chunk.cxx:        {{{0,0,0}, {0,1,0}, {1,1,0}, {1,0,0}},
+./Chunk.cxx:         1,
+./Chunk.cxx:         0.5f, 0, 0, -1},
+./Chunk.cxx:
+./Chunk.cxx:        // Front (normal +y): cross((0,0,1),(1,0,1)) = (0,1,0) ✓
+./Chunk.cxx:        {{{0,1,0}, {0,1,1}, {1,1,1}, {1,1,0}},
+./Chunk.cxx:         2,
+./Chunk.cxx:         0.75f, 0, 1, 0},
+./Chunk.cxx:
+./Chunk.cxx:        // Back (normal -y): cross((0,0,1),(-1,0,1)) = (0,-1,0) ✓
+./Chunk.cxx:        {{{1,0,0}, {1,0,1}, {0,0,1}, {0,0,0}},
+./Chunk.cxx:         3,
+./Chunk.cxx:         0.85f, 0, -1, 0},
+./Chunk.cxx:
+./Chunk.cxx:        // Right (normal +x): cross((0,1,0),(0,1,1)) = (1,0,0) ✓
+./Chunk.cxx:        {{{1,0,0}, {1,1,0}, {1,1,1}, {1,0,1}},
+./Chunk.cxx:         4,
+./Chunk.cxx:         0.7f, 1, 0, 0},
+./Chunk.cxx:
+./Chunk.cxx:        // Left (normal -x): cross((0,-1,0),(0,-1,1)) = (-1,0,0) ✓
+./Chunk.cxx:        {{{0,1,0}, {0,0,0}, {0,0,1}, {0,1,1}},
+./Chunk.cxx:         5,
+./Chunk.cxx:         0.8f, -1, 0, 0},
 ./Chunk.cxx:    };
 ./Chunk.cxx:
-./Chunk.cxx:    std::vector<uint32_t> indices = {
-./Chunk.cxx:        0, 1, 2 // single triangle
+./Chunk.cxx:    auto blockColor = [](BlockType type) -> glm::vec3
+./Chunk.cxx:    {
+./Chunk.cxx:        switch (type)
+./Chunk.cxx:        {
+./Chunk.cxx:        case STONE: return {0.5f, 0.5f, 0.5f};
+./Chunk.cxx:        case GRASS: return {0.4f, 0.8f, 0.3f};
+./Chunk.cxx:        default:    return {1.0f, 1.0f, 1.0f};
+./Chunk.cxx:        }
 ./Chunk.cxx:    };
-./Chunk.cxx:    chunkMesh.vertices = vertices;
-./Chunk.cxx:    chunkMesh.indices = indices;
 ./Chunk.cxx:
+./Chunk.cxx:    for (int z = 0; z < 256; z++)
+./Chunk.cxx:    {
+./Chunk.cxx:        for (int x = 0; x < 16; x++)
+./Chunk.cxx:        {
+./Chunk.cxx:            for (int y = 0; y < 16; y++)
+./Chunk.cxx:            {
+./Chunk.cxx:                const int idx = x + y * 16 + z * 256;
+./Chunk.cxx:                const BlockType type = voxels[idx].getBlockType();
+./Chunk.cxx:                const int* faceTexture = BlockFaces::grassFaceTexture;
+./Chunk.cxx:
+./Chunk.cxx:                if (type == AIR)
+./Chunk.cxx:                    continue;
+./Chunk.cxx:
+./Chunk.cxx:                const glm::vec3 color  = blockColor(type);
+./Chunk.cxx:                const glm::vec3 origin = {(float)x, (float)y, (float)z};
+./Chunk.cxx:
+./Chunk.cxx:                for (const FaceDef &face : faces)
+./Chunk.cxx:                {
+./Chunk.cxx:                    if (!isFaceVisible(x + face.dx, y + face.dy, z + face.dz))
+./Chunk.cxx:                        continue;
+./Chunk.cxx:
+./Chunk.cxx:                    const uint32_t base = static_cast<uint32_t>(vertices.size());
+./Chunk.cxx:
+./Chunk.cxx:                    vertices.push_back({origin + face.corners[0], color, glm::vec2(faceTexture[face.tileOffset],0), face.light});
+./Chunk.cxx:                    vertices.push_back({origin + face.corners[1], color, glm::vec2(faceTexture[face.tileOffset],1), face.light});
+./Chunk.cxx:                    vertices.push_back({origin + face.corners[2], color, glm::vec2(faceTexture[face.tileOffset],2), face.light});
+./Chunk.cxx:                    vertices.push_back({origin + face.corners[3], color, glm::vec2(faceTexture[face.tileOffset],3), face.light});
+./Chunk.cxx:
+./Chunk.cxx:                    indices.insert(indices.end(), {base, base+1, base+2, base+2, base+3, base});
+./Chunk.cxx:                }
+./Chunk.cxx:            }
+./Chunk.cxx:        }
+./Chunk.cxx:    }
+./Chunk.cxx:
+./Chunk.cxx:    chunkMesh.vertices = std::move(vertices);
+./Chunk.cxx:    chunkMesh.indices  = std::move(indices);
 ./Chunk.cxx:    chunkMesh.createVertexBuffer();
 ./Chunk.cxx:    chunkMesh.createIndexBuffer();
-./Chunk.cxx:
-./Chunk.cxx:    TIMER_END(BUILD_CHUNK_MESH)
 ./Chunk.cxx:}
 ./Chunk.cxx:
-./Chunk.cxx:void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
+./Chunk.cxx:void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
+./Chunk.cxx:                 std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
 ./Chunk.cxx:{
 ./Chunk.cxx:    VkBuffer vertexBuffers[] = {chunkMesh.vertexBuffer};
 ./Chunk.cxx:    VkDeviceSize offsets[] = {0};
@@ -2620,12 +3113,11 @@
 ./Chunk.cxx:    vkCmdBindIndexBuffer(commandBuffer, chunkMesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 ./Chunk.cxx:
 ./Chunk.cxx:    PushConstantC1 c1;
-./Chunk.cxx:    c1.data = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
-./Chunk.cxx:    // c1.data[1][1] *= -1;
-./Chunk.cxx:
+./Chunk.cxx:    c1.data = glm::translate(glm::mat4(1.f), glm::vec3(chunkOffsetX * 16, chunkOffsetY * 16, 0));
 ./Chunk.cxx:    vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantC1), &c1);
 ./Chunk.cxx:
-./Chunk.cxx:    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &(descriptorSets[currentFrame]), 0, nullptr);
+./Chunk.cxx:    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
+./Chunk.cxx:                            0, 1, &(descriptorSets[currentFrame]), 0, nullptr);
 ./Chunk.cxx:
 ./Chunk.cxx:    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(chunkMesh.indices.size()), 1, 0, 0, 0);
 ./Chunk.cxx:}
@@ -2635,22 +3127,11 @@
 ./Chunk.cxx:    chunkMesh.cleanup();
 ./Chunk.cxx:}
 ./Chunk.cxx:
-./Chunk.cxx:Voxel *Chunk::getVoxelChunkLocal(BlockCoordinates coords)
-./Chunk.cxx:{
-./Chunk.cxx:    // Check bounds first
-./Chunk.cxx:    if (coords.x < 0 || coords.x >= 16 ||
-./Chunk.cxx:        coords.y < 0 || coords.y >= 16 ||
-./Chunk.cxx:        coords.z < 0 || coords.z >= 256)
-./Chunk.cxx:        return nullptr;
-./Chunk.cxx:
-./Chunk.cxx:    int idx = coords.x + coords.y * 16 + coords.z * 16 * 16;
-./Chunk.cxx:    return &voxels[idx];
-./Chunk.cxx:}
-./Chunk.cxx:
 ./Chunk.cxx:Chunk::~Chunk()
 ./Chunk.cxx:{
 ./Chunk.cxx:}
 ./GameObjectPool.cxx:#include "GameObjectPool.h"
+./GameObjectPool.cxx:#include "Terrain.h"
 ./GameObjectPool.cxx:
 ./GameObjectPool.cxx:GameObjectPool::GameObjectPool()
 ./GameObjectPool.cxx:{
@@ -2658,22 +3139,47 @@
 ./GameObjectPool.cxx:
 ./GameObjectPool.cxx:void GameObjectPool::init(VulkanContext context)
 ./GameObjectPool.cxx:{
-./GameObjectPool.cxx:    this->vkContext = context;  
+./GameObjectPool.cxx:    this->vkContext = context;
 ./GameObjectPool.cxx:}
 ./GameObjectPool.cxx:
 ./GameObjectPool.cxx:void GameObjectPool::uploadVBOsAndIBOs()
 ./GameObjectPool.cxx:{
-./GameObjectPool.cxx:    
 ./GameObjectPool.cxx:}
 ./GameObjectPool.cxx:
 ./GameObjectPool.cxx:void GameObjectPool::drawIndexed(VkCommandBuffer &commandBuffer, std::vector<VkDescriptorSet> &descriptorSets, u_GraphicsPipeline &graphicsPipeline, VkExtent2D &swapChainExtent, uint64_t instanceCount, uint32_t &currentFrame)
 ./GameObjectPool.cxx:{
-./GameObjectPool.cxx:    
 ./GameObjectPool.cxx:}
 ./GameObjectPool.cxx:
 ./GameObjectPool.cxx:void GameObjectPool::cleanUpResources()
 ./GameObjectPool.cxx:{
-./GameObjectPool.cxx:    
+./GameObjectPool.cxx:}
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:Voxel *GameObjectPool::getVoxelGlobal(BlockCoordinates globalCoords)
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:    if (!terrain)
+./GameObjectPool.cxx:        return nullptr;
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:    int chunkX = globalCoords.x >> 4;
+./GameObjectPool.cxx:    int chunkY = globalCoords.y >> 4;
+./GameObjectPool.cxx:    int localX = globalCoords.x & 15;
+./GameObjectPool.cxx:    int localY = globalCoords.y & 15;
+./GameObjectPool.cxx:    int localZ = globalCoords.z;
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:    // Bounds check before touching any chunk
+./GameObjectPool.cxx:    if (localZ < 0 || localZ >= 256)
+./GameObjectPool.cxx:        return nullptr;
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:    for (auto &chunk : terrain->chunks)
+./GameObjectPool.cxx:    {
+./GameObjectPool.cxx:        if (chunk.chunkOffsetX == chunkX && chunk.chunkOffsetY == chunkY)
+./GameObjectPool.cxx:        {
+./GameObjectPool.cxx:            // Access voxels directly — never call getVoxelChunkLocal here
+./GameObjectPool.cxx:            int idx = localX + localY * 16 + localZ * 256;
+./GameObjectPool.cxx:            return &chunk.voxels[idx];
+./GameObjectPool.cxx:        }
+./GameObjectPool.cxx:    }
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:    return nullptr;
 ./GameObjectPool.cxx:}
 ./GameObjectPool.cxx:
 ./GameObjectPool.cxx:GameObjectPool::~GameObjectPool()
@@ -2719,12 +3225,40 @@
 ./Structs.h:    STONE
 ./Structs.h:};
 ./Structs.h:
+./Structs.h:struct FaceDef
+./Structs.h:{
+./Structs.h:    glm::vec3 corners[4]; // vertex positions relative to block origin
+./Structs.h:    int tileOffset;
+./Structs.h:    float light;
+./Structs.h:    int dx, dy, dz; // direction toward the neighbour
+./Structs.h:};
+./Structs.h:
 ./Structs.h:struct BlockCoordinates
 ./Structs.h:{
 ./Structs.h:    int x{0}, y{0}, z{0};
-./Structs.h:     bool operator==(const BlockCoordinates& other) const {
+./Structs.h:    bool operator==(const BlockCoordinates &other) const
+./Structs.h:    {
 ./Structs.h:        return x == other.x && y == other.y && z == other.z;
 ./Structs.h:    }
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct Faces
+./Structs.h:{
+./Structs.h:    bool top;
+./Structs.h:    bool bottom;
+./Structs.h:    bool right;
+./Structs.h:    bool left;
+./Structs.h:    bool front;
+./Structs.h:    bool back;
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct BlockFaces {
+./Structs.h:    static constexpr int grassFaceTexture[6]  = {0, 1, 1, 1, 1, 1};
+./Structs.h:    static constexpr int dirtFaceTexture[6]   = {1, 1, 1, 1, 1, 1};
+./Structs.h:    static constexpr int woodFaceTexture[6]   = {3, 3, 3, 3, 3, 3};
+./Structs.h:    static constexpr int leavesFaceTexture[6] = {4, 4, 4, 4, 4, 4};
+./Structs.h:    static constexpr int stoneFaceTexture[6]  = {5, 5, 5, 5, 5, 5};
+./Structs.h:    static constexpr int corruptFaceTexture[6]  = {19, 19, 19, 19, 19, 19};
 ./Structs.h:};
 ./Chunk.h:#pragma once
 ./Chunk.h:#include "PassInfo.hpp"
@@ -2732,7 +3266,19 @@
 ./Chunk.h:#include <memory>
 ./Chunk.h:#include "Voxel.h"
 ./Chunk.h:#include "Mesh.h"
+./Chunk.h:#include "GameObjectPool.h"
 ./Chunk.h:#include <unordered_map>
+./Chunk.h:
+./Chunk.h:#define TIMER_START(name) \
+./Chunk.h:    auto name##_start = std::chrono::high_resolution_clock::now();
+./Chunk.h:
+./Chunk.h:#define TIMER_END(name)                                                                                             \
+./Chunk.h:    {                                                                                                               \
+./Chunk.h:        auto name##_end = std::chrono::high_resolution_clock::now();                                                \
+./Chunk.h:        auto name##_dur = std::chrono::duration_cast<std::chrono::milliseconds>(name##_end - name##_start).count(); \
+./Chunk.h:        std::cout << #name << " took " << name##_dur << " ms\n";                                                    \
+./Chunk.h:    }
+./Chunk.h:
 ./Chunk.h:class Voxel;
 ./Chunk.h:
 ./Chunk.h:struct BlockCoordinatesHash
@@ -2756,9 +3302,12 @@
 ./Chunk.h:    int chunkOffsetY{0};
 ./Chunk.h:
 ./Chunk.h:    Mesh chunkMesh;
+./Chunk.h:    GameObjectPool &gameObjectPool;
+./Chunk.h:
+./Chunk.h:    friend class GameObjectPool;
 ./Chunk.h:
 ./Chunk.h:public:
-./Chunk.h:    Chunk(VulkanContext &vkContext);
+./Chunk.h:    Chunk(VulkanContext &vkContext, GameObjectPool &gameObjectPool);
 ./Chunk.h:    Chunk(const Chunk &) = delete;
 ./Chunk.h:    Chunk &operator=(const Chunk &other)
 ./Chunk.h:    {
@@ -2769,6 +3318,7 @@
 ./Chunk.h:    Chunk(Chunk &&) = default; // allow moves
 ./Chunk.h:    Chunk &operator=(Chunk &&) = default;
 ./Chunk.h:
+./Chunk.h:    bool isFaceVisible(int x, int y, int z);
 ./Chunk.h:    void setOffset(int x, int y);
 ./Chunk.h:    void populateBlocks();
 ./Chunk.h:
@@ -2795,12 +3345,13 @@
 ./GraphicsPipeline.h:    glm::vec3 pos;
 ./GraphicsPipeline.h:    glm::vec3 color;
 ./GraphicsPipeline.h:    glm::vec2 texCoord;
+./GraphicsPipeline.h:    float brightness;
 ./GraphicsPipeline.h:
 ./GraphicsPipeline.h:    //Telling vulkan how to setup binding
 ./GraphicsPipeline.h:    //Struct 1/2
 ./GraphicsPipeline.h:    static VkVertexInputBindingDescription getBindingDescription();
 ./GraphicsPipeline.h:    //Struct 2/2
-./GraphicsPipeline.h:    static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
+./GraphicsPipeline.h:    static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions();
 ./GraphicsPipeline.h:
 ./GraphicsPipeline.h:    bool operator==(const Vertex& other) const {
 ./GraphicsPipeline.h:    return pos == other.pos && color == other.color && texCoord == other.texCoord;
@@ -2848,6 +3399,7 @@
 ./GraphicsPipeline.h:    VkDescriptorSetLayout* descriptorSetLayout;
 ./GraphicsPipeline.h:    VkSampleCountFlagBits msaaSamples;
 ./GraphicsPipeline.h:    
+./GraphicsPipeline.h:    friend class RayGraphicsPipeline;
 ./GraphicsPipeline.h:    public:
 ./GraphicsPipeline.h:    VkPipelineLayout pipelineLayout;
 ./GraphicsPipeline.h:    VkPipeline graphicsPipeline;//shared
@@ -2860,7 +3412,7 @@
 ./GraphicsPipeline.h:
 ./GraphicsPipeline.h:    static std::vector<char> readFile(const std::string &filename);
 ./GraphicsPipeline.h:
-./GraphicsPipeline.h:    void createGraphicsPipeline();
+./GraphicsPipeline.h:    virtual void createGraphicsPipeline();
 ./GraphicsPipeline.h:    VkShaderModule createShaderModule(const std::vector<char> &code);
 ./GraphicsPipeline.h:};
 ./GraphicsPipeline.h:#endif
@@ -2886,8 +3438,15 @@
 ./Mesh.h:
 ./Mesh.h:public:
 ./Mesh.h:    Mesh(VulkanContext &vkContext);
+./Mesh.h:
+./Mesh.h:    void loadVertices(const std::vector<Vertex> &vertices);
+./Mesh.h:    void loadIndices(const std::vector<uint32_t> &indices);
+./Mesh.h:
 ./Mesh.h:    void createVertexBuffer();
 ./Mesh.h:    void createIndexBuffer();
+./Mesh.h:
+./Mesh.h:    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
+./Mesh.h:                 std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1);
 ./Mesh.h:
 ./Mesh.h:    void cleanup();
 ./Mesh.h:    ~Mesh();
@@ -2999,11 +3558,21 @@
 ./Mesh.cxx:{
 ./Mesh.cxx:}
 ./Mesh.cxx:
+./Mesh.cxx:void Mesh::loadVertices(const std::vector<Vertex> &vertices)
+./Mesh.cxx:{
+./Mesh.cxx:    this->vertices = vertices;
+./Mesh.cxx:}
+./Mesh.cxx:
+./Mesh.cxx:void Mesh::loadIndices(const std::vector<uint32_t> &indices)
+./Mesh.cxx:{
+./Mesh.cxx:    this->indices = indices;
+./Mesh.cxx:}
+./Mesh.cxx:
 ./Mesh.cxx:void Mesh::createVertexBuffer()
 ./Mesh.cxx:{
 ./Mesh.cxx:    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 ./Mesh.cxx:
-./Mesh.cxx:    if(bufferSize == 0)
+./Mesh.cxx:    if (bufferSize == 0)
 ./Mesh.cxx:        return;
 ./Mesh.cxx:
 ./Mesh.cxx:    VkBuffer stagingBuffer;
@@ -3032,7 +3601,7 @@
 ./Mesh.cxx:{
 ./Mesh.cxx:    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 ./Mesh.cxx:
-./Mesh.cxx:    if(bufferSize == 0)
+./Mesh.cxx:    if (bufferSize == 0)
 ./Mesh.cxx:        return;
 ./Mesh.cxx:
 ./Mesh.cxx:    VkBuffer stagingBuffer;
@@ -3053,6 +3622,25 @@
 ./Mesh.cxx:    vkFreeMemory(vkContext.device, stagingBufferMemory, nullptr);
 ./Mesh.cxx:}
 ./Mesh.cxx:
+./Mesh.cxx:void Mesh::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1)
+./Mesh.cxx:{
+./Mesh.cxx:    VkBuffer vertexBuffers[] = {vertexBuffer};
+./Mesh.cxx:    VkDeviceSize offsets[] = {0};
+./Mesh.cxx:
+./Mesh.cxx:    [[likely]] if (vertices.size() == 0 || indices.size() == 0)
+./Mesh.cxx:        return;
+./Mesh.cxx:
+./Mesh.cxx:    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+./Mesh.cxx:    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+./Mesh.cxx:
+./Mesh.cxx:    vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantC1), &c1);
+./Mesh.cxx:
+./Mesh.cxx:    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
+./Mesh.cxx:                            0, 1, &(descriptorSets[currentFrame]), 0, nullptr);
+./Mesh.cxx:
+./Mesh.cxx:    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+./Mesh.cxx:}
+./Mesh.cxx:
 ./Mesh.cxx:void Mesh::cleanup()
 ./Mesh.cxx:{
 ./Mesh.cxx:    vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
@@ -3064,8 +3652,174 @@
 ./Mesh.cxx:
 ./Mesh.cxx:Mesh::~Mesh()
 ./Mesh.cxx:{
-./Mesh.cxx:
 ./Mesh.cxx:}
+./Event.h:#ifndef EVENT_H
+./Event.h:#define EVENT_H
+./Event.h:#include "GLFW/glfw3.h"
+./Event.h:#include <array>
+./Event.h:
+./Event.h:struct KeyInfo
+./Event.h:{
+./Event.h:    int key;
+./Event.h:    int action;
+./Event.h:};
+./Event.h:
+./Event.h:class Event
+./Event.h:{
+./Event.h:private:
+./Event.h:    GLFWwindow &window;
+./Event.h:    KeyInfo lastKeyPressedInfo;
+./Event.h:    std::array<bool, GLFW_KEY_LAST + 1> keyDown{};
+./Event.h:
+./Event.h:public:
+./Event.h:
+./Event.h:    double dt;
+./Event.h:
+./Event.h:    double mouseX, mouseY;
+./Event.h:    Event(GLFWwindow &window);
+./Event.h:    static void keyPressedCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+./Event.h:    static void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
+./Event.h:    void eventLoop();
+./Event.h:    bool getKeyPressed(int key);
+./Event.h:    ~Event();
+./Event.h:};
+./Event.h:
+./Event.h:#endif
+./Camera.cxx:#include "Camera.h"
+./Camera.cxx:#include "HelloTriangleApplication.hpp"
+./Camera.cxx:#include <iostream>
+./Camera.cxx:
+./Camera.cxx:std::ostream &operator<<(std::ostream &os, const glm::vec3 &v)
+./Camera.cxx:{
+./Camera.cxx:    os << "vec3{x=" << v.x << ", y=" << v.y << ", z=" << v.z << "}";
+./Camera.cxx:    return os;
+./Camera.cxx:}
+./Camera.cxx:
+./Camera.cxx:Camera::Camera(VulkanContext vkContext, GameObjectPool &gop)
+./Camera.cxx:    : gameObjectPool{gop}
+./Camera.cxx:{
+./Camera.cxx:}
+./Camera.cxx:void Camera::updateUBO(UniformBufferObject &UBO,
+./Camera.cxx:                       VkExtent2D &swapChainExtent,
+./Camera.cxx:                       Event &event)
+./Camera.cxx:{
+./Camera.cxx:    static double lastX = event.mouseX;
+./Camera.cxx:    static double lastY = event.mouseY;
+./Camera.cxx:
+./Camera.cxx:    float dt = event.dt * 0.001f;
+./Camera.cxx:
+./Camera.cxx:    double dx = lastX - event.mouseX;
+./Camera.cxx:    double dy = lastY - event.mouseY;
+./Camera.cxx:
+./Camera.cxx:    lastX = event.mouseX;
+./Camera.cxx:    lastY = event.mouseY;
+./Camera.cxx:
+./Camera.cxx:    float sensitivity = 0.1f;
+./Camera.cxx:
+./Camera.cxx:    yaw += dx * sensitivity;
+./Camera.cxx:    pitch += dy * sensitivity;
+./Camera.cxx:    pitch = glm::clamp(pitch, -89.9f, 89.9f);
+./Camera.cxx:
+./Camera.cxx:    // Z-up forward vector from yaw/pitch
+./Camera.cxx:    forward.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+./Camera.cxx:    forward.y = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+./Camera.cxx:    forward.z = sin(glm::radians(pitch));
+./Camera.cxx:    forward = glm::normalize(forward);
+./Camera.cxx:
+./Camera.cxx:    glm::vec3 worldUp(0.0f, 0.0f, 1.0f); // Z-up
+./Camera.cxx:
+./Camera.cxx:    glm::vec3 forwardFlat = glm::normalize(glm::vec3(forward.x, forward.y, 0.0f));
+./Camera.cxx:    glm::vec3 right = glm::normalize(glm::cross(worldUp, forwardFlat));
+./Camera.cxx:
+./Camera.cxx:    float speed = 15.81f * dt;
+./Camera.cxx:
+./Camera.cxx:    if (event.getKeyPressed(GLFW_KEY_W))
+./Camera.cxx:        cameraPos += forwardFlat * speed;
+./Camera.cxx:    if (event.getKeyPressed(GLFW_KEY_S))
+./Camera.cxx:        cameraPos -= forwardFlat * speed;
+./Camera.cxx:    if (event.getKeyPressed(GLFW_KEY_A))
+./Camera.cxx:        cameraPos -= -right * speed;
+./Camera.cxx:    if (event.getKeyPressed(GLFW_KEY_D))
+./Camera.cxx:        cameraPos += -right * speed;
+./Camera.cxx:    if (event.getKeyPressed(GLFW_KEY_SPACE))
+./Camera.cxx:        cameraPos.z += speed;
+./Camera.cxx:    if (event.getKeyPressed(GLFW_KEY_LEFT_SHIFT))
+./Camera.cxx:        cameraPos.z -= speed;
+./Camera.cxx:
+./Camera.cxx:    UBO.view = glm::lookAt(cameraPos, cameraPos + forward, worldUp);
+./Camera.cxx:
+./Camera.cxx:    UBO.proj = glm::perspective(
+./Camera.cxx:        glm::radians(45.0f),
+./Camera.cxx:        swapChainExtent.width / (float)swapChainExtent.height,
+./Camera.cxx:        0.1f,
+./Camera.cxx:        1000.0f);
+./Camera.cxx:
+./Camera.cxx:    UBO.proj[1][1] *= -1;
+./Camera.cxx:}
+./Camera.cxx:
+./Camera.cxx:// Camera space: 1 unit = 10 voxels
+./Camera.cxx:glm::vec3 Camera::gePositionInWorldCoords() { return cameraPos * 10.f; }
+./Camera.cxx:
+./Camera.cxx:Camera::~Camera() {}
+./Ray.h:#pragma once
+./Ray.h:#include "PassInfo.hpp"
+./Ray.h:#include "Structs.h"
+./Ray.h:#include "RayMesher.h"
+./Ray.h:
+./Ray.h:class GameObjectPool;
+./Ray.h:
+./Ray.h:class Ray
+./Ray.h:{
+./Ray.h:private:
+./Ray.h:    VulkanContext &vkContext;
+./Ray.h:    GameObjectPool &gameObjectPool;
+./Ray.h:
+./Ray.h:    RayMesher rayMesher;
+./Ray.h:public:
+./Ray.h:    Ray(VulkanContext &vkContext, GameObjectPool &gameObjectPool);
+./Ray.h:    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
+./Ray.h:                 std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
+./Ray.h:
+./Ray.h:    void cleanup();
+./Ray.h:    ~Ray();
+./Ray.h:};
+./Ray.cxx:#include "Ray.h"
+./Ray.cxx:#include "GameObjectPool.h"
+./Ray.cxx:#include <vector>
+./Ray.cxx:#include "GraphicsPipeline.h"
+./Ray.cxx:
+./Ray.cxx:Ray::Ray(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{vkContext}, gameObjectPool{gameObjectPool}, rayMesher{vkContext}
+./Ray.cxx:{
+./Ray.cxx:    std::vector<RayPoints> vertices = {
+./Ray.cxx:        {{0.f, 0.f, 0.f}, {1.f, 0.f, 0.f}},
+./Ray.cxx:        {{1.f, 0.f, 0.f}, {0.2f, 1.f, 0.f}},
+./Ray.cxx:        {{1.f, 1.f, 0.f}, {1.f, 1.f, 0.2f}},
+./Ray.cxx:        {{0.f, 1.f, 0.f}, {0.f, 0.f, 1.f}},
+./Ray.cxx:    };
+./Ray.cxx:
+./Ray.cxx:    std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
+./Ray.cxx:    rayMesher.loadRayPoints(vertices);
+./Ray.cxx:    rayMesher.loadIndices(indices);
+./Ray.cxx:
+./Ray.cxx:    rayMesher.createVertexBuffer();
+./Ray.cxx:    rayMesher.createIndexBuffer();
+./Ray.cxx:}
+./Ray.cxx:
+./Ray.cxx:void Ray::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
+./Ray.cxx:{
+./Ray.cxx:    PushConstantC1 c1{};
+./Ray.cxx:    c1.data = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 0.f));
+./Ray.cxx:    rayMesher.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+./Ray.cxx:}
+./Ray.cxx:
+./Ray.cxx:void Ray::cleanup()
+./Ray.cxx:{
+./Ray.cxx:    rayMesher.cleanup();
+./Ray.cxx:}
+./Ray.cxx:
+./Ray.cxx:Ray::~Ray()
+./Ray.cxx:{
+./Ray.cxx:}
 ./Textures.hpp:#ifndef TEXTURES_HPP
 ./Textures.hpp:#define TEXTURES_HPP
 ./Textures.hpp:
@@ -3119,11 +3873,194 @@
 ./Textures.hpp:};
 ./Textures.hpp:
 ./Textures.hpp:#endif
+./Terrain.cxx:#include "Terrain.h"
+./Terrain.cxx:#include <iostream>
+./Terrain.cxx:#include <chrono>
+./Terrain.cxx:#define RENDER_DISTANCE 5
+./Terrain.cxx:
+./Terrain.cxx:Terrain::Terrain(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{vkContext}, gameObjectPool{gameObjectPool}
+./Terrain.cxx:{
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:void Terrain::generateChunks()
+./Terrain.cxx:{
+./Terrain.cxx:    TIMER_START(GENERATE_CHUNKS);
+./Terrain.cxx:
+./Terrain.cxx:    // Pass 1 — populate all chunks into the pool first
+./Terrain.cxx:    for (int x = -RENDER_DISTANCE; x < RENDER_DISTANCE; x++)
+./Terrain.cxx:        for (int y = -RENDER_DISTANCE; y < RENDER_DISTANCE; y++)
+./Terrain.cxx:        {
+./Terrain.cxx:            chunks.emplace_back(vkContext, gameObjectPool);
+./Terrain.cxx:            chunks.back().setOffset(x, y);
+./Terrain.cxx:            chunks.back().populateBlocks();
+./Terrain.cxx:        }
+./Terrain.cxx:
+./Terrain.cxx:    // Pass 2 — all neighbours now exist, cross-chunk culling works
+./Terrain.cxx:    for (auto &chunk : chunks)
+./Terrain.cxx:        chunk.buildChunkMesh();
+./Terrain.cxx:
+./Terrain.cxx:    TIMER_END(GENERATE_CHUNKS);
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:void Terrain::draw(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
+./Terrain.cxx:{
+./Terrain.cxx:    for (auto &&chunk : chunks)
+./Terrain.cxx:    {
+./Terrain.cxx:        chunk.draw(cmdBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+./Terrain.cxx:    }
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:void Terrain::cleanup()
+./Terrain.cxx:{
+./Terrain.cxx:    for (auto &&c : chunks)
+./Terrain.cxx:    {
+./Terrain.cxx:        c.cleanup();
+./Terrain.cxx:    }
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:Terrain::~Terrain()
+./Terrain.cxx:{
+./Terrain.cxx:}
+./RayMesher.cxx:#include "RayMesher.h"
+./RayMesher.cxx:#include "utils.h"
+./RayMesher.cxx:#include <cstring>
+./RayMesher.cxx:
+./RayMesher.cxx:RayMesher::RayMesher(VulkanContext &vkContext) : vkContext{vkContext}
+./RayMesher.cxx:{
+./RayMesher.cxx:}
+./RayMesher.cxx:
+./RayMesher.cxx:void RayMesher::loadRayPoints(const std::vector<RayPoints> &vertices)
+./RayMesher.cxx:{
+./RayMesher.cxx:    this->vertices = vertices;
+./RayMesher.cxx:}
+./RayMesher.cxx:
+./RayMesher.cxx:void RayMesher::loadIndices(const std::vector<uint32_t> &indices)
+./RayMesher.cxx:{
+./RayMesher.cxx:    this->indices = indices;
+./RayMesher.cxx:}
+./RayMesher.cxx:
+./RayMesher.cxx:void RayMesher::createVertexBuffer()
+./RayMesher.cxx:{
+./RayMesher.cxx:    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+./RayMesher.cxx:
+./RayMesher.cxx:    if (bufferSize == 0)
+./RayMesher.cxx:        return;
+./RayMesher.cxx:
+./RayMesher.cxx:    VkBuffer stagingBuffer;
+./RayMesher.cxx:    VkDeviceMemory stagingBufferMemory;
+./RayMesher.cxx:    // TX
+./RayMesher.cxx:    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, stagingBuffer, stagingBufferMemory, vkContext);
+./RayMesher.cxx:
+./RayMesher.cxx:    // filling in the vertex buffer
+./RayMesher.cxx:    void *data;
+./RayMesher.cxx:    vkMapMemory(vkContext.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+./RayMesher.cxx:    memcpy(data, vertices.data(), (size_t)bufferSize);
+./RayMesher.cxx:    vkUnmapMemory(vkContext.device, stagingBufferMemory);
+./RayMesher.cxx:
+./RayMesher.cxx:    // creating the actul VBO and setting it up so the it is the destionation of the transfer source
+./RayMesher.cxx:    // TX
+./RayMesher.cxx:    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, vkContext);
+./RayMesher.cxx:
+./RayMesher.cxx:    // but we still have to copy the memory contents manully
+./RayMesher.cxx:    utils::copyBuffer(stagingBuffer, vertexBuffer, bufferSize, vkContext);
+./RayMesher.cxx:
+./RayMesher.cxx:    vkDestroyBuffer(vkContext.device, stagingBuffer, nullptr);
+./RayMesher.cxx:    vkFreeMemory(vkContext.device, stagingBufferMemory, nullptr);
+./RayMesher.cxx:}
+./RayMesher.cxx:
+./RayMesher.cxx:void RayMesher::createIndexBuffer()
+./RayMesher.cxx:{
+./RayMesher.cxx:    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+./RayMesher.cxx:
+./RayMesher.cxx:    if (bufferSize == 0)
+./RayMesher.cxx:        return;
+./RayMesher.cxx:
+./RayMesher.cxx:    VkBuffer stagingBuffer;
+./RayMesher.cxx:    VkDeviceMemory stagingBufferMemory;
+./RayMesher.cxx:
+./RayMesher.cxx:    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, vkContext);
+./RayMesher.cxx:
+./RayMesher.cxx:    void *data;
+./RayMesher.cxx:    vkMapMemory(vkContext.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+./RayMesher.cxx:    memcpy(data, indices.data(), (size_t)bufferSize);
+./RayMesher.cxx:    vkUnmapMemory(vkContext.device, stagingBufferMemory);
+./RayMesher.cxx:
+./RayMesher.cxx:    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, vkContext);
+./RayMesher.cxx:
+./RayMesher.cxx:    utils::copyBuffer(stagingBuffer, indexBuffer, bufferSize, vkContext);
+./RayMesher.cxx:
+./RayMesher.cxx:    vkDestroyBuffer(vkContext.device, stagingBuffer, nullptr);
+./RayMesher.cxx:    vkFreeMemory(vkContext.device, stagingBufferMemory, nullptr);
+./RayMesher.cxx:}
+./RayMesher.cxx:
+./RayMesher.cxx:void RayMesher::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1)
+./RayMesher.cxx:{
+./RayMesher.cxx:    VkBuffer vertexBuffers[] = {vertexBuffer};
+./RayMesher.cxx:    VkDeviceSize offsets[] = {0};
+./RayMesher.cxx:
+./RayMesher.cxx:    [[unlikely]] if (vertices.size() == 0 || indices.size() == 0)
+./RayMesher.cxx:        return;
+./RayMesher.cxx:
+./RayMesher.cxx:    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+./RayMesher.cxx:    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+./RayMesher.cxx:
+./RayMesher.cxx:    vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantC1), &c1);
+./RayMesher.cxx:
+./RayMesher.cxx:    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
+./RayMesher.cxx:                            0, 1, &(descriptorSets[currentFrame]), 0, nullptr);
+./RayMesher.cxx:
+./RayMesher.cxx:    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+./RayMesher.cxx:}
+./RayMesher.cxx:
+./RayMesher.cxx:void RayMesher::cleanup()
+./RayMesher.cxx:{
+./RayMesher.cxx:    vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
+./RayMesher.cxx:    vkFreeMemory(vkContext.device, indexBufferMemory, nullptr);
+./RayMesher.cxx:
+./RayMesher.cxx:    vkDestroyBuffer(vkContext.device, vertexBuffer, nullptr);
+./RayMesher.cxx:    vkFreeMemory(vkContext.device, vertexBufferMemory, nullptr);
+./RayMesher.cxx:}
+./RayMesher.cxx:
+./RayMesher.cxx:RayMesher::~RayMesher()
+./RayMesher.cxx:{
+./RayMesher.cxx:}
+./RayMesher.h:#pragma once
+./RayMesher.h:#include "GraphicsPipeline.h"
+./RayMesher.h:#include "RayGraphicsPipeline.h"
+./RayMesher.h:
+./RayMesher.h:class RayMesher
+./RayMesher.h:{
+./RayMesher.h:private:
+./RayMesher.h:    VulkanContext &vkContext;
+./RayMesher.h:
+./RayMesher.h:    std::vector<RayPoints> vertices;
+./RayMesher.h:    std::vector<uint32_t> indices;
+./RayMesher.h:    VkBuffer vertexBuffer;
+./RayMesher.h:    VkDeviceMemory vertexBufferMemory;
+./RayMesher.h:
+./RayMesher.h:    VkBuffer indexBuffer;
+./RayMesher.h:    VkDeviceMemory indexBufferMemory;
+./RayMesher.h:
+./RayMesher.h:public:
+./RayMesher.h:    RayMesher(VulkanContext &vkContext);
+./RayMesher.h:    void loadRayPoints(const std::vector<RayPoints> &vertices);
+./RayMesher.h:    void loadIndices(const std::vector<uint32_t> &indices);
+./RayMesher.h:
+./RayMesher.h:    void createVertexBuffer();
+./RayMesher.h:    void createIndexBuffer();
+./RayMesher.h:
+./RayMesher.h:    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
+./RayMesher.h:              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1);
+./RayMesher.h:
+./RayMesher.h:    void cleanup();
+./RayMesher.h:    ~RayMesher();
+./RayMesher.h:};
 ./Update.cxx:#include "HelloTriangleApplication.hpp"
 ./Update.cxx:#include "Chunk.h"
 ./Update.cxx:#include <cstdlib>
 ./Update.cxx:#include <cstring>
 ./Update.cxx:#include <memory>
+./Update.cxx:#include "Ray.h"
 ./Update.cxx:
 ./Update.cxx:void HelloTriangleApplication::initGameObjects()
 ./Update.cxx:{
@@ -3136,13 +4073,23 @@
 ./Update.cxx:    context.commandPool = commandPool;
 ./Update.cxx:
 ./Update.cxx:    gameObjectPool.uploadVBOsAndIBOs();
-./Update.cxx:    c = std::move(Chunk(context));
-./Update.cxx:    c.value().populateBlocks(); 
-./Update.cxx:    c.value().buildChunkMesh();
+./Update.cxx:
+./Update.cxx:    camera = std::make_unique<Camera>(context, gameObjectPool);
+./Update.cxx:
+./Update.cxx:    terrain = std::move(Terrain(context, gameObjectPool));
+./Update.cxx:    gameObjectPool.terrain = &terrain.value();
+./Update.cxx:    terrain.value().generateChunks();
+./Update.cxx:
+./Update.cxx:    ray = new Ray(context, gameObjectPool);
+./Update.cxx:
 ./Update.cxx:}
 ./Update.cxx:
 ./Update.cxx:void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 ./Update.cxx:{
+./Update.cxx:
+./Update.cxx:    if (event->getKeyPressed(GLFW_KEY_ESCAPE))
+./Update.cxx:        glfwSetWindowShouldClose(_window, GLFW_TRUE);
+./Update.cxx:
 ./Update.cxx:    static auto startTime = std::chrono::high_resolution_clock::now();
 ./Update.cxx:
 ./Update.cxx:    auto currentTime = std::chrono::high_resolution_clock::now();
@@ -3153,11 +4100,13 @@
 ./Update.cxx:    // Model 0
 ./Update.cxx:    // ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
 ./Update.cxx:    ubo.model = glm::translate(glm::mat4(1.f), glm::vec3(0.f));
-./Update.cxx:    // ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+./Update.cxx:    ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+./Update.cxx:    ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
 ./Update.cxx:
-./Update.cxx:    ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 1.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
-./Update.cxx:    ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.01f, 100.0f);
+./Update.cxx:    camera->updateUBO(ubo, swapChainExtent, *event.get());
 ./Update.cxx:
-./Update.cxx:    ubo.proj[1][1] *= -1; //-1 => y -> -y
+./Update.cxx:    // ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 1.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+./Update.cxx:    // ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.01f, 100.0f);
+./Update.cxx:
 ./Update.cxx:    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 ./Update.cxx:}

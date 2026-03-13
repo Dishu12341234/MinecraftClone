@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include "Ray.h"
 
 void HelloTriangleApplication::initGameObjects()
 {
@@ -21,6 +22,8 @@ void HelloTriangleApplication::initGameObjects()
     terrain = std::move(Terrain(context, gameObjectPool));
     gameObjectPool.terrain = &terrain.value();
     terrain.value().generateChunks();
+
+    ray = new Ray(context, gameObjectPool);
 
 }
 

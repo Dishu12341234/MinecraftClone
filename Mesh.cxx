@@ -7,11 +7,21 @@ Mesh::Mesh(VulkanContext &vkContext) : vkContext{vkContext}
 {
 }
 
+void Mesh::loadVertices(const std::vector<Vertex> &vertices)
+{
+    this->vertices = vertices;
+}
+
+void Mesh::loadIndices(const std::vector<uint32_t> &indices)
+{
+    this->indices = indices;
+}
+
 void Mesh::createVertexBuffer()
 {
     VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
-    if(bufferSize == 0)
+    if (bufferSize == 0)
         return;
 
     VkBuffer stagingBuffer;
@@ -40,7 +50,7 @@ void Mesh::createIndexBuffer()
 {
     VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
-    if(bufferSize == 0)
+    if (bufferSize == 0)
         return;
 
     VkBuffer stagingBuffer;
@@ -61,6 +71,25 @@ void Mesh::createIndexBuffer()
     vkFreeMemory(vkContext.device, stagingBufferMemory, nullptr);
 }
 
+void Mesh::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1)
+{
+    VkBuffer vertexBuffers[] = {vertexBuffer};
+    VkDeviceSize offsets[] = {0};
+
+    [[likely]] if (vertices.size() == 0 || indices.size() == 0)
+        return;
+
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+    vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantC1), &c1);
+
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
+                            0, 1, &(descriptorSets[currentFrame]), 0, nullptr);
+
+    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+}
+
 void Mesh::cleanup()
 {
     vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
@@ -72,5 +101,4 @@ void Mesh::cleanup()
 
 Mesh::~Mesh()
 {
-
 }

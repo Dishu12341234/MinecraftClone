@@ -86,6 +86,9 @@ void HelloTriangleApplication::initVulkan()
     graphicsPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
     graphicsPipeline.createGraphicsPipeline();
 
+    rayGraphicsPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
+    rayGraphicsPipeline.createGraphicsPipeline();
+
     u_TexturePassInfo texturePassInfo{};
     texturePassInfo.device = device;
     texturePassInfo.physicalDevice = physicalDevice;
