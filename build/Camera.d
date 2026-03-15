@@ -1,7 +1,7 @@
 build/Camera.o: Camera.cxx Camera.h GraphicsPipeline.h PassInfo.hpp \
- Structs.h Event.h GameObjectPool.h Voxel.h HelloTriangleApplication.hpp \
- Textures.hpp include/stb-master/stb_image.h RayGraphicsPipeline.h \
- Terrain.h blocks.h utils.h Chunk.h Mesh.h
+ Structs.h Event.h GameObjectPool.h Voxel.h Ray.h RayMesher.h \
+ RayGraphicsPipeline.h HelloTriangleApplication.hpp Textures.hpp \
+ include/stb-master/stb_image.h Terrain.h blocks.h utils.h Chunk.h Mesh.h
 Camera.h:
 GraphicsPipeline.h:
 PassInfo.hpp:
@@ -9,10 +9,12 @@ Structs.h:
 Event.h:
 GameObjectPool.h:
 Voxel.h:
+Ray.h:
+RayMesher.h:
+RayGraphicsPipeline.h:
 HelloTriangleApplication.hpp:
 Textures.hpp:
 include/stb-master/stb_image.h:
-RayGraphicsPipeline.h:
 Terrain.h:
 blocks.h:
 utils.h:

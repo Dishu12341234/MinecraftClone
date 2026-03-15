@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include "HelloTriangleApplication.hpp"
+#include "Ray.h"
 #include <iostream>
 
 std::ostream &operator<<(std::ostream &os, const glm::vec3 &v)
@@ -8,8 +9,8 @@ std::ostream &operator<<(std::ostream &os, const glm::vec3 &v)
     return os;
 }
 
-Camera::Camera(VulkanContext vkContext, GameObjectPool &gop)
-    : gameObjectPool{gop}
+Camera::Camera(VulkanContext &vkContext, GameObjectPool &gop)
+    : gameObjectPool{gop}, vkContext{vkContext}, cameraRay{vkContext, gop}
 {
 }
 void Camera::updateUBO(UniformBufferObject &UBO,
@@ -72,5 +73,19 @@ void Camera::updateUBO(UniformBufferObject &UBO,
 
 // Camera space: 1 unit = 10 voxels
 glm::vec3 Camera::gePositionInWorldCoords() { return cameraPos * 10.f; }
+
+void Camera::cleanup()
+{
+    cameraRay.cleanup();
+}
+
+void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
+{
+
+    cameraRay.transform.position = gePositionInWorldCoords() / 10.f;
+    cameraRay.transform.position.z -= .5f; // lower the ray a bit so it doesn't clip with the camera
+    cameraRay.transform.rotation = glm::vec3(0.f, glm::radians(-pitch), glm::radians(yaw));
+    cameraRay.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+}
 
 Camera::~Camera() {}

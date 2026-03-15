@@ -1,0 +1,58 @@
+[33mcommit 79a4050017cef55e091f6e3e80b2327241e02ad5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Divyansh Undley <divyasnhundley@google.com>
+Date:   Sat Mar 14 02:02:43 2026 +0530
+
+    =ray pipeline added
+
+ Chunk.cxx                        |   21 [32m+[m[31m-[m
+ GraphicsPipeline.h               |    3 [32m+[m[31m-[m
+ HelloTriangleApplication.cxx     |   10 [32m+[m
+ HelloTriangleApplication.hpp     |    9 [32m+[m[31m-[m
+ Mesh.cxx                         |   34 [32m+++[m[31m-[m
+ Mesh.h                           |    7 [32m+[m
+ Ray.cxx                          |   37 [32m++++[m
+ Ray.h                            |   22 [32m+++[m
+ RayGraphicsPipeline.cxx          |  205 [32m+++++++++++++++++++[m
+ RayGraphicsPipeline.h            |   57 [32m++++++[m
+ RayMesher.cxx                    |  103 [32m++++++++++[m
+ RayMesher.h                      |   31 [32m+++[m
+ Structs.h                        |   21 [32m+[m[31m-[m
+ Update.cxx                       |    3 [32m+[m
+ Voxel.h                          |    4 [32m+[m
+ a.txt                            | 1253 [32m++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++[m[31m--------------[m
+ build/Camera.d                   |    5 [32m+[m[31m-[m
+ build/Camera.o                   |  Bin [31m410648[m -> [32m355704[m bytes
+ build/Chunk.o                    |  Bin [31m636688[m -> [32m587320[m bytes
+ build/GameObjectPool.o           |  Bin [31m244856[m -> [32m193336[m bytes
+ build/GraphicsPipeline.o         |  Bin [31m514432[m -> [32m517040[m bytes
+ build/HelloTriangleApplication.d |    7 [32m+[m[31m-[m
+ build/HelloTriangleApplication.o |  Bin [31m1231792[m -> [32m1256872[m bytes
+ build/Mesh.o                     |  Bin [31m167792[m -> [32m299952[m bytes
+ build/Ray.d                      |   10 [32m+[m
+ build/Ray.o                      |  Bin [31m0[m -> [32m282304[m bytes
+ build/RayGraphicsPipeline.d      |    6 [32m+[m
+ build/RayGraphicsPipeline.o      |  Bin [31m0[m -> [32m436560[m bytes
+ build/RayMesher.d                |    8 [32m+[m
+ build/RayMesher.o                |  Bin [31m0[m -> [32m298872[m bytes
+ build/Terrain.o                  |  Bin [31m423320[m -> [32m373912[m bytes
+ build/Update.d                   |    7 [32m+[m[31m-[m
+ build/Update.o                   |  Bin [31m846928[m -> [32m869992[m bytes
+ build/Voxel.o                    |  Bin [31m82344[m -> [32m83824[m bytes
+ build/intiVK2.d                  |    6 [32m+[m[31m-[m
+ build/intiVK2.o                  |  Bin [31m6450792[m -> [32m6449624[m bytes
+ build/intiVk.d                   |    5 [32m+[m[31m-[m
+ build/intiVk.o                   |  Bin [31m2224392[m -> [32m2224696[m bytes
+ build/main.d                     |    5 [32m+[m[31m-[m
+ build/main.o                     |  Bin [31m693136[m -> [32m692024[m bytes
+ build/main_linux                 |  Bin [31m7100376[m -> [32m7463680[m bytes
+ compile_shader.sh                |    4 [32m+[m[31m-[m
+ intiVk.cxx                       |    3 [32m+[m
+ shaders/simple_shader.vert       |   31 [32m++[m[31m-[m
+ shaders/simple_shader_ray.frag   |   11 [32m++[m
+ shaders/simple_shader_ray.vert   |   23 [32m+++[m
+ shaders/simple_shader_ray_f.spv  |  Bin [31m0[m -> [32m704[m bytes
+ shaders/simple_shader_ray_v.spv  |  Bin [31m0[m -> [32m1832[m bytes
+ shaders/simple_shader_v.spv      |  Bin [31m2232[m -> [32m3160[m bytes
+ textures/atlas.png               |  Bin [31m6353[m -> [32m8527[m bytes
+ textures/corrupt.png             |  Bin [31m0[m -> [32m652[m bytes
+ 51 files changed, 1764 insertions(+), 187 deletions(-)

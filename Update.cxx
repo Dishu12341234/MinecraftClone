@@ -22,9 +22,6 @@ void HelloTriangleApplication::initGameObjects()
     terrain = std::move(Terrain(context, gameObjectPool));
     gameObjectPool.terrain = &terrain.value();
     terrain.value().generateChunks();
-
-    ray = new Ray(context, gameObjectPool);
-
 }
 
 void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)

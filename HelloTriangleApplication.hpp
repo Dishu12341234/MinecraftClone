@@ -24,7 +24,6 @@ private:
     VkInstance instance;
     GLFWwindow *_window;
 
-    Ray *ray;
 
 
     GameObjectPool gameObjectPool;

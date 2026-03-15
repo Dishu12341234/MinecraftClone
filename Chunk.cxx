@@ -39,10 +39,9 @@ void Chunk::populateBlocks()
 
 bool Chunk::isFaceVisible(int x, int y, int z)
 {
-    Voxel *v = gameObjectPool.getVoxelGlobal({
-        x + chunkOffsetX * 16,
-        y + chunkOffsetY * 16,
-        z});
+    Voxel *v = gameObjectPool.getVoxelGlobal({x + chunkOffsetX * 16,
+                                              y + chunkOffsetY * 16,
+                                              z});
     return v == nullptr || v->getBlockType() == AIR;
 }
 
@@ -57,44 +56,65 @@ void Chunk::buildChunkMesh()
     // Each face wound CCW when viewed from OUTSIDE (normal = cross(e1, e2) points outward)
     // Verified: cross(v1-v0, v2-v0) must point in the face's outward normal direction
     static const FaceDef faces[6] = {
-        // Top (normal +z): cross((1,0,0),(1,1,0)) = (0,0,1) ✓
-        {{{0,0,1}, {1,0,1}, {1,1,1}, {0,1,1}},
+        // Top (+Z)
+        {{{-0.5f, -0.5f, 0.5f}, {0.5f, -0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, {-0.5f, 0.5f, 0.5f}},
          0,
-         1.0f, 0, 0, 1},
+         1.0f,
+         0,
+         0,
+         1},
 
-        // Bottom (normal -z): cross((0,1,0),(1,1,0)) = (0,0,-1) ✓
-        {{{0,0,0}, {0,1,0}, {1,1,0}, {1,0,0}},
+        // Bottom (-Z)
+        {{{-0.5f, -0.5f, -0.5f}, {-0.5f, 0.5f, -0.5f}, {0.5f, 0.5f, -0.5f}, {0.5f, -0.5f, -0.5f}},
          1,
-         0.5f, 0, 0, -1},
+         0.5f,
+         0,
+         0,
+         -1},
 
-        // Front (normal +y): cross((0,0,1),(1,0,1)) = (0,1,0) ✓
-        {{{0,1,0}, {0,1,1}, {1,1,1}, {1,1,0}},
+        // Front (+Y)
+        {{{-0.5f, 0.5f, -0.5f}, {-0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, -0.5f}},
          2,
-         0.75f, 0, 1, 0},
+         0.75f,
+         0,
+         1,
+         0},
 
-        // Back (normal -y): cross((0,0,1),(-1,0,1)) = (0,-1,0) ✓
-        {{{1,0,0}, {1,0,1}, {0,0,1}, {0,0,0}},
+        // Back (-Y)
+        {{{0.5f, -0.5f, -0.5f}, {0.5f, -0.5f, 0.5f}, {-0.5f, -0.5f, 0.5f}, {-0.5f, -0.5f, -0.5f}},
          3,
-         0.85f, 0, -1, 0},
+         0.85f,
+         0,
+         -1,
+         0},
 
-        // Right (normal +x): cross((0,1,0),(0,1,1)) = (1,0,0) ✓
-        {{{1,0,0}, {1,1,0}, {1,1,1}, {1,0,1}},
+        // Right (+X)
+        {{{0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}, {0.5f, -0.5f, 0.5f}},
          4,
-         0.7f, 1, 0, 0},
+         0.7f,
+         1,
+         0,
+         0},
 
-        // Left (normal -x): cross((0,-1,0),(0,-1,1)) = (-1,0,0) ✓
-        {{{0,1,0}, {0,0,0}, {0,0,1}, {0,1,1}},
+        // Left (-X)
+        {{{-0.5f, 0.5f, -0.5f}, {-0.5f, -0.5f, -0.5f}, {-0.5f, -0.5f, 0.5f}, {-0.5f, 0.5f, 0.5f}},
          5,
-         0.8f, -1, 0, 0},
+         0.8f,
+         -1,
+         0,
+         0},
     };
 
     auto blockColor = [](BlockType type) -> glm::vec3
     {
         switch (type)
         {
-        case STONE: return {0.5f, 0.5f, 0.5f};
-        case GRASS: return {0.4f, 0.8f, 0.3f};
-        default:    return {1.0f, 1.0f, 1.0f};
+        case STONE:
+            return {0.5f, 0.5f, 0.5f};
+        case GRASS:
+            return {0.4f, 0.8f, 0.3f};
+        default:
+            return {1.0f, 1.0f, 1.0f};
         }
     };
 
@@ -104,15 +124,15 @@ void Chunk::buildChunkMesh()
         {
             for (int y = 0; y < 16; y++)
             {
-                const int idx = x + y * 16 + z * 256;
+                const int idx = z * 256 + x * 16 + y;
                 const BlockType type = voxels[idx].getBlockType();
-                const int* faceTexture = BlockFaces::grassFaceTexture;
+                const int *faceTexture = BlockFaces::grassFaceTexture;
 
                 if (type == AIR)
                     continue;
 
-                const glm::vec3 color  = blockColor(type);
-                const glm::vec3 origin = {(float)x, (float)y, (float)z};
+                const glm::vec3 color = blockColor(type);
+                const glm::vec3 origin = {(float)x + 0.5f, (float)y + 0.5f, (float)z + 0.5f};
 
                 for (const FaceDef &face : faces)
                 {
@@ -121,19 +141,19 @@ void Chunk::buildChunkMesh()
 
                     const uint32_t base = static_cast<uint32_t>(vertices.size());
 
-                    vertices.push_back({origin + face.corners[0], color, glm::vec2(faceTexture[face.tileOffset],0), face.light});
-                    vertices.push_back({origin + face.corners[1], color, glm::vec2(faceTexture[face.tileOffset],1), face.light});
-                    vertices.push_back({origin + face.corners[2], color, glm::vec2(faceTexture[face.tileOffset],2), face.light});
-                    vertices.push_back({origin + face.corners[3], color, glm::vec2(faceTexture[face.tileOffset],3), face.light});
+                    vertices.push_back({origin + face.corners[0], color, glm::vec2(faceTexture[face.tileOffset], 0), face.light});
+                    vertices.push_back({origin + face.corners[1], color, glm::vec2(faceTexture[face.tileOffset], 1), face.light});
+                    vertices.push_back({origin + face.corners[2], color, glm::vec2(faceTexture[face.tileOffset], 2), face.light});
+                    vertices.push_back({origin + face.corners[3], color, glm::vec2(faceTexture[face.tileOffset], 3), face.light});
 
-                    indices.insert(indices.end(), {base, base+1, base+2, base+2, base+3, base});
+                    indices.insert(indices.end(), {base, base + 1, base + 2, base + 2, base + 3, base});
                 }
             }
         }
     }
 
     chunkMesh.vertices = std::move(vertices);
-    chunkMesh.indices  = std::move(indices);
+    chunkMesh.indices = std::move(indices);
     chunkMesh.createVertexBuffer();
     chunkMesh.createIndexBuffer();
 }

@@ -4,6 +4,7 @@
 #include "GraphicsPipeline.h"
 #include "Event.h"
 #include "GameObjectPool.h"
+#include "Ray.h"
 
 class Camera
 {
@@ -16,10 +17,16 @@ private:
     glm::vec3 forward;
     glm::vec3 worldUp{0, 0, 1};
 
+    Ray cameraRay;
+
 public:
-    Camera(VulkanContext vkContext, GameObjectPool &gop);
+    Camera(VulkanContext& vkContext, GameObjectPool &gop);
     void updateUBO(UniformBufferObject &UBO, VkExtent2D &swapChainExtent, Event &event);
     glm::vec3 gePositionInWorldCoords();
+    void cleanup();
+
+    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
+              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
 
     ~Camera();
 };
