@@ -8,6 +8,25 @@ Voxel::Voxel(VulkanContext &vkContext, BlockType blockType) : vkContext{vkContex
 void Voxel::setType(BlockType blockType)
 {
     this->blockType = blockType;
+    switch (blockType)
+    {
+    case AIR:
+        faceTexture = BlockFaces::corruptFaceTexture;
+        break;
+    case GRASS:
+        faceTexture = BlockFaces::grassFaceTexture;
+        break;
+    case DIRT:
+        faceTexture = BlockFaces::dirtFaceTexture;
+        break;
+    case STONE:
+        faceTexture = BlockFaces::stoneFaceTexture;
+        break;
+    
+    default:
+        faceTexture = BlockFaces::corruptFaceTexture;
+        break;
+    }
 }
 
 void Voxel::setPosition(glm::vec3 position)

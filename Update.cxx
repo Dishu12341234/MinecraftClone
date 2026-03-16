@@ -34,11 +34,16 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
     HitInfo hitInfo{};
     camera->getHitInfo(hitInfo);
 
-    if(hitInfo.hitVoxel)
-    {
-        std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType() << std::endl;
-        std::cout << "Hit block coordinates: (x,y,z) (" << hitInfo.blockCoords.x << ", " << hitInfo.blockCoords.y << ", " << hitInfo.blockCoords.z << ")" << std::endl;
-    }
+    if (event->getKeyPressed(GLFW_KEY_B))
+        if (hitInfo.hitVoxel)
+        {
+            std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType() << std::endl;
+            std::cout << "Hit block coordinates: (x,y,z) (" << hitInfo.blockCoords.x << ", " << hitInfo.blockCoords.y << ", " << hitInfo.blockCoords.z << ")" << std::endl;
+
+            hitInfo.hitVoxel->setType(AIR);
+
+            terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, hitInfo.blockCoords.y >> 4);
+        }
 
     if (event->getKeyPressed(GLFW_KEY_ESCAPE))
         glfwSetWindowShouldClose(_window, GLFW_TRUE);

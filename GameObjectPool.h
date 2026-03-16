@@ -6,6 +6,7 @@
 #include "Voxel.h"
 
 class Terrain;
+class Chunk;
 
 class GameObjectPool
 {
@@ -16,6 +17,8 @@ private:
     friend class HelloTriangleApplication;
     
     public:
+    Chunk *getChunk(int chunkX, int chunkY);
+
     GameObjectPool();
     void init(VulkanContext context);
     void uploadVBOsAndIBOs();

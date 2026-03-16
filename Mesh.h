@@ -10,19 +10,20 @@ private:
 
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
+    VkBuffer vertexBuffer = VK_NULL_HANDLE;
+    VkBuffer indexBuffer = VK_NULL_HANDLE;
 
-    VkBuffer indexBuffer;
-    VkDeviceMemory indexBufferMemory;
+    VkBuffer StagingVertexBuffer = VK_NULL_HANDLE;
+    VkBuffer StagingIndexBuffer = VK_NULL_HANDLE;
 
-    VkBuffer StagingVertexBuffer;
-    VkDeviceMemory StagingVertexBufferMemory;
-    void *stagingVertexBufferData;
+    VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
+    VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
 
-    VkBuffer StagingIndexBuffer;
-    VkDeviceMemory StagingIndexBufferMemory;
+    VkDeviceMemory StagingVertexBufferMemory = VK_NULL_HANDLE;
+    VkDeviceMemory StagingIndexBufferMemory = VK_NULL_HANDLE;
+
     void *stagingIndexBufferData;
+    void *stagingVertexBufferData;
 
     friend class Chunk;
 
@@ -39,7 +40,7 @@ public:
     void updateIndexBuffer();
 
     void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
-                 std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1);
+              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1);
 
     void cleanup();
     ~Mesh();

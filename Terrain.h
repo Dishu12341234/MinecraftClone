@@ -31,6 +31,8 @@ public:
     void generateChunks();
     void draw(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
 
+    void updateChunkMesh(int chunkX, int chunkY);
+
     void cleanup();
     ~Terrain();
 };

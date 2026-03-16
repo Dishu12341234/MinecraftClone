@@ -1,5 +1,20 @@
 #include "GameObjectPool.h"
 #include "Terrain.h"
+#include "Chunk.h"
+
+Chunk *GameObjectPool::getChunk(int chunkX, int chunkY)
+{
+    if(!terrain)
+        return nullptr;
+
+    for (auto &chunk : terrain->chunks)
+    {
+        if (chunk.chunkOffsetX == chunkX && chunk.chunkOffsetY == chunkY)
+            return &chunk;
+    }
+
+    return nullptr;
+}   
 
 GameObjectPool::GameObjectPool()
 {

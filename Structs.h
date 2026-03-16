@@ -9,6 +9,16 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
 
+namespace BlockFaces
+{
+    inline int grassFaceTexture[6] = {0, 1, 1, 1, 1, 1};
+    inline int dirtFaceTexture[6] = {1, 1, 1, 1, 1, 1};
+    inline int woodFaceTexture[6] = {3, 3, 3, 3, 3, 3};
+    inline int leavesFaceTexture[6] = {4, 4, 4, 4, 4, 4};
+    inline int stoneFaceTexture[6] = {5, 5, 5, 5, 5, 5};
+    inline int corruptFaceTexture[6] = {19, 19, 19, 19, 19, 19};
+};
+
 // UBO
 struct UniformBufferObject
 {
@@ -64,13 +74,4 @@ struct Faces
     bool left;
     bool front;
     bool back;
-};
-
-struct BlockFaces {
-    static constexpr int grassFaceTexture[6]  = {0, 1, 1, 1, 1, 1};
-    static constexpr int dirtFaceTexture[6]   = {1, 1, 1, 1, 1, 1};
-    static constexpr int woodFaceTexture[6]   = {3, 3, 3, 3, 3, 3};
-    static constexpr int leavesFaceTexture[6] = {4, 4, 4, 4, 4, 4};
-    static constexpr int stoneFaceTexture[6]  = {5, 5, 5, 5, 5, 5};
-    static constexpr int corruptFaceTexture[6]  = {19, 19, 19, 19, 19, 19};
 };

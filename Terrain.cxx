@@ -35,6 +35,19 @@ void Terrain::draw(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, V
     }
 }
 
+void Terrain::updateChunkMesh(int chunkX, int chunkY)
+{
+    for (auto &chunk : chunks)
+    {
+        if (chunk.chunkOffsetX == chunkX && chunk.chunkOffsetY == chunkY)
+        {
+            chunk.dirty = true;
+            chunk.updateChunkMesh();
+            break;
+        }
+    }
+}
+
 void Terrain::cleanup()
 {
     for (auto &&c : chunks)

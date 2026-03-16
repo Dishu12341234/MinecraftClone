@@ -19,7 +19,7 @@ void Mesh::loadIndices(const std::vector<uint32_t> &indices)
 
 void Mesh::createVertexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size() * 2;
 
     if (bufferSize == 0)
         return;
@@ -41,7 +41,7 @@ void Mesh::createVertexBuffer()
 
 void Mesh::createIndexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size() * 2;
 
     if (bufferSize == 0)
         return;
@@ -58,7 +58,7 @@ void Mesh::createIndexBuffer()
 
 void Mesh::updateVertexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
+    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
     if (bufferSize == 0)
         return;
@@ -69,7 +69,7 @@ void Mesh::updateVertexBuffer()
 
 void Mesh::updateIndexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(uint32_t) * indices.size();
+    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
     if (bufferSize == 0)
         return;
@@ -99,17 +99,27 @@ void Mesh::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, 
 
 void Mesh::cleanup()
 {
-    vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
-    vkFreeMemory(vkContext.device, indexBufferMemory, nullptr);
+    if (StagingVertexBufferMemory != VK_NULL_HANDLE)
+        vkUnmapMemory(vkContext.device, StagingVertexBufferMemory);  // missing from your code!
+    if (StagingIndexBufferMemory != VK_NULL_HANDLE)
+        vkUnmapMemory(vkContext.device, StagingIndexBufferMemory);   // missing too!
 
-    vkDestroyBuffer(vkContext.device, vertexBuffer, nullptr);
-    vkFreeMemory(vkContext.device, vertexBufferMemory, nullptr);
-
-    vkDestroyBuffer(vkContext.device, StagingIndexBuffer, nullptr);
-    vkFreeMemory(vkContext.device, StagingIndexBufferMemory, nullptr);
-
-    vkDestroyBuffer(vkContext.device, StagingVertexBuffer, nullptr);
-    vkFreeMemory(vkContext.device, StagingVertexBufferMemory, nullptr);
+    if (indexBuffer != VK_NULL_HANDLE) {
+        vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
+        vkFreeMemory(vkContext.device, indexBufferMemory, nullptr);
+    }
+    if (vertexBuffer != VK_NULL_HANDLE) {
+        vkDestroyBuffer(vkContext.device, vertexBuffer, nullptr);
+        vkFreeMemory(vkContext.device, vertexBufferMemory, nullptr);
+    }
+    if (StagingIndexBuffer != VK_NULL_HANDLE) {
+        vkDestroyBuffer(vkContext.device, StagingIndexBuffer, nullptr);
+        vkFreeMemory(vkContext.device, StagingIndexBufferMemory, nullptr);
+    }
+    if (StagingVertexBuffer != VK_NULL_HANDLE) {
+        vkDestroyBuffer(vkContext.device, StagingVertexBuffer, nullptr);
+        vkFreeMemory(vkContext.device, StagingVertexBufferMemory, nullptr);
+    }
 }
 
 Mesh::~Mesh()

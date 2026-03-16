@@ -18,9 +18,9 @@ void Chunk::populateBlocks()
 
     for (int z = 0; z < 256; z++)
     {
-        for (int x = 0; x < 16; x++)
+        for (int y = 0; y < 16; y++)
         {
-            for (int y = 0; y < 16; y++)
+            for (int x = 0; x < 16; x++)
             {
                 int blockType;
 
@@ -30,8 +30,8 @@ void Chunk::populateBlocks()
                     blockType = GRASS;
                 else
                     blockType = AIR;
-
                 voxels.emplace_back(vkContext, BlockType(blockType));
+                voxels.back().setType(BlockType(blockType));
             }
         }
     }
@@ -45,7 +45,7 @@ bool Chunk::isFaceVisible(int x, int y, int z)
     return v == nullptr || v->getBlockType() == AIR;
 }
 
-void Chunk::buildChunkMesh()
+void Chunk::genMesh()
 {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
@@ -124,9 +124,9 @@ void Chunk::buildChunkMesh()
         {
             for (int y = 0; y < 16; y++)
             {
-                const int idx = z * 256 + x * 16 + y;
+                const int idx = z * 256 + x + y * 16;
                 const BlockType type = voxels[idx].getBlockType();
-                const int *faceTexture = BlockFaces::grassFaceTexture;
+                const int *faceTexture = voxels[idx].faceTexture;
 
                 if (type == AIR)
                     continue;
@@ -154,8 +154,23 @@ void Chunk::buildChunkMesh()
 
     chunkMesh.vertices = std::move(vertices);
     chunkMesh.indices = std::move(indices);
+}
+
+void Chunk::buildChunkMesh()
+{
+    
+    genMesh();
     chunkMesh.createVertexBuffer();
     chunkMesh.createIndexBuffer();
+}
+
+void Chunk::updateChunkMesh()
+{
+
+    
+    genMesh();
+    chunkMesh.updateVertexBuffer();
+    chunkMesh.updateIndexBuffer();
 }
 
 void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
