@@ -31,8 +31,13 @@ const vec2 uvTable[4] = vec2[4](
 
 void main() {
 
-    gl_Position = ubo.proj * ubo.view * pc.data * vec4(inPosition, 1.0);
+    const float WORLD_SCALE = 1.f;
+    vec4 viewPos = ubo.view * pc.data * vec4(inPosition, 1.0);
+    viewPos.xyz *= WORLD_SCALE;
+    gl_Position = ubo.proj * viewPos;
     fragColor = inColor;
+
+
 
     int tid = int(textureInfoAndIdx.x);
 

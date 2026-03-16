@@ -15,6 +15,14 @@ private:
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
 
+    VkBuffer StagingVertexBuffer;
+    VkDeviceMemory StagingVertexBufferMemory;
+    void *stagingVertexBufferData;
+
+    VkBuffer StagingIndexBuffer;
+    VkDeviceMemory StagingIndexBufferMemory;
+    void *stagingIndexBufferData;
+
 public:
     RayMesher(VulkanContext &vkContext);
     void loadRayPoints(const std::vector<RayPoints> &vertices);
@@ -22,6 +30,9 @@ public:
 
     void createVertexBuffer();
     void createIndexBuffer();
+
+    void updateVertexBuffer();
+    void updateIndexBuffer();
 
     void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
               std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1);

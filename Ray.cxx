@@ -19,14 +19,23 @@ Ray::Ray(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{v
     rayMesher.createIndexBuffer();
 }
 
-void Ray::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
+void Ray::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
+               VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets,
+               uint32_t currentFrame, VkExtent2D &swapChainExtent)
 {
     PushConstantC1 c1{};
 
-    glm::quat q = glm::quat(transform.rotation);
-    c1.data = glm::translate(glm::mat4(1.0f), transform.position) * glm::toMat4(q);
+    glm::quat rotationQuat = glm::rotation(glm::vec3(1.f, 0.f, 0.f), direction);
 
-    rayMesher.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+    glm::mat4 rotation = glm::mat4_cast(rotationQuat);
+    glm::mat4 translation = glm::translate(glm::mat4(1.0f), transform.position);
+
+    c1.data = translation * rotation;
+
+    // c1.data = glm::translate(glm::mat4(1.f), transform.position);
+
+    rayMesher.draw(commandBuffer, pipelineLayout, graphicsPipeline,
+                   descriptorSets, currentFrame, swapChainExtent, c1);
 }
 
 void Ray::cleanup()

@@ -6,11 +6,19 @@
 #include "GameObjectPool.h"
 #include "Ray.h"
 
+
+struct HitInfo
+{
+    BlockCoordinates blockCoords{};
+    glm::vec3 hitNormal{};
+    Voxel *hitVoxel{nullptr};
+};
+
 class Camera
 {
 private:
     VulkanContext vkContext;
-    glm::vec3 cameraPos{2.f, 2.f, 1.f};
+    glm::vec3 cameraPos{1.f, 0.f, 66.f};
     float pitch;
     float yaw;
     GameObjectPool &gameObjectPool;
@@ -19,7 +27,9 @@ private:
 
     Ray cameraRay;
 
-public:
+    
+    public:
+    void getHitInfo(HitInfo &hitInfo);
     Camera(VulkanContext& vkContext, GameObjectPool &gop);
     void updateUBO(UniformBufferObject &UBO, VkExtent2D &swapChainExtent, Event &event);
     glm::vec3 gePositionInWorldCoords();

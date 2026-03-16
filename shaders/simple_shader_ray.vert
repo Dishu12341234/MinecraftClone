@@ -18,7 +18,6 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
     gl_PointSize = 4.f;
-    gl_LineWidth = 4.f;
     gl_Position = ubo.proj * ubo.view * pc.data * vec4(inPosition, 1.0);
     fragColor = inColor;
 }

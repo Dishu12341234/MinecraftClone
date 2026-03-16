@@ -9,10 +9,11 @@
 #include "RayGraphicsPipeline.h"
 #include "GameObjectPool.h"
 #include "Event.h"
-#include "Camera.h"
 #include "Terrain.h"
 
+
 class Ray;
+class Camera;
 
 class HelloTriangleApplication
 {
@@ -24,12 +25,9 @@ private:
     VkInstance instance;
     GLFWwindow *_window;
 
-
-
     GameObjectPool gameObjectPool;
     std::unique_ptr<Event> event;
     std::unique_ptr<Camera> camera;
-
 
     struct QueueFamilyIndices
     {
@@ -134,7 +132,6 @@ private:
 
     u_GraphicsPipeline graphicsPipeline;
     RayGraphicsPipeline rayGraphicsPipeline;
-
 
     void initGameObjects();
 

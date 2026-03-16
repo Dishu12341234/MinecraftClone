@@ -1,4 +1,5 @@
 #include "HelloTriangleApplication.hpp"
+#include "Camera.h"
 #include "Ray.h"
 
 void HelloTriangleApplication::mainLoop()

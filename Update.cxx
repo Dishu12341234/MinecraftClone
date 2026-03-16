@@ -1,9 +1,11 @@
 #include "HelloTriangleApplication.hpp"
+#include "Camera.h"
 #include "Chunk.h"
 #include <cstdlib>
 #include <cstring>
 #include <memory>
 #include "Ray.h"
+#include "iostream"
 
 void HelloTriangleApplication::initGameObjects()
 {
@@ -26,6 +28,17 @@ void HelloTriangleApplication::initGameObjects()
 
 void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 {
+
+    std::cout << "Coordinates: " << "(x,y,z) (x" << camera->gePositionInWorldCoords().x << ", " << camera->gePositionInWorldCoords().y << ", " << camera->gePositionInWorldCoords().z << ")" << std::endl;
+
+    HitInfo hitInfo{};
+    camera->getHitInfo(hitInfo);
+
+    if(hitInfo.hitVoxel)
+    {
+        std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType() << std::endl;
+        std::cout << "Hit block coordinates: (x,y,z) (" << hitInfo.blockCoords.x << ", " << hitInfo.blockCoords.y << ", " << hitInfo.blockCoords.z << ")" << std::endl;
+    }
 
     if (event->getKeyPressed(GLFW_KEY_ESCAPE))
         glfwSetWindowShouldClose(_window, GLFW_TRUE);

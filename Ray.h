@@ -12,6 +12,9 @@ private:
     GameObjectPool &gameObjectPool;
     Transform transform{};
     RayMesher rayMesher;
+    glm::vec3 direction = glm::vec3(1.f, 0.f, 0.f);
+
+    
 
     friend class Camera;
 public:

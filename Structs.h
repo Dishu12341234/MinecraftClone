@@ -28,6 +28,7 @@ struct Transform
     glm::vec3 position;
     glm::vec3 rotation;
     glm::vec3 scale;
+    glm::quat rotationQuat; // Added for ray orientation
 };
 
 enum BlockType

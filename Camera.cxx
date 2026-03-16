@@ -1,12 +1,42 @@
 #include "Camera.h"
 #include "HelloTriangleApplication.hpp"
 #include "Ray.h"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/quaternion.hpp"
 #include <iostream>
 
 std::ostream &operator<<(std::ostream &os, const glm::vec3 &v)
 {
     os << "vec3{x=" << v.x << ", y=" << v.y << ", z=" << v.z << "}";
     return os;
+}
+
+void Camera::getHitInfo(HitInfo &hitInfo)
+
+{
+    glm::vec3 rayOrigin = gePositionInWorldCoords();
+    glm::vec3 rayDir = forward;
+
+    float maxDistance = 100.0f; // Max ray distance
+    float stepSize = 0.1f;      // Step size along the ray
+
+    for (float t = 0.0f; t < maxDistance; t += stepSize)
+    {
+        glm::vec3 point = rayOrigin + rayDir * t;
+        BlockCoordinates blockCoords{
+            static_cast<int>(floor(point.x)),
+            static_cast<int>(floor(point.y)),
+            static_cast<int>(floor(point.z))};
+
+        Voxel *voxel = gameObjectPool.getVoxelGlobal(blockCoords);
+        if (voxel && voxel->getBlockType() != AIR)
+        {
+            hitInfo.blockCoords = blockCoords;
+            hitInfo.hitVoxel = voxel;
+
+            break;
+        }
+    }
 }
 
 Camera::Camera(VulkanContext &vkContext, GameObjectPool &gop)
@@ -63,16 +93,16 @@ void Camera::updateUBO(UniformBufferObject &UBO,
     UBO.view = glm::lookAt(cameraPos, cameraPos + forward, worldUp);
 
     UBO.proj = glm::perspective(
-        glm::radians(45.0f),
+        glm::radians(90.0f),
         swapChainExtent.width / (float)swapChainExtent.height,
         0.1f,
-        1000.0f);
+        4000.0f);
 
     UBO.proj[1][1] *= -1;
 }
 
 // Camera space: 1 unit = 10 voxels
-glm::vec3 Camera::gePositionInWorldCoords() { return cameraPos * 10.f; }
+glm::vec3 Camera::gePositionInWorldCoords() { return cameraPos; }
 
 void Camera::cleanup()
 {
@@ -82,9 +112,9 @@ void Camera::cleanup()
 void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
 {
 
-    cameraRay.transform.position = gePositionInWorldCoords() / 10.f;
-    cameraRay.transform.position.z -= .5f; // lower the ray a bit so it doesn't clip with the camera
-    cameraRay.transform.rotation = glm::vec3(0.f, glm::radians(-pitch), glm::radians(yaw));
+    cameraRay.transform.position = gePositionInWorldCoords();
+    cameraRay.transform.position.z -= .1f;
+    cameraRay.direction = forward;
     cameraRay.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
 }
 
