@@ -22,6 +22,9 @@ private:
     VkDeviceMemory StagingVertexBufferMemory = VK_NULL_HANDLE;
     VkDeviceMemory StagingIndexBufferMemory = VK_NULL_HANDLE;
 
+    VkDeviceSize stagingVertexBufferSize = 0;
+    VkDeviceSize stagingIndexBufferSize = 0;
+
     void *stagingIndexBufferData;
     void *stagingVertexBufferData;
 

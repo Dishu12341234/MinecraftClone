@@ -33,6 +33,8 @@ public:
 
     void updateChunkMesh(int chunkX, int chunkY);
 
+    void handelDirtyChunks();
+
     void cleanup();
     ~Terrain();
 };

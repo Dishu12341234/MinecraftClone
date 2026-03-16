@@ -35,10 +35,12 @@ void HelloTriangleApplication::drawFrame()
     // 3️⃣ Reset the command buffer for this frame
     vkResetCommandBuffer(commandBuffers[currentFrame], 0); // or VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
 
+    terrain.value().handelDirtyChunks();
     // 4️⃣ Record drawing commands into the command buffer
     recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
     updateUniformBuffer(currentFrame);
+
 
     // 5️⃣ Submit the command buffer to the graphics queue
     VkSubmitInfo submitInfo{};

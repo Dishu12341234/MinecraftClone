@@ -1,7 +1,7 @@
 #include "Terrain.h"
 #include <iostream>
 #include <chrono>
-#define RENDER_DISTANCE 5
+#define RENDER_DISTANCE 1
 
 Terrain::Terrain(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{vkContext}, gameObjectPool{gameObjectPool}
 {
@@ -44,6 +44,18 @@ void Terrain::updateChunkMesh(int chunkX, int chunkY)
             chunk.dirty = true;
             chunk.updateChunkMesh();
             break;
+        }
+    }
+}
+
+void Terrain::handelDirtyChunks()
+{
+    for (auto &chunk : chunks)
+    {
+        if (chunk.dirty)
+        {
+            chunk.swapMesh();
+            chunk.dirty = false;
         }
     }
 }

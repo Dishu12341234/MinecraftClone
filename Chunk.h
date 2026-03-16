@@ -40,6 +40,8 @@ private:
     int chunkOffsetY{0};
 
     Mesh chunkMesh;
+    Mesh backMesh;
+
     GameObjectPool &gameObjectPool;
 
     friend class GameObjectPool;
@@ -47,15 +49,7 @@ private:
 
     
     public:
-
-    Voxel *getLocalVoxel(int x, int y, int z);
-    void markNeighborDirty(int dx, int dy);
-
-    
-    
     bool dirty = false;
-
-     void setBlock(int x, int y, int z, BlockType type);
 
     Chunk(VulkanContext &vkContext, GameObjectPool &gameObjectPool);
     Chunk(const Chunk &) = delete;
@@ -72,9 +66,11 @@ private:
     void setOffset(int x, int y);
     void populateBlocks();
 
-    void genMesh();
+    void genMesh(bool useChunkMesh = false);
     void buildChunkMesh();
     void updateChunkMesh();
+
+    void swapMesh();
     void draw(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
 
     void cleanup();

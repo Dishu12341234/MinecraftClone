@@ -19,46 +19,53 @@ void Mesh::loadIndices(const std::vector<uint32_t> &indices)
 
 void Mesh::createVertexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size() * 2;
+    stagingVertexBufferSize = sizeof(vertices[0]) * vertices.size() * 2;
 
-    if (bufferSize == 0)
+    std::cout << "Size of staging VBO " << stagingVertexBufferSize << std::endl;
+
+    if (stagingVertexBufferSize == 0)
         return;
 
     // TX
-    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, StagingVertexBuffer, StagingVertexBufferMemory, vkContext);
+    utils::createBuffer(stagingVertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingVertexBuffer, StagingVertexBufferMemory, vkContext);
 
     // filling in the vertex buffer
-    vkMapMemory(vkContext.device, StagingVertexBufferMemory, 0, bufferSize, 0, &stagingVertexBufferData);
-    memcpy(stagingVertexBufferData, vertices.data(), (size_t)bufferSize);
+    vkMapMemory(vkContext.device, StagingVertexBufferMemory, 0, stagingVertexBufferSize, 0, &stagingVertexBufferData);
+    memcpy(stagingVertexBufferData, vertices.data(), (size_t)stagingVertexBufferSize);
 
     // creating the actul VBO and setting it up so the it is the destionation of the transfer source
     // TX
-    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, vkContext);
+    utils::createBuffer(stagingVertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, vkContext);
 
     // but we still have to copy the memory contents manully
-    utils::copyBuffer(StagingVertexBuffer, vertexBuffer, bufferSize, vkContext);
+    utils::copyBuffer(StagingVertexBuffer, vertexBuffer, stagingVertexBufferSize, vkContext);
 }
 
 void Mesh::createIndexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size() * 2;
+    stagingIndexBufferSize = sizeof(indices[0]) * indices.size() * 2;
 
-    if (bufferSize == 0)
+    if (stagingIndexBufferSize == 0)
         return;
 
-    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, StagingIndexBuffer, StagingIndexBufferMemory, vkContext);
+    utils::createBuffer(stagingIndexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingIndexBuffer, StagingIndexBufferMemory, vkContext);
 
-    vkMapMemory(vkContext.device, StagingIndexBufferMemory, 0, bufferSize, 0, &stagingIndexBufferData);
-    memcpy(stagingIndexBufferData, indices.data(), (size_t)bufferSize);
+    vkMapMemory(vkContext.device, StagingIndexBufferMemory, 0, stagingIndexBufferSize, 0, &stagingIndexBufferData);
+    memcpy(stagingIndexBufferData, indices.data(), (size_t)stagingIndexBufferSize);
 
-    utils::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, vkContext);
+    utils::createBuffer(stagingIndexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, vkContext);
 
-    utils::copyBuffer(StagingIndexBuffer, indexBuffer, bufferSize, vkContext);
+    utils::copyBuffer(StagingIndexBuffer, indexBuffer, stagingIndexBufferSize, vkContext);
 }
 
 void Mesh::updateVertexBuffer()
 {
     VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+    std::cout << "Updating Vertex Buffer..." << std::endl;
+
+    std::cout << "required buffer Size: " << bufferSize << " bytes" << std::endl;
+    std::cout << "current buffer size: " << stagingVertexBufferSize << " bytes" << std::endl;
 
     if (bufferSize == 0)
         return;

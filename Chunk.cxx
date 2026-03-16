@@ -2,7 +2,7 @@
 #include <chrono>
 #include <iostream>
 
-Chunk::Chunk(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{vkContext}, chunkMesh{vkContext}, gameObjectPool{gameObjectPool}
+Chunk::Chunk(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{vkContext}, chunkMesh{vkContext}, backMesh{vkContext}, gameObjectPool{gameObjectPool}
 {
 }
 
@@ -45,7 +45,7 @@ bool Chunk::isFaceVisible(int x, int y, int z)
     return v == nullptr || v->getBlockType() == AIR;
 }
 
-void Chunk::genMesh()
+void Chunk::genMesh(bool useChunkMesh)
 {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
@@ -152,23 +152,44 @@ void Chunk::genMesh()
         }
     }
 
-    chunkMesh.vertices = std::move(vertices);
-    chunkMesh.indices = std::move(indices);
+    if (useChunkMesh)
+    {
+        chunkMesh.vertices = std::move(vertices);
+        chunkMesh.indices = std::move(indices);
+    }
+    else
+    {
+        backMesh.vertices = std::move(vertices);
+        backMesh.indices = std::move(indices);
+    }
 }
 
 void Chunk::buildChunkMesh()
 {
-    
+
+    genMesh(true);
     genMesh();
     chunkMesh.createVertexBuffer();
     chunkMesh.createIndexBuffer();
+    backMesh.createVertexBuffer();
+    backMesh.createIndexBuffer();
 }
 
 void Chunk::updateChunkMesh()
 {
-
-    
     genMesh();
+    backMesh.updateVertexBuffer();
+    backMesh.updateIndexBuffer();
+}
+
+void Chunk::swapMesh()
+{
+    chunkMesh.vertices = std::move(backMesh.vertices);
+    chunkMesh.indices = std::move(backMesh.indices);
+
+    backMesh.vertices.clear();
+    backMesh.indices.clear();
+
     chunkMesh.updateVertexBuffer();
     chunkMesh.updateIndexBuffer();
 }
@@ -194,6 +215,7 @@ void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
 void Chunk::cleanup()
 {
     chunkMesh.cleanup();
+    backMesh.cleanup();
 }
 
 Chunk::~Chunk()
