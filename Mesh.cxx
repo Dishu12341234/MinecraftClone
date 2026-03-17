@@ -19,9 +19,7 @@ void Mesh::loadIndices(const std::vector<uint32_t> &indices)
 
 void Mesh::createVertexBuffer()
 {
-    stagingVertexBufferSize = sizeof(vertices[0]) * vertices.size() * 2;
-
-    std::cout << "Size of staging VBO " << stagingVertexBufferSize << std::endl;
+    stagingVertexBufferSize = sizeof(vertices[0]) * vertices.size();
 
     if (stagingVertexBufferSize == 0)
         return;
@@ -43,7 +41,7 @@ void Mesh::createVertexBuffer()
 
 void Mesh::createIndexBuffer()
 {
-    stagingIndexBufferSize = sizeof(indices[0]) * indices.size() * 2;
+    stagingIndexBufferSize = sizeof(indices[0]) * indices.size();
 
     if (stagingIndexBufferSize == 0)
         return;
@@ -62,10 +60,26 @@ void Mesh::updateVertexBuffer()
 {
     VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
-    std::cout << "Updating Vertex Buffer..." << std::endl;
+    if (bufferSize >= stagingVertexBufferSize)
+    {
+        vkUnmapMemory(vkContext.device, StagingVertexBufferMemory);
+        vkDestroyBuffer(vkContext.device, StagingVertexBuffer, nullptr);
+        vkFreeMemory(vkContext.device, StagingVertexBufferMemory, nullptr);
 
-    std::cout << "required buffer Size: " << bufferSize << " bytes" << std::endl;
-    std::cout << "current buffer size: " << stagingVertexBufferSize << " bytes" << std::endl;
+        // destroy OLD GPU buffer FIRST
+        if (vertexBuffer != VK_NULL_HANDLE)
+        {
+            vkDeviceWaitIdle(vkContext.device);
+            vkDestroyBuffer(vkContext.device, vertexBuffer, nullptr);
+            vkFreeMemory(vkContext.device, vertexBufferMemory, nullptr);
+
+            vertexBuffer = VK_NULL_HANDLE;
+            vertexBufferMemory = VK_NULL_HANDLE;
+        }
+
+        // now recreate everything
+        createVertexBuffer();
+    }
 
     if (bufferSize == 0)
         return;
@@ -77,6 +91,25 @@ void Mesh::updateVertexBuffer()
 void Mesh::updateIndexBuffer()
 {
     VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+    if (bufferSize >= stagingIndexBufferSize)
+    {
+        vkUnmapMemory(vkContext.device, StagingIndexBufferMemory);
+        vkDestroyBuffer(vkContext.device, StagingIndexBuffer, nullptr);
+        vkFreeMemory(vkContext.device, StagingIndexBufferMemory, nullptr);
+
+        if (indexBuffer != VK_NULL_HANDLE)
+        {
+            vkDeviceWaitIdle(vkContext.device);
+            vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
+            vkFreeMemory(vkContext.device, indexBufferMemory, nullptr);
+
+            indexBuffer = VK_NULL_HANDLE;
+            indexBufferMemory = VK_NULL_HANDLE;
+        }
+
+        createIndexBuffer();
+    }
 
     if (bufferSize == 0)
         return;
@@ -107,23 +140,27 @@ void Mesh::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, 
 void Mesh::cleanup()
 {
     if (StagingVertexBufferMemory != VK_NULL_HANDLE)
-        vkUnmapMemory(vkContext.device, StagingVertexBufferMemory);  // missing from your code!
+        vkUnmapMemory(vkContext.device, StagingVertexBufferMemory); // missing from your code!
     if (StagingIndexBufferMemory != VK_NULL_HANDLE)
-        vkUnmapMemory(vkContext.device, StagingIndexBufferMemory);   // missing too!
+        vkUnmapMemory(vkContext.device, StagingIndexBufferMemory); // missing too!
 
-    if (indexBuffer != VK_NULL_HANDLE) {
+    if (indexBuffer != VK_NULL_HANDLE)
+    {
         vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
         vkFreeMemory(vkContext.device, indexBufferMemory, nullptr);
     }
-    if (vertexBuffer != VK_NULL_HANDLE) {
+    if (vertexBuffer != VK_NULL_HANDLE)
+    {
         vkDestroyBuffer(vkContext.device, vertexBuffer, nullptr);
         vkFreeMemory(vkContext.device, vertexBufferMemory, nullptr);
     }
-    if (StagingIndexBuffer != VK_NULL_HANDLE) {
+    if (StagingIndexBuffer != VK_NULL_HANDLE)
+    {
         vkDestroyBuffer(vkContext.device, StagingIndexBuffer, nullptr);
         vkFreeMemory(vkContext.device, StagingIndexBufferMemory, nullptr);
     }
-    if (StagingVertexBuffer != VK_NULL_HANDLE) {
+    if (StagingVertexBuffer != VK_NULL_HANDLE)
+    {
         vkDestroyBuffer(vkContext.device, StagingVertexBuffer, nullptr);
         vkFreeMemory(vkContext.device, StagingVertexBufferMemory, nullptr);
     }

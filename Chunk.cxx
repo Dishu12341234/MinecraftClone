@@ -18,9 +18,9 @@ void Chunk::populateBlocks()
 
     for (int z = 0; z < 256; z++)
     {
-        for (int y = 0; y < 16; y++)
+        for (int x = 0; x < 16; x++)
         {
-            for (int x = 0; x < 16; x++)
+            for (int y = 0; y < 16; y++)
             {
                 int blockType;
 
@@ -125,8 +125,9 @@ void Chunk::genMesh(bool useChunkMesh)
             for (int y = 0; y < 16; y++)
             {
                 const int idx = z * 256 + x + y * 16;
-                const BlockType type = voxels[idx].getBlockType();
-                const int *faceTexture = voxels[idx].faceTexture;
+                    
+                const BlockType type = voxels.at(idx).getBlockType();
+                const int *faceTexture = voxels.at(idx).faceTexture;
 
                 if (type == AIR)
                     continue;

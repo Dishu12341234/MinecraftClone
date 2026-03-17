@@ -43,6 +43,15 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
             hitInfo.hitVoxel->setType(AIR);
 
             terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, hitInfo.blockCoords.y >> 4);
+
+            if ((hitInfo.blockCoords.x & 15) == 0)
+                terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) - 1, hitInfo.blockCoords.y >> 4);
+            if ((hitInfo.blockCoords.x & 15) == 15)
+                terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) + 1, hitInfo.blockCoords.y >> 4);
+            if ((hitInfo.blockCoords.y & 15) == 0)
+                terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) - 1);
+            if ((hitInfo.blockCoords.y & 15) == 15)
+                terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) + 1);
         }
 
     if (event->getKeyPressed(GLFW_KEY_ESCAPE))

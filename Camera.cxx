@@ -17,8 +17,8 @@ void Camera::getHitInfo(HitInfo &hitInfo)
     glm::vec3 rayOrigin = gePositionInWorldCoords();
     glm::vec3 rayDir = forward;
 
-    float maxDistance = 100.0f; // Max ray distance
-    float stepSize = 0.1f;      // Step size along the ray
+    float maxDistance = 5.0f; // Max ray distance
+    float stepSize = 0.1f;
 
     for (float t = 0.0f; t < maxDistance; t += stepSize)
     {

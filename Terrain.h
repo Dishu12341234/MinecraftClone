@@ -6,6 +6,15 @@
 #include "GameObjectPool.h"
 #include "Chunk.h"
 #include <vector>
+#define RENDER_DISTANCE 1
+
+
+static auto chunkIndex = [](int x, int y) -> int
+{
+    int ix = x + RENDER_DISTANCE;
+    int iy = y + RENDER_DISTANCE;
+    return ix * (2 * RENDER_DISTANCE) + iy;
+};
 
 class Terrain
 {

@@ -52,6 +52,8 @@ Voxel *GameObjectPool::getVoxelGlobal(BlockCoordinates globalCoords)
     if (localZ < 0 || localZ >= 256)
         return nullptr;
 
+    
+
     for (auto &chunk : terrain->chunks)
     {
         if (chunk.chunkOffsetX == chunkX && chunk.chunkOffsetY == chunkY)

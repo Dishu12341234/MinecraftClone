@@ -1,7 +1,7 @@
 #include "Terrain.h"
 #include <iostream>
 #include <chrono>
-#define RENDER_DISTANCE 1
+
 
 Terrain::Terrain(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{vkContext}, gameObjectPool{gameObjectPool}
 {
@@ -35,17 +35,17 @@ void Terrain::draw(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, V
     }
 }
 
+
 void Terrain::updateChunkMesh(int chunkX, int chunkY)
 {
-    for (auto &chunk : chunks)
+    int idx = chunkIndex(chunkX, chunkY);
+    if(idx < 0 || idx >= chunks.size())
     {
-        if (chunk.chunkOffsetX == chunkX && chunk.chunkOffsetY == chunkY)
-        {
-            chunk.dirty = true;
-            chunk.updateChunkMesh();
-            break;
-        }
+        std::cerr << "Invalid chunk coordinates: (" << chunkX << ", " << chunkY << ")" << std::endl;
+        return;
     }
+    chunks.at(idx).dirty = true;
+    chunks.at(idx).updateChunkMesh();
 }
 
 void Terrain::handelDirtyChunks()
