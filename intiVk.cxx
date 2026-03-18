@@ -65,7 +65,10 @@ void HelloTriangleApplication::initVulkan()
 {
     createInstance();
     createSurface();
+
+    
     pickPhysicalDevice();
+    isDeviceSuitable(physicalDevice);
     createLogicalDevice();
     createSwapChain();
     createImageViews();
@@ -95,11 +98,22 @@ void HelloTriangleApplication::initVulkan()
     texturePassInfo.physicalDevice = physicalDevice;
     texturePassInfo.swapChainExtent = swapChainExtent;
 
+    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+    {
+        uiTextures.emplace_back();
+    }
+
     texture.passTextureCreateInfo(texturePassInfo);
+    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+    {
+        uiTextures.at(i).passTextureCreateInfo(texturePassInfo);
+    }
+
     createColorResources();
     createDepthResources();
     createFramebuffers();
     createCommandPool();
+
     texturePassInfo.graphicsQueue = graphicsQueue;
     texturePassInfo.renderPass = renderPass;
     texturePassInfo.commandPool = commandPool;
@@ -107,6 +121,12 @@ void HelloTriangleApplication::initVulkan()
     texturePassInfo.width = WIDTH;
     texturePassInfo.texturePath = TEXTURE_PATH;
     texture.passTextureCreateInfo(texturePassInfo);
+    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+    {
+        texturePassInfo.texturePath = "textures/Leo.png";
+        uiTextures.at(i).passTextureCreateInfo(texturePassInfo);
+    }
+
     loadModel();
     // createVertexBuffer();
     // createIndexBuffer();
@@ -118,6 +138,12 @@ void HelloTriangleApplication::initVulkan()
     texture.createTextureImage();
     texture.createTextureView();
     texture.createTextureSampler();
+    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+    {
+        uiTextures.at(i).createTextureImage();
+        uiTextures.at(i).createTextureView();
+        uiTextures.at(i).createTextureSampler();
+    }
 
     createDescriptorSets();
     createCommandBuffers();
@@ -377,6 +403,13 @@ void HelloTriangleApplication::createLogicalDevice()
     deviceFeatures.samplerAnisotropy = VK_TRUE;
     deviceFeatures.sampleRateShading = VK_TRUE;
 
+    // If you're on Vulkan 1.2, use VkPhysicalDeviceVulkan12Features instead:
+    VkPhysicalDeviceVulkan12Features vk12Features{};
+    vk12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    vk12Features.descriptorIndexing                        = VK_TRUE;
+    vk12Features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    vk12Features.pNext = nullptr;
+
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
@@ -384,12 +417,15 @@ void HelloTriangleApplication::createLogicalDevice()
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
     createInfo.pEnabledFeatures = &deviceFeatures;
+    createInfo.pNext = &vk12Features;
 
 #ifdef __APPLE__
     deviceExtensions.push_back("VK_KHR_portability_subset");
 #else
     deviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 #endif
+
+    deviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
@@ -422,6 +458,20 @@ bool HelloTriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
     QueueFamilyIndices indices = findQueueFamilies(device);
 
     bool extensionsSupported = checkDeviceExtensionSupport(device);
+
+    VkPhysicalDeviceDescriptorIndexingFeatures indexingSupport{};
+    indexingSupport.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+
+    VkPhysicalDeviceFeatures2 features2{};
+    features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features2.pNext = &indexingSupport;
+
+    vkGetPhysicalDeviceFeatures2(physicalDevice, &features2);
+
+    if (!indexingSupport.shaderSampledImageArrayNonUniformIndexing)
+    {
+        throw std::runtime_error("Device does not support non-uniform texture indexing!");
+    }
 
     bool swapChainAdequate = false;
     if (extensionsSupported)
@@ -635,11 +685,15 @@ void HelloTriangleApplication::createDescriptorPool()
 {
     std::cout << "Creating Descriptor Pool..." << std::endl;
 
-    std::array<VkDescriptorPoolSize, 2> poolSizes{};
+    std::array<VkDescriptorPoolSize, 3> poolSizes{};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+    poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSizes[2].descriptorCount = NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT); // uiTexturesBinding.descriptorCount = 16;
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -688,7 +742,15 @@ void HelloTriangleApplication::updateDescriptorSets(u_Texture &texture)
         imageInfo.imageView = texture.textureImageView;
         imageInfo.sampler = texture.textureSampler;
 
-        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+        std::vector<VkDescriptorImageInfo> imageInfos(NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES);
+        for (uint32_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+        {
+            imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfos[i].imageView = uiTextures[i].textureImageView; // your VkImageView array
+            imageInfos[i].sampler = uiTextures[i].textureSampler;
+        }
+
+        std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = descriptorSets[i];
@@ -706,7 +768,60 @@ void HelloTriangleApplication::updateDescriptorSets(u_Texture &texture)
         descriptorWrites[1].descriptorCount = 1;
         descriptorWrites[1].pImageInfo = &imageInfo;
 
+        descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[2].dstSet = descriptorSets[i];
+        descriptorWrites[2].dstBinding = 2;
+        descriptorWrites[2].dstArrayElement = 0;
+        descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[2].descriptorCount = NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES;
+        descriptorWrites[2].pImageInfo = imageInfos.data();
+
         vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+    }
+}
+
+void HelloTriangleApplication::createDescriptorSetLayout()
+{
+    std::cout << "Creating Descriptor Set Layout..." << std::endl;
+
+    VkDescriptorSetLayoutBinding uboLayoutBinding{};
+    uboLayoutBinding.binding = 0;
+    uboLayoutBinding.descriptorCount = 1;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.pImmutableSamplers = nullptr;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+    samplerLayoutBinding.binding = 1;
+    samplerLayoutBinding.descriptorCount = 1;
+    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerLayoutBinding.pImmutableSamplers = nullptr;
+    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    VkDescriptorSetLayoutBinding uiTexturesBinding{};
+    uiTexturesBinding.binding = 2;
+    uiTexturesBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    uiTexturesBinding.descriptorCount = NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES;
+    uiTexturesBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    uiTexturesBinding.pImmutableSamplers = nullptr;
+
+    VkDescriptorBindingFlags bindingFlags = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT;
+
+    VkDescriptorSetLayoutBindingFlagsCreateInfo flagsInfo{};
+    flagsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+    flagsInfo.bindingCount = 3;
+    flagsInfo.pBindingFlags = &bindingFlags;
+
+    std::array<VkDescriptorSetLayoutBinding, 3> bindings = {uboLayoutBinding, samplerLayoutBinding, uiTexturesBinding};
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+    layoutInfo.pBindings = bindings.data();
+    layoutInfo.pNext = nullptr;
+
+    if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create descriptor set layout!");
     }
 }
 

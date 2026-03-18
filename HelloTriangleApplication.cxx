@@ -37,8 +37,8 @@ void HelloTriangleApplication::drawFrame()
 
     terrain.value().handelDirtyChunks();
     
+    
     updateUniformBuffer(currentFrame);
-
     recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
     // 5️⃣ Submit the command buffer to the graphics queue
@@ -178,6 +178,11 @@ void HelloTriangleApplication::cleanup()
     vkDestroySwapchainKHR(device, swapChain, nullptr);
 
     texture.destroy();
+    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+    {
+        uiTextures.at(i).destroy();
+    }
+    
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {

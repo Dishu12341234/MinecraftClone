@@ -14,6 +14,8 @@
 #include "Terrain.h"
 #include "UI.h"
 
+#define NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES 16
+
 
 class Ray;
 class Camera;
@@ -27,6 +29,8 @@ private:
 
     std::optional<Terrain> terrain;
     std::optional<UI> ui;
+
+    std::vector<u_Texture> uiTextures;
 
     VkInstance instance;
     GLFWwindow *_window;

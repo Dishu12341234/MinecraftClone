@@ -101,7 +101,6 @@
 ./intiVk.cxx:#include <map>
 ./intiVk.cxx:#include <set>
 ./intiVk.cxx:
-./intiVk.cxx:
 ./intiVk.cxx:VkSampleCountFlagBits HelloTriangleApplication::getMaxUsableSampleCount()
 ./intiVk.cxx:{
 ./intiVk.cxx:    VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -155,7 +154,10 @@
 ./intiVk.cxx:{
 ./intiVk.cxx:    createInstance();
 ./intiVk.cxx:    createSurface();
+./intiVk.cxx:
+./intiVk.cxx:    
 ./intiVk.cxx:    pickPhysicalDevice();
+./intiVk.cxx:    isDeviceSuitable(physicalDevice);
 ./intiVk.cxx:    createLogicalDevice();
 ./intiVk.cxx:    createSwapChain();
 ./intiVk.cxx:    createImageViews();
@@ -178,16 +180,29 @@
 ./intiVk.cxx:    rayGraphicsPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
 ./intiVk.cxx:    rayGraphicsPipeline.createGraphicsPipeline();
 ./intiVk.cxx:
+./intiVk.cxx:    uiRenderPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
+./intiVk.cxx:    uiRenderPipeline.createGraphicsPipeline();
 ./intiVk.cxx:    u_TexturePassInfo texturePassInfo{};
 ./intiVk.cxx:    texturePassInfo.device = device;
 ./intiVk.cxx:    texturePassInfo.physicalDevice = physicalDevice;
 ./intiVk.cxx:    texturePassInfo.swapChainExtent = swapChainExtent;
 ./intiVk.cxx:
+./intiVk.cxx:    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+./intiVk.cxx:    {
+./intiVk.cxx:        uiTextures.emplace_back();
+./intiVk.cxx:    }
+./intiVk.cxx:
 ./intiVk.cxx:    texture.passTextureCreateInfo(texturePassInfo);
+./intiVk.cxx:    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+./intiVk.cxx:    {
+./intiVk.cxx:        uiTextures.at(i).passTextureCreateInfo(texturePassInfo);
+./intiVk.cxx:    }
+./intiVk.cxx:
 ./intiVk.cxx:    createColorResources();
 ./intiVk.cxx:    createDepthResources();
 ./intiVk.cxx:    createFramebuffers();
 ./intiVk.cxx:    createCommandPool();
+./intiVk.cxx:
 ./intiVk.cxx:    texturePassInfo.graphicsQueue = graphicsQueue;
 ./intiVk.cxx:    texturePassInfo.renderPass = renderPass;
 ./intiVk.cxx:    texturePassInfo.commandPool = commandPool;
@@ -195,6 +210,12 @@
 ./intiVk.cxx:    texturePassInfo.width = WIDTH;
 ./intiVk.cxx:    texturePassInfo.texturePath = TEXTURE_PATH;
 ./intiVk.cxx:    texture.passTextureCreateInfo(texturePassInfo);
+./intiVk.cxx:    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+./intiVk.cxx:    {
+./intiVk.cxx:        texturePassInfo.texturePath = "textures/Leo.png";
+./intiVk.cxx:        uiTextures.at(i).passTextureCreateInfo(texturePassInfo);
+./intiVk.cxx:    }
+./intiVk.cxx:
 ./intiVk.cxx:    loadModel();
 ./intiVk.cxx:    // createVertexBuffer();
 ./intiVk.cxx:    // createIndexBuffer();
@@ -206,6 +227,12 @@
 ./intiVk.cxx:    texture.createTextureImage();
 ./intiVk.cxx:    texture.createTextureView();
 ./intiVk.cxx:    texture.createTextureSampler();
+./intiVk.cxx:    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+./intiVk.cxx:    {
+./intiVk.cxx:        uiTextures.at(i).createTextureImage();
+./intiVk.cxx:        uiTextures.at(i).createTextureView();
+./intiVk.cxx:        uiTextures.at(i).createTextureSampler();
+./intiVk.cxx:    }
 ./intiVk.cxx:
 ./intiVk.cxx:    createDescriptorSets();
 ./intiVk.cxx:    createCommandBuffers();
@@ -465,6 +492,13 @@
 ./intiVk.cxx:    deviceFeatures.samplerAnisotropy = VK_TRUE;
 ./intiVk.cxx:    deviceFeatures.sampleRateShading = VK_TRUE;
 ./intiVk.cxx:
+./intiVk.cxx:    // If you're on Vulkan 1.2, use VkPhysicalDeviceVulkan12Features instead:
+./intiVk.cxx:    VkPhysicalDeviceVulkan12Features vk12Features{};
+./intiVk.cxx:    vk12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+./intiVk.cxx:    vk12Features.descriptorIndexing                        = VK_TRUE;
+./intiVk.cxx:    vk12Features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+./intiVk.cxx:    vk12Features.pNext = nullptr;
+./intiVk.cxx:
 ./intiVk.cxx:    VkDeviceCreateInfo createInfo{};
 ./intiVk.cxx:    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 ./intiVk.cxx:
@@ -472,12 +506,15 @@
 ./intiVk.cxx:    createInfo.pQueueCreateInfos = queueCreateInfos.data();
 ./intiVk.cxx:
 ./intiVk.cxx:    createInfo.pEnabledFeatures = &deviceFeatures;
+./intiVk.cxx:    createInfo.pNext = &vk12Features;
 ./intiVk.cxx:
 ./intiVk.cxx:#ifdef __APPLE__
 ./intiVk.cxx:    deviceExtensions.push_back("VK_KHR_portability_subset");
 ./intiVk.cxx:#else
 ./intiVk.cxx:    deviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 ./intiVk.cxx:#endif
+./intiVk.cxx:
+./intiVk.cxx:    deviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 ./intiVk.cxx:
 ./intiVk.cxx:    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 ./intiVk.cxx:    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
@@ -510,6 +547,20 @@
 ./intiVk.cxx:    QueueFamilyIndices indices = findQueueFamilies(device);
 ./intiVk.cxx:
 ./intiVk.cxx:    bool extensionsSupported = checkDeviceExtensionSupport(device);
+./intiVk.cxx:
+./intiVk.cxx:    VkPhysicalDeviceDescriptorIndexingFeatures indexingSupport{};
+./intiVk.cxx:    indexingSupport.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+./intiVk.cxx:
+./intiVk.cxx:    VkPhysicalDeviceFeatures2 features2{};
+./intiVk.cxx:    features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+./intiVk.cxx:    features2.pNext = &indexingSupport;
+./intiVk.cxx:
+./intiVk.cxx:    vkGetPhysicalDeviceFeatures2(physicalDevice, &features2);
+./intiVk.cxx:
+./intiVk.cxx:    if (!indexingSupport.shaderSampledImageArrayNonUniformIndexing)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("Device does not support non-uniform texture indexing!");
+./intiVk.cxx:    }
 ./intiVk.cxx:
 ./intiVk.cxx:    bool swapChainAdequate = false;
 ./intiVk.cxx:    if (extensionsSupported)
@@ -649,7 +700,6 @@
 ./intiVk.cxx:#endif
 ./intiVk.cxx:}
 ./intiVk.cxx:
-./intiVk.cxx:
 ./intiVk.cxx:// here we are using a staging buffer which is accisible by the CPU and then afterwards copying the contents of the staging buffer to the vertex buffer
 ./intiVk.cxx:void HelloTriangleApplication::createVertexBuffer()
 ./intiVk.cxx:{
@@ -724,11 +774,15 @@
 ./intiVk.cxx:{
 ./intiVk.cxx:    std::cout << "Creating Descriptor Pool..." << std::endl;
 ./intiVk.cxx:
-./intiVk.cxx:    std::array<VkDescriptorPoolSize, 2> poolSizes{};
+./intiVk.cxx:    std::array<VkDescriptorPoolSize, 3> poolSizes{};
 ./intiVk.cxx:    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 ./intiVk.cxx:    poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:
 ./intiVk.cxx:    poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 ./intiVk.cxx:    poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+./intiVk.cxx:
+./intiVk.cxx:    poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+./intiVk.cxx:    poolSizes[2].descriptorCount = NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT); // uiTexturesBinding.descriptorCount = 16;
 ./intiVk.cxx:
 ./intiVk.cxx:    VkDescriptorPoolCreateInfo poolInfo{};
 ./intiVk.cxx:    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -759,6 +813,12 @@
 ./intiVk.cxx:        throw std::runtime_error("failed to allocate descriptor sets!");
 ./intiVk.cxx:    }
 ./intiVk.cxx:
+./intiVk.cxx:    updateDescriptorSets(texture);
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::updateDescriptorSets(u_Texture &texture)
+./intiVk.cxx:{
+./intiVk.cxx:
 ./intiVk.cxx:    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 ./intiVk.cxx:    {
 ./intiVk.cxx:        VkDescriptorBufferInfo bufferInfo{};
@@ -771,7 +831,15 @@
 ./intiVk.cxx:        imageInfo.imageView = texture.textureImageView;
 ./intiVk.cxx:        imageInfo.sampler = texture.textureSampler;
 ./intiVk.cxx:
-./intiVk.cxx:        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+./intiVk.cxx:        std::vector<VkDescriptorImageInfo> imageInfos(NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES);
+./intiVk.cxx:        for (uint32_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+./intiVk.cxx:        {
+./intiVk.cxx:            imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+./intiVk.cxx:            imageInfos[i].imageView = uiTextures[i].textureImageView; // your VkImageView array
+./intiVk.cxx:            imageInfos[i].sampler = uiTextures[i].textureSampler;
+./intiVk.cxx:        }
+./intiVk.cxx:
+./intiVk.cxx:        std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 ./intiVk.cxx:
 ./intiVk.cxx:        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 ./intiVk.cxx:        descriptorWrites[0].dstSet = descriptorSets[i];
@@ -789,7 +857,60 @@
 ./intiVk.cxx:        descriptorWrites[1].descriptorCount = 1;
 ./intiVk.cxx:        descriptorWrites[1].pImageInfo = &imageInfo;
 ./intiVk.cxx:
+./intiVk.cxx:        descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+./intiVk.cxx:        descriptorWrites[2].dstSet = descriptorSets[i];
+./intiVk.cxx:        descriptorWrites[2].dstBinding = 2;
+./intiVk.cxx:        descriptorWrites[2].dstArrayElement = 0;
+./intiVk.cxx:        descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+./intiVk.cxx:        descriptorWrites[2].descriptorCount = NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES;
+./intiVk.cxx:        descriptorWrites[2].pImageInfo = imageInfos.data();
+./intiVk.cxx:
 ./intiVk.cxx:        vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+./intiVk.cxx:    }
+./intiVk.cxx:}
+./intiVk.cxx:
+./intiVk.cxx:void HelloTriangleApplication::createDescriptorSetLayout()
+./intiVk.cxx:{
+./intiVk.cxx:    std::cout << "Creating Descriptor Set Layout..." << std::endl;
+./intiVk.cxx:
+./intiVk.cxx:    VkDescriptorSetLayoutBinding uboLayoutBinding{};
+./intiVk.cxx:    uboLayoutBinding.binding = 0;
+./intiVk.cxx:    uboLayoutBinding.descriptorCount = 1;
+./intiVk.cxx:    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+./intiVk.cxx:    uboLayoutBinding.pImmutableSamplers = nullptr;
+./intiVk.cxx:    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+./intiVk.cxx:
+./intiVk.cxx:    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+./intiVk.cxx:    samplerLayoutBinding.binding = 1;
+./intiVk.cxx:    samplerLayoutBinding.descriptorCount = 1;
+./intiVk.cxx:    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+./intiVk.cxx:    samplerLayoutBinding.pImmutableSamplers = nullptr;
+./intiVk.cxx:    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+./intiVk.cxx:
+./intiVk.cxx:    VkDescriptorSetLayoutBinding uiTexturesBinding{};
+./intiVk.cxx:    uiTexturesBinding.binding = 2;
+./intiVk.cxx:    uiTexturesBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+./intiVk.cxx:    uiTexturesBinding.descriptorCount = NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES;
+./intiVk.cxx:    uiTexturesBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+./intiVk.cxx:    uiTexturesBinding.pImmutableSamplers = nullptr;
+./intiVk.cxx:
+./intiVk.cxx:    VkDescriptorBindingFlags bindingFlags = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT;
+./intiVk.cxx:
+./intiVk.cxx:    VkDescriptorSetLayoutBindingFlagsCreateInfo flagsInfo{};
+./intiVk.cxx:    flagsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+./intiVk.cxx:    flagsInfo.bindingCount = 3;
+./intiVk.cxx:    flagsInfo.pBindingFlags = &bindingFlags;
+./intiVk.cxx:
+./intiVk.cxx:    std::array<VkDescriptorSetLayoutBinding, 3> bindings = {uboLayoutBinding, samplerLayoutBinding, uiTexturesBinding};
+./intiVk.cxx:    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+./intiVk.cxx:    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+./intiVk.cxx:    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+./intiVk.cxx:    layoutInfo.pBindings = bindings.data();
+./intiVk.cxx:    layoutInfo.pNext = nullptr;
+./intiVk.cxx:
+./intiVk.cxx:    if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+./intiVk.cxx:    {
+./intiVk.cxx:        throw std::runtime_error("failed to create descriptor set layout!");
 ./intiVk.cxx:    }
 ./intiVk.cxx:}
 ./intiVk.cxx:
@@ -839,7 +960,8 @@
 ./intiVk.cxx:        throw std::runtime_error("failed to allocate command buffers");
 ./intiVk.cxx:    }
 ./intiVk.cxx:}
-./intiVk.cxx:void HelloTriangleApplication::createSyncObject() {
+./intiVk.cxx:void HelloTriangleApplication::createSyncObject()
+./intiVk.cxx:{
 ./intiVk.cxx:    // 1️⃣ Per-frame semaphores for acquiring images
 ./intiVk.cxx:    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 ./intiVk.cxx:
@@ -857,21 +979,24 @@
 ./intiVk.cxx:    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT; // start signaled
 ./intiVk.cxx:
 ./intiVk.cxx:    // Create per-frame semaphores and fences
-./intiVk.cxx:    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+./intiVk.cxx:    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+./intiVk.cxx:    {
 ./intiVk.cxx:        if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-./intiVk.cxx:            vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+./intiVk.cxx:            vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
+./intiVk.cxx:        {
 ./intiVk.cxx:            throw std::runtime_error("failed to create semaphore or fence!");
 ./intiVk.cxx:        }
 ./intiVk.cxx:    }
 ./intiVk.cxx:
 ./intiVk.cxx:    // Create per-swapchain-image render-finished semaphores
-./intiVk.cxx:    for (size_t i = 0; i < swapChainImages.size(); i++) {
-./intiVk.cxx:        if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS) {
+./intiVk.cxx:    for (size_t i = 0; i < swapChainImages.size(); i++)
+./intiVk.cxx:    {
+./intiVk.cxx:        if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS)
+./intiVk.cxx:        {
 ./intiVk.cxx:            throw std::runtime_error("failed to create renderFinished semaphore!");
 ./intiVk.cxx:        }
 ./intiVk.cxx:    }
 ./intiVk.cxx:}
-./intiVk.cxx:
 ./Camera.h:#ifndef CAMERA_H
 ./Camera.h:#define CAMERA_H
 ./Camera.h:
@@ -879,7 +1004,7 @@
 ./Camera.h:#include "Event.h"
 ./Camera.h:#include "GameObjectPool.h"
 ./Camera.h:#include "Ray.h"
-./Camera.h:
+./Camera.h:#include "UI.h"
 ./Camera.h:
 ./Camera.h:struct HitInfo
 ./Camera.h:{
@@ -901,16 +1026,17 @@
 ./Camera.h:
 ./Camera.h:    Ray cameraRay;
 ./Camera.h:
-./Camera.h:    
-./Camera.h:    public:
+./Camera.h:public:
 ./Camera.h:    void getHitInfo(HitInfo &hitInfo);
-./Camera.h:    Camera(VulkanContext& vkContext, GameObjectPool &gop);
+./Camera.h:    Camera(VulkanContext &vkContext, GameObjectPool &gop);
 ./Camera.h:    void updateUBO(UniformBufferObject &UBO, VkExtent2D &swapChainExtent, Event &event);
 ./Camera.h:    glm::vec3 gePositionInWorldCoords();
 ./Camera.h:    void cleanup();
 ./Camera.h:
 ./Camera.h:    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
 ./Camera.h:              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
+./Camera.h:
+./Camera.h:    void drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui);
 ./Camera.h:
 ./Camera.h:    ~Camera();
 ./Camera.h:};
@@ -925,13 +1051,19 @@
 ./HelloTriangleApplication.hpp:#include "Textures.hpp"
 ./HelloTriangleApplication.hpp:#include "GraphicsPipeline.h"
 ./HelloTriangleApplication.hpp:#include "RayGraphicsPipeline.h"
-./HelloTriangleApplication.hpp:#include "GameObjectPool.h"
+./HelloTriangleApplication.hpp:#include "UIRenderPipeline.h"
+./HelloTriangleApplication.hpp:#include "UIComponents.h"
+./HelloTriangleApplication.hpp:#include "GameObjectPool.h" 
 ./HelloTriangleApplication.hpp:#include "Event.h"
 ./HelloTriangleApplication.hpp:#include "Terrain.h"
+./HelloTriangleApplication.hpp:#include "UI.h"
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:#define NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES 16
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:class Ray;
 ./HelloTriangleApplication.hpp:class Camera;
+./HelloTriangleApplication.hpp:class UI;
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:class HelloTriangleApplication
 ./HelloTriangleApplication.hpp:{
@@ -940,6 +1072,10 @@
 ./HelloTriangleApplication.hpp:    std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    std::optional<Terrain> terrain;
+./HelloTriangleApplication.hpp:    std::optional<UI> ui;
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::vector<u_Texture> uiTextures;
+./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    VkInstance instance;
 ./HelloTriangleApplication.hpp:    GLFWwindow *_window;
 ./HelloTriangleApplication.hpp:
@@ -1051,6 +1187,8 @@
 ./HelloTriangleApplication.hpp:    u_GraphicsPipeline graphicsPipeline;
 ./HelloTriangleApplication.hpp:    RayGraphicsPipeline rayGraphicsPipeline;
 ./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    UIRenderPipeline uiRenderPipeline;
+./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    void initGameObjects();
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    void createFramebuffers();
@@ -1071,6 +1209,7 @@
 ./HelloTriangleApplication.hpp:    VkDescriptorPool descriptorPool;
 ./HelloTriangleApplication.hpp:    std::vector<VkDescriptorSet> descriptorSets;
 ./HelloTriangleApplication.hpp:    void createDescriptorSets();
+./HelloTriangleApplication.hpp:    void updateDescriptorSets(u_Texture &texture);
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBufferm, VkDeviceSize size);
 ./HelloTriangleApplication.hpp:    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -1126,6 +1265,8 @@
 ./Event.cxx:{
 ./Event.cxx:    glfwSetKeyCallback(&window, Event::keyPressedCallback);
 ./Event.cxx:    glfwSetCursorPosCallback(&window, Event::cursorPositionCallback);
+./Event.cxx:    glfwSetMouseButtonCallback(&window, Event::mouseButtonCallback);
+./Event.cxx:
 ./Event.cxx:    if (glfwRawMouseMotionSupported())
 ./Event.cxx:    {
 ./Event.cxx:        glfwSetInputMode(&window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
@@ -1179,6 +1320,24 @@
 ./Event.cxx:
 ./Event.cxx:Event::~Event()
 ./Event.cxx:{
+./Event.cxx:}
+./Event.cxx:
+./Event.cxx:void Event::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+./Event.cxx:{
+./Event.cxx:    Event *event = static_cast<Event *>(glfwGetWindowUserPointer(window));
+./Event.cxx:    if (!event)
+./Event.cxx:        return;
+./Event.cxx:
+./Event.cxx:    event->mouseButtonDown = button;
+./Event.cxx:    event->mouseButtonAction = action;
+./Event.cxx:}
+./Event.cxx:
+./Event.cxx:bool Event::getMouseButtonPressed(int button)
+./Event.cxx:{
+./Event.cxx:    if(button == mouseButtonDown)
+./Event.cxx:        return (mouseButtonAction == GLFW_PRESS);
+./Event.cxx:
+./Event.cxx:    return false;
 ./Event.cxx:}
 ./PassInfo.hpp:#ifndef PASSINFO_HPP
 ./PassInfo.hpp:#define PASSINFO_HPP
@@ -2087,6 +2246,15 @@
 ./Terrain.h:#include "GameObjectPool.h"
 ./Terrain.h:#include "Chunk.h"
 ./Terrain.h:#include <vector>
+./Terrain.h:#define RENDER_DISTANCE 1
+./Terrain.h:
+./Terrain.h:
+./Terrain.h:static auto chunkIndex = [](int x, int y) -> int
+./Terrain.h:{
+./Terrain.h:    int ix = x + RENDER_DISTANCE;
+./Terrain.h:    int iy = y + RENDER_DISTANCE;
+./Terrain.h:    return ix * (2 * RENDER_DISTANCE) + iy;
+./Terrain.h:};
 ./Terrain.h:
 ./Terrain.h:class Terrain
 ./Terrain.h:{
@@ -2127,6 +2295,22 @@
 ./utils.h:{
 ./utils.h:    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory, VulkanContext &vkContext);
 ./utils.h:    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VulkanContext &vkContext);
+./utils.h:    inline int signum(int x)
+./utils.h:    {
+./utils.h:        if (x > 0)
+./utils.h:        {
+./utils.h:            return 1;
+./utils.h:        }
+./utils.h:        else if (x < 0)
+./utils.h:        {
+./utils.h:            return -1;
+./utils.h:        }
+./utils.h:        else
+./utils.h:        {
+./utils.h:            return 0;
+./utils.h:        }
+./utils.h:    }
+./utils.h:
 ./utils.h:} // namespace utils
 ./Voxel.h:#pragma once
 ./Voxel.h:#include "PassInfo.hpp"
@@ -2155,6 +2339,7 @@
 ./Voxel.h:    ~Voxel();
 ./Voxel.h:};
 ./HelloTriangleApplication.cxx:#include "HelloTriangleApplication.hpp"
+./HelloTriangleApplication.cxx:#include <iostream>
 ./HelloTriangleApplication.cxx:#include "Camera.h"
 ./HelloTriangleApplication.cxx:#include "Ray.h"
 ./HelloTriangleApplication.cxx:
@@ -2188,15 +2373,13 @@
 ./HelloTriangleApplication.cxx:        throw std::runtime_error("failed to acquire swap chain image!");
 ./HelloTriangleApplication.cxx:    }
 ./HelloTriangleApplication.cxx:
-./HelloTriangleApplication.cxx:    // 3️⃣ Reset the command buffer for this frame
 ./HelloTriangleApplication.cxx:    vkResetCommandBuffer(commandBuffers[currentFrame], 0); // or VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
 ./HelloTriangleApplication.cxx:
-./HelloTriangleApplication.cxx:    // 4️⃣ Record drawing commands into the command buffer
-./HelloTriangleApplication.cxx:    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
-./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    terrain.value().handelDirtyChunks();
+./HelloTriangleApplication.cxx:    
 ./HelloTriangleApplication.cxx:    updateUniformBuffer(currentFrame);
 ./HelloTriangleApplication.cxx:
-./HelloTriangleApplication.cxx:    terrain.value().handelDirtyChunks();
+./HelloTriangleApplication.cxx:    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    // 5️⃣ Submit the command buffer to the graphics queue
 ./HelloTriangleApplication.cxx:    VkSubmitInfo submitInfo{};
@@ -2271,8 +2454,10 @@
 ./HelloTriangleApplication.cxx:    
 ./HelloTriangleApplication.cxx:    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
 ./HelloTriangleApplication.cxx:    camera->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
-./HelloTriangleApplication.cxx:    // 
-./HelloTriangleApplication.cxx:    // gameObjectPool.drawIndexed(commandBuffer, descriptorSets, graphicsPipeline, swapChainExtent, 3, currentFrame);
+./HelloTriangleApplication.cxx:    
+./HelloTriangleApplication.cxx:    
+./HelloTriangleApplication.cxx:    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, uiRenderPipeline.graphicsPipeline);
+./HelloTriangleApplication.cxx:    camera->drawUI(commandBuffer, uiRenderPipeline.pipelineLayout, uiRenderPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, ui.value());
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    vkCmdEndRenderPass(commandBuffer);
 ./HelloTriangleApplication.cxx:
@@ -2289,6 +2474,7 @@
 ./HelloTriangleApplication.cxx:    gameObjectPool.cleanUpResources();
 ./HelloTriangleApplication.cxx:    terrain.value().cleanup();
 ./HelloTriangleApplication.cxx:    camera->cleanup();
+./HelloTriangleApplication.cxx:    ui->cleanup();
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    vkDestroyBuffer(device, indexBuffer, nullptr);
 ./HelloTriangleApplication.cxx:    vkFreeMemory(device, indexBufferMemory, nullptr);
@@ -2316,6 +2502,7 @@
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    graphicsPipeline.destroyPipelineLayout();
 ./HelloTriangleApplication.cxx:    rayGraphicsPipeline.destroyPipelineLayout();
+./HelloTriangleApplication.cxx:    uiRenderPipeline.destroyPipelineLayout();
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    vkDestroyRenderPass(device, renderPass, nullptr);
 ./HelloTriangleApplication.cxx:
@@ -2331,6 +2518,11 @@
 ./HelloTriangleApplication.cxx:    vkDestroySwapchainKHR(device, swapChain, nullptr);
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    texture.destroy();
+./HelloTriangleApplication.cxx:    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+./HelloTriangleApplication.cxx:    {
+./HelloTriangleApplication.cxx:        uiTextures.at(i).destroy();
+./HelloTriangleApplication.cxx:    }
+./HelloTriangleApplication.cxx:    
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 ./HelloTriangleApplication.cxx:    {
@@ -2347,6 +2539,9 @@
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    glfwDestroyWindow(_window);
 ./HelloTriangleApplication.cxx:    glfwTerminate();
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:
+./HelloTriangleApplication.cxx:    std::cout << "Byeeeee :)" << std::endl;
 ./HelloTriangleApplication.cxx:}
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:HelloTriangleApplication::HelloTriangleApplication()
@@ -2381,7 +2576,6 @@
 ./intiVK2.cxx:#include <chrono>
 ./intiVK2.cxx:#include <map>
 ./intiVK2.cxx:#include <set>
-./intiVK2.cxx:
 ./intiVK2.cxx:
 ./intiVK2.cxx:#define TINYOBJLOADER_IMPLEMENTATION
 ./intiVK2.cxx:#include "include/tinyobjloader/tiny_obj_loader.h"
@@ -2629,36 +2823,6 @@
 ./intiVK2.cxx:    vkQueueWaitIdle(graphicsQueue);
 ./intiVK2.cxx:
 ./intiVK2.cxx:    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-./intiVK2.cxx:}
-./intiVK2.cxx:
-./intiVK2.cxx:void HelloTriangleApplication::createDescriptorSetLayout()
-./intiVK2.cxx:{
-./intiVK2.cxx:    std::cout << "Creating Descriptor Set Layout..." << std::endl;
-./intiVK2.cxx:
-./intiVK2.cxx:    VkDescriptorSetLayoutBinding uboLayoutBinding{};
-./intiVK2.cxx:    uboLayoutBinding.binding = 0;
-./intiVK2.cxx:    uboLayoutBinding.descriptorCount = 1;
-./intiVK2.cxx:    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-./intiVK2.cxx:    uboLayoutBinding.pImmutableSamplers = nullptr;
-./intiVK2.cxx:    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-./intiVK2.cxx:
-./intiVK2.cxx:    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-./intiVK2.cxx:    samplerLayoutBinding.binding = 1;
-./intiVK2.cxx:    samplerLayoutBinding.descriptorCount = 1;
-./intiVK2.cxx:    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-./intiVK2.cxx:    samplerLayoutBinding.pImmutableSamplers = nullptr;
-./intiVK2.cxx:    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-./intiVK2.cxx:
-./intiVK2.cxx:    std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
-./intiVK2.cxx:    VkDescriptorSetLayoutCreateInfo layoutInfo{};
-./intiVK2.cxx:    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-./intiVK2.cxx:    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-./intiVK2.cxx:    layoutInfo.pBindings = bindings.data();
-./intiVK2.cxx:
-./intiVK2.cxx:    if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
-./intiVK2.cxx:    {
-./intiVK2.cxx:        throw std::runtime_error("failed to create descriptor set layout!");
-./intiVK2.cxx:    }
 ./intiVK2.cxx:}
 ./intiVK2.cxx:
 ./intiVK2.cxx:// ----creating framebuffers----
@@ -3024,9 +3188,9 @@
 ./Chunk.cxx:
 ./Chunk.cxx:    for (int z = 0; z < 256; z++)
 ./Chunk.cxx:    {
-./Chunk.cxx:        for (int y = 0; y < 16; y++)
+./Chunk.cxx:        for (int x = 0; x < 16; x++)
 ./Chunk.cxx:        {
-./Chunk.cxx:            for (int x = 0; x < 16; x++)
+./Chunk.cxx:            for (int y = 0; y < 16; y++)
 ./Chunk.cxx:            {
 ./Chunk.cxx:                int blockType;
 ./Chunk.cxx:
@@ -3131,8 +3295,9 @@
 ./Chunk.cxx:            for (int y = 0; y < 16; y++)
 ./Chunk.cxx:            {
 ./Chunk.cxx:                const int idx = z * 256 + x + y * 16;
-./Chunk.cxx:                const BlockType type = voxels[idx].getBlockType();
-./Chunk.cxx:                const int *faceTexture = voxels[idx].faceTexture;
+./Chunk.cxx:                    
+./Chunk.cxx:                const BlockType type = voxels.at(idx).getBlockType();
+./Chunk.cxx:                const int *faceTexture = voxels.at(idx).faceTexture;
 ./Chunk.cxx:
 ./Chunk.cxx:                if (type == AIR)
 ./Chunk.cxx:                    continue;
@@ -3281,6 +3446,8 @@
 ./GameObjectPool.cxx:    if (localZ < 0 || localZ >= 256)
 ./GameObjectPool.cxx:        return nullptr;
 ./GameObjectPool.cxx:
+./GameObjectPool.cxx:    
+./GameObjectPool.cxx:
 ./GameObjectPool.cxx:    for (auto &chunk : terrain->chunks)
 ./GameObjectPool.cxx:    {
 ./GameObjectPool.cxx:        if (chunk.chunkOffsetX == chunkX && chunk.chunkOffsetY == chunkY)
@@ -3374,6 +3541,216 @@
 ./Structs.h:    bool front;
 ./Structs.h:    bool back;
 ./Structs.h:};
+./UIRenderPipeline.cxx:#include "UIRenderPipeline.h"
+./UIRenderPipeline.cxx:#include <iostream>
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:UIRenderPipeline::UIRenderPipeline()
+./UIRenderPipeline.cxx:{
+./UIRenderPipeline.cxx:}
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:void UIRenderPipeline::createGraphicsPipeline()
+./UIRenderPipeline.cxx:{
+./UIRenderPipeline.cxx:    std::cout << "Creating UI Graphics Pipeline..." << std::endl;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    auto vertShaderCode = readFile("shaders/simple_shader_ui_v.spv");
+./UIRenderPipeline.cxx:    auto fragShaderCode = readFile("shaders/simple_shader_ui_f.spv");
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+./UIRenderPipeline.cxx:    VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    // shaderStageCreation
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+./UIRenderPipeline.cxx:    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+./UIRenderPipeline.cxx:    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT; // telling vulkan 'which stage must this shader go'
+./UIRenderPipeline.cxx:    vertShaderStageInfo.module = vertShaderModule;
+./UIRenderPipeline.cxx:    vertShaderStageInfo.pName = "main";
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+./UIRenderPipeline.cxx:    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+./UIRenderPipeline.cxx:    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+./UIRenderPipeline.cxx:    fragShaderStageInfo.module = fragShaderModule;
+./UIRenderPipeline.cxx:    fragShaderStageInfo.pName = "main";
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    auto bindingDescription = UIVertex::getBindingDescription();
+./UIRenderPipeline.cxx:    auto attributeDescriptions = UIVertex::getAttributeDescriptions();
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+./UIRenderPipeline.cxx:    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+./UIRenderPipeline.cxx:    vertexInputInfo.vertexBindingDescriptionCount = 1;
+./UIRenderPipeline.cxx:    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+./UIRenderPipeline.cxx:    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+./UIRenderPipeline.cxx:    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    // input assembly
+./UIRenderPipeline.cxx:    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+./UIRenderPipeline.cxx:    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+./UIRenderPipeline.cxx:    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+./UIRenderPipeline.cxx:    inputAssembly.primitiveRestartEnable = VK_FALSE;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    // viewport and scissors
+./UIRenderPipeline.cxx:    VkViewport viewport{};
+./UIRenderPipeline.cxx:    viewport.x = .0f;
+./UIRenderPipeline.cxx:    viewport.y = .0f;
+./UIRenderPipeline.cxx:    viewport.width = (float)swapChainExtent.width;
+./UIRenderPipeline.cxx:    viewport.height = (float)swapChainExtent.height; // this swapchain is used as a framebuffer hensforth using it as the size for our viewport
+./UIRenderPipeline.cxx:    viewport.minDepth = .0f;
+./UIRenderPipeline.cxx:    viewport.maxDepth = 1.0f;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    VkRect2D scissor{};
+./UIRenderPipeline.cxx:    scissor.offset = {0, 0};
+./UIRenderPipeline.cxx:    scissor.extent = swapChainExtent;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    // //dyanmic scissor and viewport
+./UIRenderPipeline.cxx:    // std::vector<VkDynamicState> dynamicStates =
+./UIRenderPipeline.cxx:    // {
+./UIRenderPipeline.cxx:    //     VK_DYNAMIC_STATE_VIEWPORT,
+./UIRenderPipeline.cxx:    //     VK_DYNAMIC_STATE_SCISSOR
+./UIRenderPipeline.cxx:    // };
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    // VkPipelineDynamicStateCreateInfo dynamicState{};
+./UIRenderPipeline.cxx:    // dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+./UIRenderPipeline.cxx:    // dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+./UIRenderPipeline.cxx:    // dynamicState.pDynamicStates = dynamicStates.data();
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    VkPipelineViewportStateCreateInfo viewportState{};
+./UIRenderPipeline.cxx:    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+./UIRenderPipeline.cxx:    viewportState.viewportCount = 1;
+./UIRenderPipeline.cxx:    viewportState.pViewports = &viewport;
+./UIRenderPipeline.cxx:    viewportState.scissorCount = 1;
+./UIRenderPipeline.cxx:    viewportState.pScissors = &scissor;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    // Rasterizer
+./UIRenderPipeline.cxx:    VkPipelineRasterizationStateCreateInfo rasterizer{};
+./UIRenderPipeline.cxx:    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+./UIRenderPipeline.cxx:    rasterizer.depthClampEnable = VK_FALSE;
+./UIRenderPipeline.cxx:    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+./UIRenderPipeline.cxx:    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    rasterizer.lineWidth = 1.0f;
+./UIRenderPipeline.cxx:    rasterizer.cullMode = VK_CULL_MODE_NONE;
+./UIRenderPipeline.cxx:    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    rasterizer.depthBiasEnable = VK_FALSE;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    // MSSA(disabled for now)
+./UIRenderPipeline.cxx:    VkPipelineMultisampleStateCreateInfo multisampling{};
+./UIRenderPipeline.cxx:    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+./UIRenderPipeline.cxx:    multisampling.sampleShadingEnable = VK_TRUE;
+./UIRenderPipeline.cxx:    multisampling.rasterizationSamples = msaaSamples;
+./UIRenderPipeline.cxx:    multisampling.minSampleShading = .2f;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    VkPipelineDepthStencilStateCreateInfo depthStencil{};
+./UIRenderPipeline.cxx:    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+./UIRenderPipeline.cxx:    depthStencil.depthTestEnable = VK_TRUE;
+./UIRenderPipeline.cxx:    depthStencil.depthWriteEnable = VK_TRUE;
+./UIRenderPipeline.cxx:    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+./UIRenderPipeline.cxx:    depthStencil.depthBoundsTestEnable = VK_FALSE;
+./UIRenderPipeline.cxx:    depthStencil.minDepthBounds = 0.0f; // Optional
+./UIRenderPipeline.cxx:    depthStencil.maxDepthBounds = 1.0f; // Optional
+./UIRenderPipeline.cxx:    depthStencil.stencilTestEnable = VK_FALSE;
+./UIRenderPipeline.cxx:    depthStencil.front = {}; // Optional
+./UIRenderPipeline.cxx:    depthStencil.back = {};  // Optional
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    /// color blending
+./UIRenderPipeline.cxx:    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+./UIRenderPipeline.cxx:    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+./UIRenderPipeline.cxx:    colorBlendAttachment.blendEnable = VK_FALSE;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    VkPipelineColorBlendStateCreateInfo colorBlending{};
+./UIRenderPipeline.cxx:    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+./UIRenderPipeline.cxx:    colorBlending.logicOpEnable = VK_FALSE;
+./UIRenderPipeline.cxx:    colorBlending.attachmentCount = 1;
+./UIRenderPipeline.cxx:    colorBlending.pAttachments = &colorBlendAttachment;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    // Pipeline Layout
+./UIRenderPipeline.cxx:    //(passing data to uniform objects in shaders)
+./UIRenderPipeline.cxx:    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+./UIRenderPipeline.cxx:    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+./UIRenderPipeline.cxx:    pipelineLayoutInfo.setLayoutCount = 1;
+./UIRenderPipeline.cxx:    pipelineLayoutInfo.pSetLayouts = descriptorSetLayout;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    VkPushConstantRange pushConstatn;
+./UIRenderPipeline.cxx:    pushConstatn.offset = 0;
+./UIRenderPipeline.cxx:    pushConstatn.size = sizeof(PushConstantC1);
+./UIRenderPipeline.cxx:    pushConstatn.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    pipelineLayoutInfo.pPushConstantRanges = &pushConstatn;
+./UIRenderPipeline.cxx:    pipelineLayoutInfo.pushConstantRangeCount = 1;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+./UIRenderPipeline.cxx:    {
+./UIRenderPipeline.cxx:        throw std::runtime_error("failed to create pipeline layout!");
+./UIRenderPipeline.cxx:    }
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    // creating graphics pipeline
+./UIRenderPipeline.cxx:    VkGraphicsPipelineCreateInfo pipelineInfo{};
+./UIRenderPipeline.cxx:    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+./UIRenderPipeline.cxx:    pipelineInfo.stageCount = 2; // the shader stage count
+./UIRenderPipeline.cxx:    pipelineInfo.pStages = shaderStages;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    pipelineInfo.pVertexInputState = &vertexInputInfo;
+./UIRenderPipeline.cxx:    pipelineInfo.pInputAssemblyState = &inputAssembly;
+./UIRenderPipeline.cxx:    pipelineInfo.pViewportState = &viewportState;
+./UIRenderPipeline.cxx:    pipelineInfo.pRasterizationState = &rasterizer;
+./UIRenderPipeline.cxx:    pipelineInfo.pMultisampleState = &multisampling;
+./UIRenderPipeline.cxx:    pipelineInfo.pDepthStencilState = &depthStencil; // disabled
+./UIRenderPipeline.cxx:    pipelineInfo.pColorBlendState = &colorBlending;
+./UIRenderPipeline.cxx:    // pipelineInfo.pDynamicState = &dynamic_state;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    pipelineInfo.layout = pipelineLayout;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    pipelineInfo.renderPass = renderPass; // passs the render pass
+./UIRenderPipeline.cxx:    pipelineInfo.subpass = 0;
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+./UIRenderPipeline.cxx:    {
+./UIRenderPipeline.cxx:        throw std::runtime_error("failed to create graphics pipeline!");
+./UIRenderPipeline.cxx:    }
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    vkDestroyShaderModule(device, fragShaderModule, nullptr);
+./UIRenderPipeline.cxx:    vkDestroyShaderModule(device, vertShaderModule, nullptr);
+./UIRenderPipeline.cxx:}
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:UIRenderPipeline::~UIRenderPipeline()
+./UIRenderPipeline.cxx:{
+./UIRenderPipeline.cxx:}
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:VkVertexInputBindingDescription UIVertex::getBindingDescription()
+./UIRenderPipeline.cxx:{
+./UIRenderPipeline.cxx:    VkVertexInputBindingDescription bindingDescription{};
+./UIRenderPipeline.cxx:    // A vertex binding describes at which rate to load data from memory throughout the verticies.
+./UIRenderPipeline.cxx:    // It specifies the number of bytes between data entries and whether to move to the next data entery after each vertex or after each instance.
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    bindingDescription.binding = 0; // binding index to zero
+./UIRenderPipeline.cxx:    bindingDescription.stride = sizeof(UIVertex);
+./UIRenderPipeline.cxx:    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX; // advance to the next input per vertex
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    return bindingDescription;
+./UIRenderPipeline.cxx:}
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:std::array<VkVertexInputAttributeDescription, 3> UIVertex::getAttributeDescriptions()
+./UIRenderPipeline.cxx:{
+./UIRenderPipeline.cxx:    std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+./UIRenderPipeline.cxx:    attributeDescriptions[0].binding = 0;                         // same as getBindingDescription
+./UIRenderPipeline.cxx:    attributeDescriptions[0].location = 0;                        // directly co-relates to 'layout(location = 0)'
+./UIRenderPipeline.cxx:    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
+./UIRenderPipeline.cxx:    attributeDescriptions[0].offset = offsetof(UIVertex, pos);
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    attributeDescriptions[1].binding = 0;
+./UIRenderPipeline.cxx:    attributeDescriptions[1].location = 1;
+./UIRenderPipeline.cxx:    attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT; // vec2
+./UIRenderPipeline.cxx:    attributeDescriptions[1].offset = offsetof(UIVertex, uv);
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    attributeDescriptions[2].binding = 0;
+./UIRenderPipeline.cxx:    attributeDescriptions[2].location = 2;
+./UIRenderPipeline.cxx:    attributeDescriptions[2].format = VK_FORMAT_R32_UINT; // vec2
+./UIRenderPipeline.cxx:    attributeDescriptions[2].offset = offsetof(UIVertex, textureIndex); 
+./UIRenderPipeline.cxx:
+./UIRenderPipeline.cxx:    return attributeDescriptions;
+./UIRenderPipeline.cxx:}
 ./Chunk.h:#pragma once
 ./Chunk.h:#include "PassInfo.hpp"
 ./Chunk.h:#include "Structs.h"
@@ -3524,6 +3901,7 @@
 ./GraphicsPipeline.h:    VkSampleCountFlagBits msaaSamples;
 ./GraphicsPipeline.h:    
 ./GraphicsPipeline.h:    friend class RayGraphicsPipeline;
+./GraphicsPipeline.h:    friend class UIRenderPipeline;
 ./GraphicsPipeline.h:    public:
 ./GraphicsPipeline.h:    VkPipelineLayout pipelineLayout;
 ./GraphicsPipeline.h:    VkPipeline graphicsPipeline;//shared
@@ -3688,6 +4066,125 @@
 ./utils.cxx:    // 7. Free the temporary command buffer
 ./utils.cxx:    vkFreeCommandBuffers(vkContext.device, vkContext.commandPool, 1, &commandBuffer);
 ./utils.cxx:}
+./UIComponents.cxx:#include "UIComponents.h"
+./UIComponents.cxx:#include "utils.h"
+./UIComponents.cxx:#include <cstring>
+./UIComponents.cxx:
+./UIComponents.cxx:UIComponents::UIComponents(VulkanContext &vkContext) : vkContext{vkContext}
+./UIComponents.cxx:{
+./UIComponents.cxx:}
+./UIComponents.cxx:void UIComponents::createVertexBuffer()
+./UIComponents.cxx:{
+./UIComponents.cxx:    stagingVertexBufferSize = sizeof(vertices[0]) * vertices.size();
+./UIComponents.cxx:
+./UIComponents.cxx:    if (stagingVertexBufferSize == 0)
+./UIComponents.cxx:        return;
+./UIComponents.cxx:
+./UIComponents.cxx:    // TX
+./UIComponents.cxx:    utils::createBuffer(stagingVertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingVertexBuffer, StagingVertexBufferMemory, vkContext);
+./UIComponents.cxx:
+./UIComponents.cxx:    // filling in the vertex buffer
+./UIComponents.cxx:    vkMapMemory(vkContext.device, StagingVertexBufferMemory, 0, stagingVertexBufferSize, 0, &stagingVertexBufferData);
+./UIComponents.cxx:    memcpy(stagingVertexBufferData, vertices.data(), (size_t)stagingVertexBufferSize);
+./UIComponents.cxx:
+./UIComponents.cxx:    // creating the actul VBO and setting it up so the it is the destionation of the transfer source
+./UIComponents.cxx:    // TX
+./UIComponents.cxx:    utils::createBuffer(stagingVertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, vkContext);
+./UIComponents.cxx:
+./UIComponents.cxx:    // but we still have to copy the memory contents manully
+./UIComponents.cxx:    utils::copyBuffer(StagingVertexBuffer, vertexBuffer, stagingVertexBufferSize, vkContext);
+./UIComponents.cxx:}
+./UIComponents.cxx:
+./UIComponents.cxx:void UIComponents::createIndexBuffer()
+./UIComponents.cxx:{
+./UIComponents.cxx:    stagingIndexBufferSize = sizeof(indices[0]) * indices.size();
+./UIComponents.cxx:
+./UIComponents.cxx:    if (stagingIndexBufferSize == 0)
+./UIComponents.cxx:        return;
+./UIComponents.cxx:
+./UIComponents.cxx:    utils::createBuffer(stagingIndexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingIndexBuffer, StagingIndexBufferMemory, vkContext);
+./UIComponents.cxx:
+./UIComponents.cxx:    vkMapMemory(vkContext.device, StagingIndexBufferMemory, 0, stagingIndexBufferSize, 0, &stagingIndexBufferData);
+./UIComponents.cxx:    memcpy(stagingIndexBufferData, indices.data(), (size_t)stagingIndexBufferSize);
+./UIComponents.cxx:
+./UIComponents.cxx:    utils::createBuffer(stagingIndexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, vkContext);
+./UIComponents.cxx:
+./UIComponents.cxx:    utils::copyBuffer(StagingIndexBuffer, indexBuffer, stagingIndexBufferSize, vkContext);
+./UIComponents.cxx:}
+./UIComponents.cxx:
+./UIComponents.cxx:void UIComponents::initUIComponent(glm::vec2 position, glm::vec2 size)
+./UIComponents.cxx:{
+./UIComponents.cxx:    vertices.clear();
+./UIComponents.cxx:    indices.clear();
+./UIComponents.cxx:    vertices.reserve(4);
+./UIComponents.cxx:    indices.reserve(6);
+./UIComponents.cxx:
+./UIComponents.cxx:    this->position = position;
+./UIComponents.cxx:    this->size = size;
+./UIComponents.cxx:
+./UIComponents.cxx:    vertices = {
+./UIComponents.cxx:    {{position.r, position.s - size.r / 2.f, 0.0f - size.r / 2.f}, {1.0f, 0.0f}, 0},
+./UIComponents.cxx:    {{position.r, position.s - size.r / 2.f, size.r - size.r / 2.f}, {0.0f, 1.0f}, 0},
+./UIComponents.cxx:    {{position.r, position.s - size.r / 2.f + size.s, size.r - size.r / 2.f}, {1.0f, 1.0f}, 0},
+./UIComponents.cxx:    {{position.r, position.s - size.r / 2.f + size.s, 0.0f - size.r / 2.f}, {1.0f, 0.0f}, 0}};
+./UIComponents.cxx:
+./UIComponents.cxx:    indices = {0, 1, 2, 2, 3, 0};
+./UIComponents.cxx:
+./UIComponents.cxx:    createVertexBuffer();
+./UIComponents.cxx:    createIndexBuffer();
+./UIComponents.cxx:}
+./UIComponents.cxx:
+./UIComponents.cxx:void UIComponents::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1)
+./UIComponents.cxx:{
+./UIComponents.cxx:    VkBuffer vertexBuffers[] = {vertexBuffer};
+./UIComponents.cxx:    VkDeviceSize offsets[] = {0};
+./UIComponents.cxx:
+./UIComponents.cxx:    if (vertices.size() == 0 || indices.size() == 0) [[unlikely]]
+./UIComponents.cxx:        return;
+./UIComponents.cxx:
+./UIComponents.cxx:    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+./UIComponents.cxx:    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+./UIComponents.cxx:
+./UIComponents.cxx:    vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantC1), &c1);
+./UIComponents.cxx:
+./UIComponents.cxx:    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
+./UIComponents.cxx:                            0, 1, &(descriptorSets[currentFrame]), 0, nullptr);
+./UIComponents.cxx:
+./UIComponents.cxx:    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+./UIComponents.cxx:}
+./UIComponents.cxx:
+./UIComponents.cxx:void UIComponents::cleanup()
+./UIComponents.cxx:{
+./UIComponents.cxx:    if (StagingVertexBufferMemory != VK_NULL_HANDLE)
+./UIComponents.cxx:        vkUnmapMemory(vkContext.device, StagingVertexBufferMemory);
+./UIComponents.cxx:    if (StagingIndexBufferMemory != VK_NULL_HANDLE)
+./UIComponents.cxx:        vkUnmapMemory(vkContext.device, StagingIndexBufferMemory);
+./UIComponents.cxx:
+./UIComponents.cxx:    if (indexBuffer != VK_NULL_HANDLE)
+./UIComponents.cxx:    {
+./UIComponents.cxx:        vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
+./UIComponents.cxx:        vkFreeMemory(vkContext.device, indexBufferMemory, nullptr);
+./UIComponents.cxx:    }
+./UIComponents.cxx:    if (vertexBuffer != VK_NULL_HANDLE)
+./UIComponents.cxx:    {
+./UIComponents.cxx:        vkDestroyBuffer(vkContext.device, vertexBuffer, nullptr);
+./UIComponents.cxx:        vkFreeMemory(vkContext.device, vertexBufferMemory, nullptr);
+./UIComponents.cxx:    }
+./UIComponents.cxx:    if (StagingIndexBuffer != VK_NULL_HANDLE)
+./UIComponents.cxx:    {
+./UIComponents.cxx:        vkDestroyBuffer(vkContext.device, StagingIndexBuffer, nullptr);
+./UIComponents.cxx:        vkFreeMemory(vkContext.device, StagingIndexBufferMemory, nullptr);
+./UIComponents.cxx:    }
+./UIComponents.cxx:    if (StagingVertexBuffer != VK_NULL_HANDLE)
+./UIComponents.cxx:    {
+./UIComponents.cxx:        vkDestroyBuffer(vkContext.device, StagingVertexBuffer, nullptr);
+./UIComponents.cxx:        vkFreeMemory(vkContext.device, StagingVertexBufferMemory, nullptr);
+./UIComponents.cxx:    }
+./UIComponents.cxx:}
+./UIComponents.cxx:
+./UIComponents.cxx:UIComponents::~UIComponents()
+./UIComponents.cxx:{
+./UIComponents.cxx:}
 ./Mesh.cxx:#include "Mesh.h"
 ./Mesh.cxx:#include "utils.h"
 ./Mesh.cxx:#include <iostream>
@@ -3709,15 +4206,13 @@
 ./Mesh.cxx:
 ./Mesh.cxx:void Mesh::createVertexBuffer()
 ./Mesh.cxx:{
-./Mesh.cxx:    stagingVertexBufferSize = sizeof(vertices[0]) * vertices.size() * 2;
-./Mesh.cxx:
-./Mesh.cxx:    std::cout << "Size of staging VBO " << stagingVertexBufferSize << std::endl;
+./Mesh.cxx:    stagingVertexBufferSize = sizeof(vertices[0]) * vertices.size();
 ./Mesh.cxx:
 ./Mesh.cxx:    if (stagingVertexBufferSize == 0)
 ./Mesh.cxx:        return;
 ./Mesh.cxx:
 ./Mesh.cxx:    // TX
-./Mesh.cxx:    utils::createBuffer(stagingVertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, StagingVertexBuffer, StagingVertexBufferMemory, vkContext);
+./Mesh.cxx:    utils::createBuffer(stagingVertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingVertexBuffer, StagingVertexBufferMemory, vkContext);
 ./Mesh.cxx:
 ./Mesh.cxx:    // filling in the vertex buffer
 ./Mesh.cxx:    vkMapMemory(vkContext.device, StagingVertexBufferMemory, 0, stagingVertexBufferSize, 0, &stagingVertexBufferData);
@@ -3733,12 +4228,12 @@
 ./Mesh.cxx:
 ./Mesh.cxx:void Mesh::createIndexBuffer()
 ./Mesh.cxx:{
-./Mesh.cxx:    stagingIndexBufferSize = sizeof(indices[0]) * indices.size() * 2;
+./Mesh.cxx:    stagingIndexBufferSize = sizeof(indices[0]) * indices.size();
 ./Mesh.cxx:
 ./Mesh.cxx:    if (stagingIndexBufferSize == 0)
 ./Mesh.cxx:        return;
 ./Mesh.cxx:
-./Mesh.cxx:    utils::createBuffer(stagingIndexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, StagingIndexBuffer, StagingIndexBufferMemory, vkContext);
+./Mesh.cxx:    utils::createBuffer(stagingIndexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingIndexBuffer, StagingIndexBufferMemory, vkContext);
 ./Mesh.cxx:
 ./Mesh.cxx:    vkMapMemory(vkContext.device, StagingIndexBufferMemory, 0, stagingIndexBufferSize, 0, &stagingIndexBufferData);
 ./Mesh.cxx:    memcpy(stagingIndexBufferData, indices.data(), (size_t)stagingIndexBufferSize);
@@ -3752,10 +4247,26 @@
 ./Mesh.cxx:{
 ./Mesh.cxx:    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 ./Mesh.cxx:
-./Mesh.cxx:    std::cout << "Updating Vertex Buffer..." << std::endl;
+./Mesh.cxx:    if (bufferSize >= stagingVertexBufferSize)
+./Mesh.cxx:    {
+./Mesh.cxx:        vkUnmapMemory(vkContext.device, StagingVertexBufferMemory);
+./Mesh.cxx:        vkDestroyBuffer(vkContext.device, StagingVertexBuffer, nullptr);
+./Mesh.cxx:        vkFreeMemory(vkContext.device, StagingVertexBufferMemory, nullptr);
 ./Mesh.cxx:
-./Mesh.cxx:    std::cout << "required buffer Size: " << bufferSize << " bytes" << std::endl;
-./Mesh.cxx:    std::cout << "current buffer size: " << stagingVertexBufferSize << " bytes" << std::endl;
+./Mesh.cxx:        // destroy OLD GPU buffer FIRST
+./Mesh.cxx:        if (vertexBuffer != VK_NULL_HANDLE)
+./Mesh.cxx:        {
+./Mesh.cxx:            vkDeviceWaitIdle(vkContext.device);
+./Mesh.cxx:            vkDestroyBuffer(vkContext.device, vertexBuffer, nullptr);
+./Mesh.cxx:            vkFreeMemory(vkContext.device, vertexBufferMemory, nullptr);
+./Mesh.cxx:
+./Mesh.cxx:            vertexBuffer = VK_NULL_HANDLE;
+./Mesh.cxx:            vertexBufferMemory = VK_NULL_HANDLE;
+./Mesh.cxx:        }
+./Mesh.cxx:
+./Mesh.cxx:        // now recreate everything
+./Mesh.cxx:        createVertexBuffer();
+./Mesh.cxx:    }
 ./Mesh.cxx:
 ./Mesh.cxx:    if (bufferSize == 0)
 ./Mesh.cxx:        return;
@@ -3767,6 +4278,25 @@
 ./Mesh.cxx:void Mesh::updateIndexBuffer()
 ./Mesh.cxx:{
 ./Mesh.cxx:    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+./Mesh.cxx:
+./Mesh.cxx:    if (bufferSize >= stagingIndexBufferSize)
+./Mesh.cxx:    {
+./Mesh.cxx:        vkUnmapMemory(vkContext.device, StagingIndexBufferMemory);
+./Mesh.cxx:        vkDestroyBuffer(vkContext.device, StagingIndexBuffer, nullptr);
+./Mesh.cxx:        vkFreeMemory(vkContext.device, StagingIndexBufferMemory, nullptr);
+./Mesh.cxx:
+./Mesh.cxx:        if (indexBuffer != VK_NULL_HANDLE)
+./Mesh.cxx:        {
+./Mesh.cxx:            vkDeviceWaitIdle(vkContext.device);
+./Mesh.cxx:            vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
+./Mesh.cxx:            vkFreeMemory(vkContext.device, indexBufferMemory, nullptr);
+./Mesh.cxx:
+./Mesh.cxx:            indexBuffer = VK_NULL_HANDLE;
+./Mesh.cxx:            indexBufferMemory = VK_NULL_HANDLE;
+./Mesh.cxx:        }
+./Mesh.cxx:
+./Mesh.cxx:        createIndexBuffer();
+./Mesh.cxx:    }
 ./Mesh.cxx:
 ./Mesh.cxx:    if (bufferSize == 0)
 ./Mesh.cxx:        return;
@@ -3797,23 +4327,27 @@
 ./Mesh.cxx:void Mesh::cleanup()
 ./Mesh.cxx:{
 ./Mesh.cxx:    if (StagingVertexBufferMemory != VK_NULL_HANDLE)
-./Mesh.cxx:        vkUnmapMemory(vkContext.device, StagingVertexBufferMemory);  // missing from your code!
+./Mesh.cxx:        vkUnmapMemory(vkContext.device, StagingVertexBufferMemory); // missing from your code!
 ./Mesh.cxx:    if (StagingIndexBufferMemory != VK_NULL_HANDLE)
-./Mesh.cxx:        vkUnmapMemory(vkContext.device, StagingIndexBufferMemory);   // missing too!
+./Mesh.cxx:        vkUnmapMemory(vkContext.device, StagingIndexBufferMemory); // missing too!
 ./Mesh.cxx:
-./Mesh.cxx:    if (indexBuffer != VK_NULL_HANDLE) {
+./Mesh.cxx:    if (indexBuffer != VK_NULL_HANDLE)
+./Mesh.cxx:    {
 ./Mesh.cxx:        vkDestroyBuffer(vkContext.device, indexBuffer, nullptr);
 ./Mesh.cxx:        vkFreeMemory(vkContext.device, indexBufferMemory, nullptr);
 ./Mesh.cxx:    }
-./Mesh.cxx:    if (vertexBuffer != VK_NULL_HANDLE) {
+./Mesh.cxx:    if (vertexBuffer != VK_NULL_HANDLE)
+./Mesh.cxx:    {
 ./Mesh.cxx:        vkDestroyBuffer(vkContext.device, vertexBuffer, nullptr);
 ./Mesh.cxx:        vkFreeMemory(vkContext.device, vertexBufferMemory, nullptr);
 ./Mesh.cxx:    }
-./Mesh.cxx:    if (StagingIndexBuffer != VK_NULL_HANDLE) {
+./Mesh.cxx:    if (StagingIndexBuffer != VK_NULL_HANDLE)
+./Mesh.cxx:    {
 ./Mesh.cxx:        vkDestroyBuffer(vkContext.device, StagingIndexBuffer, nullptr);
 ./Mesh.cxx:        vkFreeMemory(vkContext.device, StagingIndexBufferMemory, nullptr);
 ./Mesh.cxx:    }
-./Mesh.cxx:    if (StagingVertexBuffer != VK_NULL_HANDLE) {
+./Mesh.cxx:    if (StagingVertexBuffer != VK_NULL_HANDLE)
+./Mesh.cxx:    {
 ./Mesh.cxx:        vkDestroyBuffer(vkContext.device, StagingVertexBuffer, nullptr);
 ./Mesh.cxx:        vkFreeMemory(vkContext.device, StagingVertexBufferMemory, nullptr);
 ./Mesh.cxx:    }
@@ -3839,6 +4373,8 @@
 ./Event.h:    GLFWwindow &window;
 ./Event.h:    KeyInfo lastKeyPressedInfo;
 ./Event.h:    std::array<bool, GLFW_KEY_LAST + 1> keyDown{};
+./Event.h:    int mouseButtonDown = 0; // bitfield for mouse buttons
+./Event.h:    int mouseButtonAction = 0; // GLFW_PRESS, GLFW_RELEASE, or GLFW_REPEAT
 ./Event.h:
 ./Event.h:public:
 ./Event.h:
@@ -3847,9 +4383,11 @@
 ./Event.h:    double mouseX, mouseY;
 ./Event.h:    Event(GLFWwindow &window);
 ./Event.h:    static void keyPressedCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+./Event.h:    static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
 ./Event.h:    static void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
 ./Event.h:    void eventLoop();
 ./Event.h:    bool getKeyPressed(int key);
+./Event.h:    bool getMouseButtonPressed(int button);
 ./Event.h:    ~Event();
 ./Event.h:};
 ./Event.h:
@@ -3873,8 +4411,8 @@
 ./Camera.cxx:    glm::vec3 rayOrigin = gePositionInWorldCoords();
 ./Camera.cxx:    glm::vec3 rayDir = forward;
 ./Camera.cxx:
-./Camera.cxx:    float maxDistance = 100.0f; // Max ray distance
-./Camera.cxx:    float stepSize = 0.1f;      // Step size along the ray
+./Camera.cxx:    float maxDistance = 5.0f; // Max ray distance
+./Camera.cxx:    float stepSize = 0.1f;
 ./Camera.cxx:
 ./Camera.cxx:    for (float t = 0.0f; t < maxDistance; t += stepSize)
 ./Camera.cxx:    {
@@ -3974,7 +4512,96 @@
 ./Camera.cxx:    cameraRay.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
 ./Camera.cxx:}
 ./Camera.cxx:
-./Camera.cxx:Camera::~Camera() {}
+./Camera.cxx:void Camera::drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui)
+./Camera.cxx:{
+./Camera.cxx:    PushConstantC1 c1;
+./Camera.cxx:    glm::mat4 model = glm::mat4(1.f);
+./Camera.cxx:    model = glm::translate(model, cameraPos + glm::vec3(1, 0, 0));
+./Camera.cxx:    c1.data = model;
+./Camera.cxx:    ui.render(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+./Camera.cxx:}
+./Camera.cxx:
+./Camera.cxx:Camera::~Camera()
+./Camera.cxx:{
+./Camera.cxx:}
+./UIComponents.h:#pragma once
+./UIComponents.h:#include "Structs.h"
+./UIComponents.h:#include "PassInfo.hpp"
+./UIComponents.h:#include "UIRenderPipeline.h"
+./UIComponents.h:
+./UIComponents.h:class UIComponents
+./UIComponents.h:{
+./UIComponents.h:private:
+./UIComponents.h:    VulkanContext &vkContext;
+./UIComponents.h:    glm::vec2 position{0.f, 0.f};
+./UIComponents.h:    glm::vec2 size{1.f, 1.f};
+./UIComponents.h:
+./UIComponents.h:    // Vertices and stuff
+./UIComponents.h:    std::vector<UIVertex> vertices;
+./UIComponents.h:    std::vector<uint32_t> indices;
+./UIComponents.h:    VkBuffer vertexBuffer = VK_NULL_HANDLE;
+./UIComponents.h:    VkBuffer indexBuffer = VK_NULL_HANDLE;
+./UIComponents.h:
+./UIComponents.h:    VkBuffer StagingVertexBuffer = VK_NULL_HANDLE;
+./UIComponents.h:    VkBuffer StagingIndexBuffer = VK_NULL_HANDLE;
+./UIComponents.h:
+./UIComponents.h:    VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
+./UIComponents.h:    VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
+./UIComponents.h:
+./UIComponents.h:    VkDeviceMemory StagingVertexBufferMemory = VK_NULL_HANDLE;
+./UIComponents.h:    VkDeviceMemory StagingIndexBufferMemory = VK_NULL_HANDLE;
+./UIComponents.h:
+./UIComponents.h:    VkDeviceSize stagingVertexBufferSize = 0;
+./UIComponents.h:    VkDeviceSize stagingIndexBufferSize = 0;
+./UIComponents.h:
+./UIComponents.h:    void *stagingIndexBufferData;
+./UIComponents.h:    void *stagingVertexBufferData;
+./UIComponents.h:
+./UIComponents.h:    void createVertexBuffer();
+./UIComponents.h:    void createIndexBuffer();
+./UIComponents.h:
+./UIComponents.h:public:
+./UIComponents.h:    UIComponents(VulkanContext &vkContext);
+./UIComponents.h:
+./UIComponents.h:    void initUIComponent(glm::vec2 position = glm::vec2{0.f, 0.f}, glm::vec2 size=glm::vec2{1.f, 1.f});
+./UIComponents.h:
+./UIComponents.h:    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
+./UIComponents.h:              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1);
+./UIComponents.h:    void cleanup();
+./UIComponents.h:    ~UIComponents();
+./UIComponents.h:};
+./UI.h:#pragma once
+./UI.h:#include "Structs.h"
+./UI.h:#include "PassInfo.hpp"
+./UI.h:#include "UIComponents.h"
+./UI.h:#include <vector>
+./UI.h:
+./UI.h:
+./UI.h:class UI
+./UI.h:{
+./UI.h:private:
+./UI.h:    VulkanContext &vkContext;
+./UI.h:    std::vector<UIComponents> components;
+./UI.h:    public:
+./UI.h:
+./UI.h:    UI(const UI &) = delete;
+./UI.h:    UI &operator=(const UI &other)
+./UI.h:    {
+./UI.h:        return *this;
+./UI.h:    }
+./UI.h:
+./UI.h:    UI(UI &&) = default;
+./UI.h:    UI &operator=(UI &&) = default;
+./UI.h:
+./UI.h:    UI(VulkanContext &vkContext);
+./UI.h:
+./UI.h:    void attachComponent(UIComponents &component);
+./UI.h:
+./UI.h:    void render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
+./UI.h:              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 c1);
+./UI.h:    void cleanup();
+./UI.h:    ~UI();
+./UI.h:};
 ./Ray.h:#pragma once
 ./Ray.h:#include "PassInfo.hpp"
 ./Ray.h:#include "Structs.h"
@@ -4002,6 +4629,37 @@
 ./Ray.h:    void cleanup();
 ./Ray.h:    ~Ray();
 ./Ray.h:};
+./UI.cxx:#include "UI.h"
+./UI.cxx:#include <iostream>
+./UI.cxx:
+./UI.cxx:UI::UI(VulkanContext &vkContext) : vkContext{vkContext}
+./UI.cxx:{
+./UI.cxx:}
+./UI.cxx:
+./UI.cxx:void UI::attachComponent(UIComponents &component)
+./UI.cxx:{
+./UI.cxx:    this->components.push_back(component);
+./UI.cxx:}
+./UI.cxx:
+./UI.cxx:void UI::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 c1)
+./UI.cxx:{
+./UI.cxx:    for (auto &&component : components)
+./UI.cxx:    {
+./UI.cxx:        component.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+./UI.cxx:    }
+./UI.cxx:}
+./UI.cxx:
+./UI.cxx:void UI::cleanup()
+./UI.cxx:{
+./UI.cxx:    for (auto &component : components)
+./UI.cxx:    {
+./UI.cxx:        component.cleanup();
+./UI.cxx:    }
+./UI.cxx:}
+./UI.cxx:
+./UI.cxx:UI::~UI()
+./UI.cxx:{
+./UI.cxx:}
 ./Ray.cxx:#include "Ray.h"
 ./Ray.cxx:#include "GameObjectPool.h"
 ./Ray.cxx:#include <vector>
@@ -4106,7 +4764,7 @@
 ./Terrain.cxx:#include "Terrain.h"
 ./Terrain.cxx:#include <iostream>
 ./Terrain.cxx:#include <chrono>
-./Terrain.cxx:#define RENDER_DISTANCE 1
+./Terrain.cxx:
 ./Terrain.cxx:
 ./Terrain.cxx:Terrain::Terrain(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{vkContext}, gameObjectPool{gameObjectPool}
 ./Terrain.cxx:{
@@ -4140,17 +4798,17 @@
 ./Terrain.cxx:    }
 ./Terrain.cxx:}
 ./Terrain.cxx:
+./Terrain.cxx:
 ./Terrain.cxx:void Terrain::updateChunkMesh(int chunkX, int chunkY)
 ./Terrain.cxx:{
-./Terrain.cxx:    for (auto &chunk : chunks)
+./Terrain.cxx:    int idx = chunkIndex(chunkX, chunkY);
+./Terrain.cxx:    if(idx < 0 || idx >= chunks.size())
 ./Terrain.cxx:    {
-./Terrain.cxx:        if (chunk.chunkOffsetX == chunkX && chunk.chunkOffsetY == chunkY)
-./Terrain.cxx:        {
-./Terrain.cxx:            chunk.dirty = true;
-./Terrain.cxx:            chunk.updateChunkMesh();
-./Terrain.cxx:            break;
-./Terrain.cxx:        }
+./Terrain.cxx:        std::cerr << "Invalid chunk coordinates: (" << chunkX << ", " << chunkY << ")" << std::endl;
+./Terrain.cxx:        return;
 ./Terrain.cxx:    }
+./Terrain.cxx:    chunks.at(idx).dirty = true;
+./Terrain.cxx:    chunks.at(idx).updateChunkMesh();
 ./Terrain.cxx:}
 ./Terrain.cxx:
 ./Terrain.cxx:void Terrain::handelDirtyChunks()
@@ -4334,14 +4992,72 @@
 ./RayMesher.h:    void cleanup();
 ./RayMesher.h:    ~RayMesher();
 ./RayMesher.h:};
+./UIRenderPipeline.h:#pragma once
+./UIRenderPipeline.h:#include "GraphicsPipeline.h"
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:struct UIVertex {
+./UIRenderPipeline.h:    glm::vec3 pos;
+./UIRenderPipeline.h:    glm::vec2 uv;
+./UIRenderPipeline.h:    uint32_t textureIndex{0};
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:    //Telling vulkan how to setup binding
+./UIRenderPipeline.h:    //Struct 1/2
+./UIRenderPipeline.h:    static VkVertexInputBindingDescription getBindingDescription();
+./UIRenderPipeline.h:    //Struct 2/2
+./UIRenderPipeline.h:    static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:    bool operator==(const UIVertex& other) const {
+./UIRenderPipeline.h:    return pos == other.pos && uv == other.uv;
+./UIRenderPipeline.h:}
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:};
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:namespace std {
+./UIRenderPipeline.h:    template<>
+./UIRenderPipeline.h:    struct hash<UIVertex> {
+./UIRenderPipeline.h:        size_t operator()(UIVertex const& vertex) const {
+./UIRenderPipeline.h:            size_t seed = 0;
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:            auto hashCombine = [&seed](auto const& v) {
+./UIRenderPipeline.h:                seed ^= std::hash<float>()(v)
+./UIRenderPipeline.h:                      + 0x9e3779b97f4a7c15
+./UIRenderPipeline.h:                      + (seed << 6)
+./UIRenderPipeline.h:                      + (seed >> 2);
+./UIRenderPipeline.h:            };
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:            hashCombine(vertex.pos.x);
+./UIRenderPipeline.h:            hashCombine(vertex.pos.y);
+./UIRenderPipeline.h:            hashCombine(vertex.pos.z);
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:            hashCombine(vertex.uv.r);
+./UIRenderPipeline.h:            hashCombine(vertex.uv.g);
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:            return seed;
+./UIRenderPipeline.h:        }
+./UIRenderPipeline.h:    };
+./UIRenderPipeline.h:}
+./UIRenderPipeline.h:
+./UIRenderPipeline.h:class UIRenderPipeline : public u_GraphicsPipeline
+./UIRenderPipeline.h:{
+./UIRenderPipeline.h:private:
+./UIRenderPipeline.h:    
+./UIRenderPipeline.h:public:
+./UIRenderPipeline.h:    UIRenderPipeline();
+./UIRenderPipeline.h:    void createGraphicsPipeline() override;
+./UIRenderPipeline.h:    ~UIRenderPipeline();
+./UIRenderPipeline.h:};
+./Update.cxx:#include <iostream>
+./Update.cxx:#include <cstdlib>
+./Update.cxx:#include <cstring>
+./Update.cxx:
 ./Update.cxx:#include "HelloTriangleApplication.hpp"
 ./Update.cxx:#include "Camera.h"
 ./Update.cxx:#include "Chunk.h"
-./Update.cxx:#include <cstdlib>
-./Update.cxx:#include <cstring>
 ./Update.cxx:#include <memory>
 ./Update.cxx:#include "Ray.h"
-./Update.cxx:#include "iostream"
+./Update.cxx:#include "UI.h"
 ./Update.cxx:
 ./Update.cxx:void HelloTriangleApplication::initGameObjects()
 ./Update.cxx:{
@@ -4358,6 +5074,13 @@
 ./Update.cxx:    camera = std::make_unique<Camera>(context, gameObjectPool);
 ./Update.cxx:
 ./Update.cxx:    terrain = std::move(Terrain(context, gameObjectPool));
+./Update.cxx:    ui = std::move(UI(context));
+./Update.cxx:
+./Update.cxx:    UIComponents testComponent(context);
+./Update.cxx:    testComponent.initUIComponent(glm::vec2(0.f),glm::vec2(2.f));
+./Update.cxx:
+./Update.cxx:    ui->attachComponent(testComponent);
+./Update.cxx:
 ./Update.cxx:    gameObjectPool.terrain = &terrain.value();
 ./Update.cxx:    terrain.value().generateChunks();
 ./Update.cxx:}
@@ -4370,7 +5093,7 @@
 ./Update.cxx:    HitInfo hitInfo{};
 ./Update.cxx:    camera->getHitInfo(hitInfo);
 ./Update.cxx:
-./Update.cxx:    if (event->getKeyPressed(GLFW_KEY_B))
+./Update.cxx:    if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
 ./Update.cxx:        if (hitInfo.hitVoxel)
 ./Update.cxx:        {
 ./Update.cxx:            std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType() << std::endl;
@@ -4379,6 +5102,15 @@
 ./Update.cxx:            hitInfo.hitVoxel->setType(AIR);
 ./Update.cxx:
 ./Update.cxx:            terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, hitInfo.blockCoords.y >> 4);
+./Update.cxx:
+./Update.cxx:            if ((hitInfo.blockCoords.x & 15) == 0)
+./Update.cxx:                terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) - 1, hitInfo.blockCoords.y >> 4);
+./Update.cxx:            if ((hitInfo.blockCoords.x & 15) == 15)
+./Update.cxx:                terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) + 1, hitInfo.blockCoords.y >> 4);
+./Update.cxx:            if ((hitInfo.blockCoords.y & 15) == 0)
+./Update.cxx:                terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) - 1);
+./Update.cxx:            if ((hitInfo.blockCoords.y & 15) == 15)
+./Update.cxx:                terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) + 1);
 ./Update.cxx:        }
 ./Update.cxx:
 ./Update.cxx:    if (event->getKeyPressed(GLFW_KEY_ESCAPE))
