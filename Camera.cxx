@@ -118,4 +118,15 @@ void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout
     cameraRay.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
 }
 
-Camera::~Camera() {}
+void Camera::drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui)
+{
+    PushConstantC1 c1;
+    glm::mat4 model = glm::mat4(1.f);
+    model = glm::translate(model, cameraPos + glm::vec3(1, 0, 0));
+    c1.data = model;
+    ui.render(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+}
+
+Camera::~Camera()
+{
+}

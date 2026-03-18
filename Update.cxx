@@ -1,11 +1,13 @@
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+
 #include "HelloTriangleApplication.hpp"
 #include "Camera.h"
 #include "Chunk.h"
-#include <cstdlib>
-#include <cstring>
 #include <memory>
 #include "Ray.h"
-#include "iostream"
+#include "UI.h"
 
 void HelloTriangleApplication::initGameObjects()
 {
@@ -22,6 +24,13 @@ void HelloTriangleApplication::initGameObjects()
     camera = std::make_unique<Camera>(context, gameObjectPool);
 
     terrain = std::move(Terrain(context, gameObjectPool));
+    ui = std::move(UI(context));
+
+    UIComponents testComponent(context);
+    testComponent.initUIComponent(glm::vec2(0.f),glm::vec2(2.f));
+
+    ui->attachComponent(testComponent);
+
     gameObjectPool.terrain = &terrain.value();
     terrain.value().generateChunks();
 }
@@ -34,7 +43,7 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
     HitInfo hitInfo{};
     camera->getHitInfo(hitInfo);
 
-    if (event->getKeyPressed(GLFW_KEY_B))
+    if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
         if (hitInfo.hitVoxel)
         {
             std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType() << std::endl;

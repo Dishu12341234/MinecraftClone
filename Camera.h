@@ -5,7 +5,7 @@
 #include "Event.h"
 #include "GameObjectPool.h"
 #include "Ray.h"
-
+#include "UI.h"
 
 struct HitInfo
 {
@@ -27,16 +27,17 @@ private:
 
     Ray cameraRay;
 
-    
-    public:
+public:
     void getHitInfo(HitInfo &hitInfo);
-    Camera(VulkanContext& vkContext, GameObjectPool &gop);
+    Camera(VulkanContext &vkContext, GameObjectPool &gop);
     void updateUBO(UniformBufferObject &UBO, VkExtent2D &swapChainExtent, Event &event);
     glm::vec3 gePositionInWorldCoords();
     void cleanup();
 
     void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
               std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
+
+    void drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui);
 
     ~Camera();
 };

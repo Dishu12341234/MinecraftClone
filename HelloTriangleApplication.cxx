@@ -1,4 +1,5 @@
 #include "HelloTriangleApplication.hpp"
+#include <iostream>
 #include "Camera.h"
 #include "Ray.h"
 
@@ -32,15 +33,13 @@ void HelloTriangleApplication::drawFrame()
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    // 3️⃣ Reset the command buffer for this frame
     vkResetCommandBuffer(commandBuffers[currentFrame], 0); // or VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
 
     terrain.value().handelDirtyChunks();
-    // 4️⃣ Record drawing commands into the command buffer
-    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
-
+    
     updateUniformBuffer(currentFrame);
 
+    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
     // 5️⃣ Submit the command buffer to the graphics queue
     VkSubmitInfo submitInfo{};
@@ -115,8 +114,10 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
     
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
     camera->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
-    // 
-    // gameObjectPool.drawIndexed(commandBuffer, descriptorSets, graphicsPipeline, swapChainExtent, 3, currentFrame);
+    
+    
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, uiRenderPipeline.graphicsPipeline);
+    camera->drawUI(commandBuffer, uiRenderPipeline.pipelineLayout, uiRenderPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, ui.value());
 
     vkCmdEndRenderPass(commandBuffer);
 
@@ -133,6 +134,7 @@ void HelloTriangleApplication::cleanup()
     gameObjectPool.cleanUpResources();
     terrain.value().cleanup();
     camera->cleanup();
+    ui->cleanup();
 
     vkDestroyBuffer(device, indexBuffer, nullptr);
     vkFreeMemory(device, indexBufferMemory, nullptr);
@@ -160,6 +162,7 @@ void HelloTriangleApplication::cleanup()
 
     graphicsPipeline.destroyPipelineLayout();
     rayGraphicsPipeline.destroyPipelineLayout();
+    uiRenderPipeline.destroyPipelineLayout();
 
     vkDestroyRenderPass(device, renderPass, nullptr);
 
@@ -191,6 +194,9 @@ void HelloTriangleApplication::cleanup()
 
     glfwDestroyWindow(_window);
     glfwTerminate();
+
+
+    std::cout << "Byeeeee :)" << std::endl;
 }
 
 HelloTriangleApplication::HelloTriangleApplication()

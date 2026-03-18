@@ -7,13 +7,17 @@
 #include "Textures.hpp"
 #include "GraphicsPipeline.h"
 #include "RayGraphicsPipeline.h"
-#include "GameObjectPool.h"
+#include "UIRenderPipeline.h"
+#include "UIComponents.h"
+#include "GameObjectPool.h" 
 #include "Event.h"
 #include "Terrain.h"
+#include "UI.h"
 
 
 class Ray;
 class Camera;
+class UI;
 
 class HelloTriangleApplication
 {
@@ -22,6 +26,8 @@ private:
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
     std::optional<Terrain> terrain;
+    std::optional<UI> ui;
+
     VkInstance instance;
     GLFWwindow *_window;
 
@@ -133,6 +139,8 @@ private:
     u_GraphicsPipeline graphicsPipeline;
     RayGraphicsPipeline rayGraphicsPipeline;
 
+    UIRenderPipeline uiRenderPipeline;
+
     void initGameObjects();
 
     void createFramebuffers();
@@ -153,6 +161,7 @@ private:
     VkDescriptorPool descriptorPool;
     std::vector<VkDescriptorSet> descriptorSets;
     void createDescriptorSets();
+    void updateDescriptorSets(u_Texture &texture);
 
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBufferm, VkDeviceSize size);
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);

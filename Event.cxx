@@ -6,6 +6,8 @@ Event::Event(GLFWwindow &window) : window{window}
 {
     glfwSetKeyCallback(&window, Event::keyPressedCallback);
     glfwSetCursorPosCallback(&window, Event::cursorPositionCallback);
+    glfwSetMouseButtonCallback(&window, Event::mouseButtonCallback);
+
     if (glfwRawMouseMotionSupported())
     {
         glfwSetInputMode(&window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
@@ -59,4 +61,22 @@ bool Event::getKeyPressed(int key)
 
 Event::~Event()
 {
+}
+
+void Event::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+{
+    Event *event = static_cast<Event *>(glfwGetWindowUserPointer(window));
+    if (!event)
+        return;
+
+    event->mouseButtonDown = button;
+    event->mouseButtonAction = action;
+}
+
+bool Event::getMouseButtonPressed(int button)
+{
+    if(button == mouseButtonDown)
+        return (mouseButtonAction == GLFW_PRESS);
+
+    return false;
 }

@@ -12,7 +12,6 @@
 #include <map>
 #include <set>
 
-
 VkSampleCountFlagBits HelloTriangleApplication::getMaxUsableSampleCount()
 {
     VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -89,6 +88,8 @@ void HelloTriangleApplication::initVulkan()
     rayGraphicsPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
     rayGraphicsPipeline.createGraphicsPipeline();
 
+    uiRenderPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
+    uiRenderPipeline.createGraphicsPipeline();
     u_TexturePassInfo texturePassInfo{};
     texturePassInfo.device = device;
     texturePassInfo.physicalDevice = physicalDevice;
@@ -560,7 +561,6 @@ VkExtent2D HelloTriangleApplication::chooseSwapExtent(const VkSurfaceCapabilitie
 #endif
 }
 
-
 // here we are using a staging buffer which is accisible by the CPU and then afterwards copying the contents of the staging buffer to the vertex buffer
 void HelloTriangleApplication::createVertexBuffer()
 {
@@ -670,6 +670,12 @@ void HelloTriangleApplication::createDescriptorSets()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
+    updateDescriptorSets(texture);
+}
+
+void HelloTriangleApplication::updateDescriptorSets(u_Texture &texture)
+{
+
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
@@ -750,7 +756,8 @@ void HelloTriangleApplication::createCommandBuffers()
         throw std::runtime_error("failed to allocate command buffers");
     }
 }
-void HelloTriangleApplication::createSyncObject() {
+void HelloTriangleApplication::createSyncObject()
+{
     // 1️⃣ Per-frame semaphores for acquiring images
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -768,18 +775,21 @@ void HelloTriangleApplication::createSyncObject() {
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT; // start signaled
 
     // Create per-frame semaphores and fences
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
         if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-            vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+            vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
+        {
             throw std::runtime_error("failed to create semaphore or fence!");
         }
     }
 
     // Create per-swapchain-image render-finished semaphores
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
-        if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS) {
+    for (size_t i = 0; i < swapChainImages.size(); i++)
+    {
+        if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS)
+        {
             throw std::runtime_error("failed to create renderFinished semaphore!");
         }
     }
 }
-

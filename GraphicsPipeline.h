@@ -67,6 +67,7 @@ private:
     VkSampleCountFlagBits msaaSamples;
     
     friend class RayGraphicsPipeline;
+    friend class UIRenderPipeline;
     public:
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;//shared
