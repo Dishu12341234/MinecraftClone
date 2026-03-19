@@ -34,6 +34,7 @@ LINUX_VULKAN_SDK := /home/divyansh/SDKs/vksdk/1.4.335.0/x86_64
 COMMON_CXXFLAGS := -std=c++2b -Wall -g -O1 \
 	-fsanitize=address -fno-omit-frame-pointer \
 	-MMD -MP \
+	-fno-diagnostics-show-template-tree \
 	-lprofiler \
 	-I/usr/include
 

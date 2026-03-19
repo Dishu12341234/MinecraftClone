@@ -2,6 +2,9 @@
 #include <iostream>
 #include "Camera.h"
 #include "Ray.h"
+#include "Event.h"
+#include "Terrain.h"
+#include "Player.h"
 
 void HelloTriangleApplication::mainLoop()
 {
@@ -38,8 +41,8 @@ void HelloTriangleApplication::drawFrame()
     terrain.value().handelDirtyChunks();
     
     
-    updateUniformBuffer(currentFrame);
     recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+    updateUniformBuffer(currentFrame);
 
     // 5️⃣ Submit the command buffer to the graphics queue
     VkSubmitInfo submitInfo{};
@@ -100,7 +103,7 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
     renderPassInfo.renderArea.extent = swapChainExtent;
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+    clearValues[0].color = {{0.102f, 0.133f, 0.255f, 1.0f}};
     clearValues[1].depthStencil = {1.0f, 0};
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -113,11 +116,11 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
     
     
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
-    camera->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+    playerS1->camera->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
     
     
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, uiRenderPipeline.graphicsPipeline);
-    camera->drawUI(commandBuffer, uiRenderPipeline.pipelineLayout, uiRenderPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, ui.value());
+    playerS1->drawUIIfPossible(commandBuffer, uiRenderPipeline.pipelineLayout, uiRenderPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, ui.value());
 
     vkCmdEndRenderPass(commandBuffer);
 
@@ -133,7 +136,7 @@ void HelloTriangleApplication::cleanup()
 
     gameObjectPool.cleanUpResources();
     terrain.value().cleanup();
-    camera->cleanup();
+    playerS1->camera->cleanup();
     ui->cleanup();
 
     vkDestroyBuffer(device, indexBuffer, nullptr);

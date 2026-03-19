@@ -14,15 +14,16 @@ std::ostream &operator<<(std::ostream &os, const glm::vec3 &v)
 void Camera::getHitInfo(HitInfo &hitInfo)
 
 {
-    glm::vec3 rayOrigin = gePositionInWorldCoords();
-    glm::vec3 rayDir = forward;
-
-    float maxDistance = 5.0f; // Max ray distance
     float stepSize = 0.1f;
 
-    for (float t = 0.0f; t < maxDistance; t += stepSize)
+    glm::vec3 rayOriginCR = gePositionInWorldCoords();
+    glm::vec3 rayDirCR = forwardCR;
+
+    float maxDistanceCR = 5.0f; // Max ray distance
+
+    for (float t = 0.0f; t < maxDistanceCR; t += stepSize)
     {
-        glm::vec3 point = rayOrigin + rayDir * t;
+        glm::vec3 point = rayOriginCR + rayDirCR * t;
         BlockCoordinates blockCoords{
             static_cast<int>(floor(point.x)),
             static_cast<int>(floor(point.y)),
@@ -40,7 +41,7 @@ void Camera::getHitInfo(HitInfo &hitInfo)
 }
 
 Camera::Camera(VulkanContext &vkContext, GameObjectPool &gop)
-    : gameObjectPool{gop}, vkContext{vkContext}, cameraRay{vkContext, gop}
+    : gameObjectPool{gop}, vkContext{vkContext}, cameraRay{vkContext, gop}, hitBoxR1{vkContext, gop}
 {
 }
 void Camera::updateUBO(UniformBufferObject &UBO,
@@ -65,17 +66,17 @@ void Camera::updateUBO(UniformBufferObject &UBO,
     pitch = glm::clamp(pitch, -89.9f, 89.9f);
 
     // Z-up forward vector from yaw/pitch
-    forward.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    forward.y = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    forward.z = sin(glm::radians(pitch));
-    forward = glm::normalize(forward);
+    forwardCR.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    forwardCR.y = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    forwardCR.z = sin(glm::radians(pitch));
+    forwardCR = glm::normalize(forwardCR);
 
     glm::vec3 worldUp(0.0f, 0.0f, 1.0f); // Z-up
 
-    glm::vec3 forwardFlat = glm::normalize(glm::vec3(forward.x, forward.y, 0.0f));
+    glm::vec3 forwardFlat = glm::normalize(glm::vec3(forwardCR.x, forwardCR.y, 0.0f));
     glm::vec3 right = glm::normalize(glm::cross(worldUp, forwardFlat));
 
-    float speed = 15.81f * dt;
+    speed = 15.81f * dt;
 
     if (event.getKeyPressed(GLFW_KEY_W))
         cameraPos += forwardFlat * speed;
@@ -85,18 +86,14 @@ void Camera::updateUBO(UniformBufferObject &UBO,
         cameraPos -= -right * speed;
     if (event.getKeyPressed(GLFW_KEY_D))
         cameraPos += -right * speed;
-    if (event.getKeyPressed(GLFW_KEY_SPACE))
-        cameraPos.z += speed;
-    if (event.getKeyPressed(GLFW_KEY_LEFT_SHIFT))
-        cameraPos.z -= speed;
 
-    UBO.view = glm::lookAt(cameraPos, cameraPos + forward, worldUp);
+    UBO.view = glm::lookAt(cameraPos, cameraPos + forwardCR, worldUp);
 
     UBO.proj = glm::perspective(
         glm::radians(90.0f),
         swapChainExtent.width / (float)swapChainExtent.height,
-        0.1f,
-        4000.0f);
+        0.025f,
+        1000.0f);
 
     UBO.proj[1][1] *= -1;
 }
@@ -107,6 +104,7 @@ glm::vec3 Camera::gePositionInWorldCoords() { return cameraPos; }
 void Camera::cleanup()
 {
     cameraRay.cleanup();
+    hitBoxR1.cleanup();
 }
 
 void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
@@ -114,17 +112,67 @@ void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout
 
     cameraRay.transform.position = gePositionInWorldCoords();
     cameraRay.transform.position.z -= .1f;
-    cameraRay.direction = forward;
+    cameraRay.direction = forwardCR;
     cameraRay.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+
+    hitBoxR1.transform.position = gePositionInWorldCoords();
+    // hitBoxR1.transform.position.x += .1f;
+    // hitBoxR1.transform.position.y -= .025f;
+    // hitBoxR1.transform.position.z += .1f;
+    hitBoxR1.direction = glm::vec3(0, 0, -1);
+    hitBoxR1.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
 }
 
-void Camera::drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui)
+void Camera::drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
+                    VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets,
+                    uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui)
 {
     PushConstantC1 c1;
-    glm::mat4 model = glm::mat4(1.f);
-    model = glm::translate(model, cameraPos + glm::vec3(0, 1, 0));
-    c1.data = model;
-    ui.render(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+
+    float aspect = (float)swapChainExtent.width / (float)swapChainExtent.height;
+    c1.data = glm::ortho(-aspect, aspect, -1.0f, 1.0f, 0.0f, 1.0f);
+
+    ui.render(commandBuffer, pipelineLayout, graphicsPipeline,
+              descriptorSets, currentFrame, swapChainExtent, c1);
+}
+
+void Camera::drawUIAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui, uint32_t idx)
+{
+    PushConstantC1 c1;
+
+    float aspect = (float)swapChainExtent.width / (float)swapChainExtent.height;
+    c1.data = glm::ortho(-aspect, aspect, -1.0f, 1.0f, 0.0f, 1.0f);
+
+    ui.renderAt(commandBuffer, pipelineLayout, graphicsPipeline,
+                descriptorSets, currentFrame, swapChainExtent, c1, idx);
+}
+
+PlayerState Camera::updateHitBox()
+{
+    float stepSize = 0.1f;
+
+    glm::vec3 rayOriginHBR1 = gePositionInWorldCoords();
+    glm::vec3 rayDirHBR1 = glm::vec3(0, 0, -1);
+
+    float maxDistanceHBR1 = 2.0f; // Max ray distance
+    bool groundCollision = false;
+    for (float t = 0.0f; t < maxDistanceHBR1; t += stepSize)
+    {
+        glm::vec3 point = rayOriginHBR1 + rayDirHBR1 * t;
+        BlockCoordinates blockCoords{
+            static_cast<int>(floor(point.x)),
+            static_cast<int>(floor(point.y)),
+            static_cast<int>(floor(point.z))};
+        std::cout << "Point: (x,y,z) (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
+        Voxel *voxel = gameObjectPool.getVoxelGlobal(blockCoords);
+        if (voxel && voxel->getBlockType() != AIR)
+        {
+            groundCollision = true;
+            break;
+        }
+    }
+
+    return {groundCollision, 0, 0};
 }
 
 Camera::~Camera()

@@ -5,8 +5,11 @@
 #include "HelloTriangleApplication.hpp"
 #include "Camera.h"
 #include "Chunk.h"
+#include "Event.h"
 #include <memory>
+#include "Player.h"
 #include "Ray.h"
+#include "Terrain.h"
 #include "UI.h"
 
 void HelloTriangleApplication::initGameObjects()
@@ -21,13 +24,13 @@ void HelloTriangleApplication::initGameObjects()
 
     gameObjectPool.uploadVBOsAndIBOs();
 
-    camera = std::make_unique<Camera>(context, gameObjectPool);
+    playerS1 = std::make_unique<Player>(context, gameObjectPool);
 
     terrain = std::move(Terrain(context, gameObjectPool));
     ui = std::move(UI(context));
 
     UIComponents testComponent(context);
-    testComponent.initUIComponent(glm::vec2(0.f),glm::vec2(2.f));
+    testComponent.initUIComponent(glm::vec2(0.f), glm::vec2(2.5f, 1.5f));
 
     ui->attachComponent(testComponent);
 
@@ -35,13 +38,15 @@ void HelloTriangleApplication::initGameObjects()
     terrain.value().generateChunks();
 }
 
+KeyTracker keys;
+
 void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 {
 
-    std::cout << "Coordinates: " << "(x,y,z) (x" << camera->gePositionInWorldCoords().x << ", " << camera->gePositionInWorldCoords().y << ", " << camera->gePositionInWorldCoords().z << ")" << std::endl;
+    std::cout << "Coordinates: " << "(x,y,z) (x" << playerS1->camera->gePositionInWorldCoords().x << ", " << playerS1->camera->gePositionInWorldCoords().y << ", " << playerS1->camera->gePositionInWorldCoords().z << ")" << std::endl;
 
     HitInfo hitInfo{};
-    camera->getHitInfo(hitInfo);
+    playerS1->camera->getHitInfo(hitInfo);
 
     if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
         if (hitInfo.hitVoxel)
@@ -66,23 +71,15 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
     if (event->getKeyPressed(GLFW_KEY_ESCAPE))
         glfwSetWindowShouldClose(_window, GLFW_TRUE);
 
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+    if (keys.justPressed(event.get(), GLFW_KEY_E))
+    {
+        playerS1->playerState.inInventory = !playerS1->playerState.inInventory;
+    }
 
     UniformBufferObject ubo{};
 
-    // Model 0
-    // ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
-    ubo.model = glm::translate(glm::mat4(1.f), glm::vec3(0.f));
-    ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
-    ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
-
-    camera->updateUBO(ubo, swapChainExtent, *event.get());
-
-    // ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 1.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
-    // ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.01f, 100.0f);
+    playerS1->handlePlayerMovement(ubo, swapChainExtent, *event.get());
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+    keys.update(event.get(), { GLFW_KEY_E });
 }

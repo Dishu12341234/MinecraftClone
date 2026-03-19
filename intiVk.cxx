@@ -1,4 +1,6 @@
 #include "HelloTriangleApplication.hpp"
+#include "Event.h"
+#include "Terrain.h"
 #include <vulkan/vulkan.h>
 #include <iostream>
 #include <stdexcept>
@@ -100,6 +102,12 @@ void HelloTriangleApplication::initVulkan()
 
     for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
     {
+        uiTexturePaths[i] = "textures/corrupt.png";
+    }
+    
+
+    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+    {
         uiTextures.emplace_back();
     }
 
@@ -121,9 +129,12 @@ void HelloTriangleApplication::initVulkan()
     texturePassInfo.width = WIDTH;
     texturePassInfo.texturePath = TEXTURE_PATH;
     texture.passTextureCreateInfo(texturePassInfo);
+
+
+    uiTexturePaths[0] = "textures/inventory.png";
     for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
     {
-        texturePassInfo.texturePath = "textures/Leo.png";
+        texturePassInfo.texturePath = uiTexturePaths[i];
         uiTextures.at(i).passTextureCreateInfo(texturePassInfo);
     }
 

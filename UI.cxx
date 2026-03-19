@@ -18,6 +18,15 @@ void UI::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, 
     }
 }
 
+void UI::renderAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 c1, uint32_t idx)
+{
+    if(idx >= components.size())
+        return;
+    
+
+    components.at(idx).draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+}
+
 void UI::cleanup()
 {
     for (auto &component : components)

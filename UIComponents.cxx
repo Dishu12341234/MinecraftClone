@@ -54,14 +54,15 @@ void UIComponents::initUIComponent(glm::vec2 position, glm::vec2 size)
     this->position = position;
     this->size = size;
 
-    float cx = position.x - size.x, cy = position.y - size.y / 2; // screen-center offset
+    float cx = position.x - size.x / 2; // also fix this, was missing /2
+    float cy = position.y - size.y / 2;
     float w = size.x, h = size.y;
 
     vertices = {
-        {{-1.0f, cx, cy}, {1.0f, 1.0f}, 0},         // bottom-left
-        {{-1.0f, cx, cy + h}, {1.0f, 0.0f}, 0},     // top-left
-        {{-1.0f, cx + w, cy + h}, {0.0f, 0.0f}, 0}, // top-right
-        {{-1.0f, cx + w, cy}, {0.0f, 1.0f}, 0},     // bottom-right
+        {{cx, cy, 0.0f}, {0.0f, 0.0f}, 0},         // bottom-left
+        {{cx, cy + h, 0.0f}, {0.0f, 1.0f}, 0},     // top-left
+        {{cx + w, cy + h, 0.0f}, {1.0f, 1.0f}, 0}, // top-right
+        {{cx + w, cy, 0.0f}, {1.0f, 0.0f}, 0},     // bottom-right
     };
 
     indices = {0, 1, 2, 2, 3, 0};

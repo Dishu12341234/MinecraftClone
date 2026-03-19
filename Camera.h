@@ -6,6 +6,7 @@
 #include "GameObjectPool.h"
 #include "Ray.h"
 #include "UI.h"
+#include "Structs.h"
 
 struct HitInfo
 {
@@ -21,13 +22,27 @@ private:
     glm::vec3 cameraPos{1.f, 0.f, 66.f};
     float pitch;
     float yaw;
+    float speed;
     GameObjectPool &gameObjectPool;
-    glm::vec3 forward;
+    glm::vec3 forwardCR;
     glm::vec3 worldUp{0, 0, 1};
 
     Ray cameraRay;
+    Ray hitBoxR1;
+
+    friend class Player;
 
 public:
+    Camera(const Camera &) = delete;
+    Camera &operator=(const Camera &other)
+    {
+        // allocate new Vulkan buffers, copy data
+        return *this;
+    }
+
+    Camera(Camera &&) = default; // allow moves
+    Camera &operator=(Camera &&) = default;
+
     void getHitInfo(HitInfo &hitInfo);
     Camera(VulkanContext &vkContext, GameObjectPool &gop);
     void updateUBO(UniformBufferObject &UBO, VkExtent2D &swapChainExtent, Event &event);
@@ -38,6 +53,9 @@ public:
               std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
 
     void drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui);
+    void drawUIAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui, uint32_t idx);
+
+    PlayerState updateHitBox();
 
     ~Camera();
 };

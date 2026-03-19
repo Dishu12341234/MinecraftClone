@@ -8,16 +8,17 @@
 #include "GraphicsPipeline.h"
 #include "RayGraphicsPipeline.h"
 #include "UIRenderPipeline.h"
-#include "UIComponents.h"
 #include "GameObjectPool.h" 
-#include "Event.h"
 #include "Terrain.h"
 #include "UI.h"
+
+class Event;
 
 #define NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES 16
 
 
 class Ray;
+class Player;
 class Camera;
 class UI;
 
@@ -30,6 +31,7 @@ private:
     std::optional<Terrain> terrain;
     std::optional<UI> ui;
 
+    std::array<std::string, NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES> uiTexturePaths;
     std::vector<u_Texture> uiTextures;
 
     VkInstance instance;
@@ -37,7 +39,7 @@ private:
 
     GameObjectPool gameObjectPool;
     std::unique_ptr<Event> event;
-    std::unique_ptr<Camera> camera;
+    std::unique_ptr<Player> playerS1;
 
     struct QueueFamilyIndices
     {

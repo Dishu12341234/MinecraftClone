@@ -1,9 +1,9 @@
 build/HelloTriangleApplication.o: HelloTriangleApplication.cxx \
  HelloTriangleApplication.hpp Textures.hpp PassInfo.hpp \
  include/stb-master/stb_image.h GraphicsPipeline.h Structs.h \
- RayGraphicsPipeline.h UIRenderPipeline.h UIComponents.h GameObjectPool.h \
- Voxel.h Event.h Terrain.h blocks.h utils.h Chunk.h Mesh.h UI.h Camera.h \
- Ray.h RayMesher.h
+ RayGraphicsPipeline.h UIRenderPipeline.h GameObjectPool.h Voxel.h \
+ Terrain.h blocks.h utils.h Chunk.h Mesh.h UI.h UIComponents.h Camera.h \
+ Event.h Ray.h RayMesher.h Player.h
 HelloTriangleApplication.hpp:
 Textures.hpp:
 PassInfo.hpp:
@@ -12,16 +12,17 @@ GraphicsPipeline.h:
 Structs.h:
 RayGraphicsPipeline.h:
 UIRenderPipeline.h:
-UIComponents.h:
 GameObjectPool.h:
 Voxel.h:
-Event.h:
 Terrain.h:
 blocks.h:
 utils.h:
 Chunk.h:
 Mesh.h:
 UI.h:
+UIComponents.h:
 Camera.h:
+Event.h:
 Ray.h:
 RayMesher.h:
+Player.h:

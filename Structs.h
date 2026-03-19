@@ -49,6 +49,13 @@ enum BlockType
     STONE
 };
 
+struct PlayerState
+{
+    bool onGround{false};
+    bool inGUI{false};
+    bool inInventory{false};
+};
+
 struct FaceDef
 {
     glm::vec3 corners[4]; // vertex positions relative to block origin
