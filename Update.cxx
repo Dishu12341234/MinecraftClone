@@ -29,10 +29,15 @@ void HelloTriangleApplication::initGameObjects()
     terrain = std::move(Terrain(context, gameObjectPool));
     ui = std::move(UI(context));
 
-    UIComponents testComponent(context);
-    testComponent.initUIComponent(glm::vec2(0.f), glm::vec2(2.5f, 1.5f));
+    UIComponents Inventory(context);
+    Inventory.initUIComponent(glm::vec2(0.f), glm::vec2(2.5f, 1.5f));
 
-    ui->attachComponent(testComponent);
+    UIComponents Crosshair(context);
+    Crosshair.setTextureIDX(1);
+    Crosshair.initUIComponent(glm::vec2(0, 0), glm::vec2(.1f, .1f));
+
+    ui->attachComponent(Inventory);
+    ui->attachComponent(Crosshair);
 
     gameObjectPool.terrain = &terrain.value();
     terrain.value().generateChunks();
@@ -68,8 +73,13 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
                 terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) + 1);
         }
 
-    if (event->getKeyPressed(GLFW_KEY_ESCAPE))
-        glfwSetWindowShouldClose(_window, GLFW_TRUE);
+    if (keys.justPressed(event.get(), GLFW_KEY_ESCAPE))
+    {
+        if (!playerS1->playerState.inInventory)
+            glfwSetWindowShouldClose(_window, GLFW_TRUE);
+        else
+            playerS1->playerState.inInventory = false;
+    }
 
     if (keys.justPressed(event.get(), GLFW_KEY_E))
     {
@@ -81,5 +91,5 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
     playerS1->handlePlayerMovement(ubo, swapChainExtent, *event.get());
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
-    keys.update(event.get(), { GLFW_KEY_E });
+    keys.update(event.get(), {GLFW_KEY_E, GLFW_KEY_ESCAPE});
 }

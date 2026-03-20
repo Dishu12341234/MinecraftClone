@@ -41,8 +41,8 @@ void HelloTriangleApplication::drawFrame()
     terrain.value().handelDirtyChunks();
     
     
-    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
     updateUniformBuffer(currentFrame);
+    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
     // 5️⃣ Submit the command buffer to the graphics queue
     VkSubmitInfo submitInfo{};

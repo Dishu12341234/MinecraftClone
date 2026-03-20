@@ -54,6 +54,7 @@ struct PlayerState
     bool onGround{false};
     bool inGUI{false};
     bool inInventory{false};
+    bool inJump{false};
 };
 
 struct FaceDef
@@ -81,4 +82,10 @@ struct Faces
     bool left;
     bool front;
     bool back;
+};
+
+struct AxisAlignedBoundingBox
+{
+    glm::vec3 min;
+    glm::vec3 max;
 };

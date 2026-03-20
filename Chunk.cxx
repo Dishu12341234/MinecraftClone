@@ -32,6 +32,10 @@ void Chunk::populateBlocks()
                     blockType = AIR;
                 voxels.emplace_back(vkContext, BlockType(blockType));
                 voxels.back().setType(BlockType(blockType));
+                voxels.back().setPosition({
+                    (float)x + 0.5f,
+                    (float)y + 0.5f,
+                    (float)z + 0.5f});
             }
         }
     }
@@ -124,8 +128,8 @@ void Chunk::genMesh(bool useChunkMesh)
         {
             for (int y = 0; y < 16; y++)
             {
-                const int idx = z * 256 + x + y * 16;
-                    
+                const int idx = z * 256 + x * 16+ y;
+
                 const BlockType type = voxels.at(idx).getBlockType();
                 const int *faceTexture = voxels.at(idx).faceTexture;
 
@@ -133,7 +137,7 @@ void Chunk::genMesh(bool useChunkMesh)
                     continue;
 
                 const glm::vec3 color = blockColor(type);
-                const glm::vec3 origin = {(float)x + 0.5f, (float)y + 0.5f, (float)z + 0.5f};
+                const glm::vec3 origin = voxels.at(idx).transform.position;
 
                 for (const FaceDef &face : faces)
                 {

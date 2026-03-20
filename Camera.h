@@ -28,7 +28,6 @@ private:
     glm::vec3 worldUp{0, 0, 1};
 
     Ray cameraRay;
-    Ray hitBoxR1;
 
     friend class Player;
 
@@ -55,7 +54,6 @@ public:
     void drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui);
     void drawUIAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui, uint32_t idx);
 
-    PlayerState updateHitBox();
 
     ~Camera();
 };

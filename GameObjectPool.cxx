@@ -4,7 +4,7 @@
 
 Chunk *GameObjectPool::getChunk(int chunkX, int chunkY)
 {
-    if(!terrain)
+    if (!terrain)
         return nullptr;
 
     for (auto &chunk : terrain->chunks)
@@ -14,7 +14,7 @@ Chunk *GameObjectPool::getChunk(int chunkX, int chunkY)
     }
 
     return nullptr;
-}   
+}
 
 GameObjectPool::GameObjectPool()
 {
@@ -52,14 +52,11 @@ Voxel *GameObjectPool::getVoxelGlobal(BlockCoordinates globalCoords)
     if (localZ < 0 || localZ >= 256)
         return nullptr;
 
-    
-
     for (auto &chunk : terrain->chunks)
     {
         if (chunk.chunkOffsetX == chunkX && chunk.chunkOffsetY == chunkY)
         {
-            // Access voxels directly — never call getVoxelChunkLocal here
-            int idx = localX + localY * 16 + localZ * 256;
+            int idx = localX * 16 + localY + localZ * 256;
             return &chunk.voxels[idx];
         }
     }

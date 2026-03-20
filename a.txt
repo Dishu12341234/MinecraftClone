@@ -32,6 +32,9 @@
 ./Voxel.cxx:void Voxel::setPosition(glm::vec3 position)
 ./Voxel.cxx:{
 ./Voxel.cxx:    this->transform.position = position;
+./Voxel.cxx:    aabb.max = position + glm::vec3(.5f);
+./Voxel.cxx:    aabb.min = position - glm::vec3(.5f);
+./Voxel.cxx:
 ./Voxel.cxx:}
 ./Voxel.cxx:
 ./Voxel.cxx:void Voxel::setRotation(glm::vec3 rotation)
@@ -88,6 +91,8 @@
 ./GameObjectPool.h:
 ./GameObjectPool.h:#endif
 ./intiVk.cxx:#include "HelloTriangleApplication.hpp"
+./intiVk.cxx:#include "Event.h"
+./intiVk.cxx:#include "Terrain.h"
 ./intiVk.cxx:#include <vulkan/vulkan.h>
 ./intiVk.cxx:#include <iostream>
 ./intiVk.cxx:#include <stdexcept>
@@ -189,6 +194,12 @@
 ./intiVk.cxx:
 ./intiVk.cxx:    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
 ./intiVk.cxx:    {
+./intiVk.cxx:        uiTexturePaths[i] = "textures/corrupt.png";
+./intiVk.cxx:    }
+./intiVk.cxx:    
+./intiVk.cxx:
+./intiVk.cxx:    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
+./intiVk.cxx:    {
 ./intiVk.cxx:        uiTextures.emplace_back();
 ./intiVk.cxx:    }
 ./intiVk.cxx:
@@ -210,9 +221,13 @@
 ./intiVk.cxx:    texturePassInfo.width = WIDTH;
 ./intiVk.cxx:    texturePassInfo.texturePath = TEXTURE_PATH;
 ./intiVk.cxx:    texture.passTextureCreateInfo(texturePassInfo);
+./intiVk.cxx:
+./intiVk.cxx:
+./intiVk.cxx:    uiTexturePaths[0] = "textures/inventory.png";
+./intiVk.cxx:    uiTexturePaths[1] = "textures/crosshair.png";
 ./intiVk.cxx:    for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
 ./intiVk.cxx:    {
-./intiVk.cxx:        texturePassInfo.texturePath = "textures/Leo.png";
+./intiVk.cxx:        texturePassInfo.texturePath = uiTexturePaths[i];
 ./intiVk.cxx:        uiTextures.at(i).passTextureCreateInfo(texturePassInfo);
 ./intiVk.cxx:    }
 ./intiVk.cxx:
@@ -1005,6 +1020,7 @@
 ./Camera.h:#include "GameObjectPool.h"
 ./Camera.h:#include "Ray.h"
 ./Camera.h:#include "UI.h"
+./Camera.h:#include "Structs.h"
 ./Camera.h:
 ./Camera.h:struct HitInfo
 ./Camera.h:{
@@ -1020,13 +1036,26 @@
 ./Camera.h:    glm::vec3 cameraPos{1.f, 0.f, 66.f};
 ./Camera.h:    float pitch;
 ./Camera.h:    float yaw;
+./Camera.h:    float speed;
 ./Camera.h:    GameObjectPool &gameObjectPool;
-./Camera.h:    glm::vec3 forward;
+./Camera.h:    glm::vec3 forwardCR;
 ./Camera.h:    glm::vec3 worldUp{0, 0, 1};
 ./Camera.h:
 ./Camera.h:    Ray cameraRay;
 ./Camera.h:
+./Camera.h:    friend class Player;
+./Camera.h:
 ./Camera.h:public:
+./Camera.h:    Camera(const Camera &) = delete;
+./Camera.h:    Camera &operator=(const Camera &other)
+./Camera.h:    {
+./Camera.h:        // allocate new Vulkan buffers, copy data
+./Camera.h:        return *this;
+./Camera.h:    }
+./Camera.h:
+./Camera.h:    Camera(Camera &&) = default; // allow moves
+./Camera.h:    Camera &operator=(Camera &&) = default;
+./Camera.h:
 ./Camera.h:    void getHitInfo(HitInfo &hitInfo);
 ./Camera.h:    Camera(VulkanContext &vkContext, GameObjectPool &gop);
 ./Camera.h:    void updateUBO(UniformBufferObject &UBO, VkExtent2D &swapChainExtent, Event &event);
@@ -1037,6 +1066,8 @@
 ./Camera.h:              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
 ./Camera.h:
 ./Camera.h:    void drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui);
+./Camera.h:    void drawUIAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui, uint32_t idx);
+./Camera.h:
 ./Camera.h:
 ./Camera.h:    ~Camera();
 ./Camera.h:};
@@ -1052,16 +1083,17 @@
 ./HelloTriangleApplication.hpp:#include "GraphicsPipeline.h"
 ./HelloTriangleApplication.hpp:#include "RayGraphicsPipeline.h"
 ./HelloTriangleApplication.hpp:#include "UIRenderPipeline.h"
-./HelloTriangleApplication.hpp:#include "UIComponents.h"
 ./HelloTriangleApplication.hpp:#include "GameObjectPool.h" 
-./HelloTriangleApplication.hpp:#include "Event.h"
 ./HelloTriangleApplication.hpp:#include "Terrain.h"
 ./HelloTriangleApplication.hpp:#include "UI.h"
+./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:class Event;
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:#define NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES 16
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:class Ray;
+./HelloTriangleApplication.hpp:class Player;
 ./HelloTriangleApplication.hpp:class Camera;
 ./HelloTriangleApplication.hpp:class UI;
 ./HelloTriangleApplication.hpp:
@@ -1074,6 +1106,7 @@
 ./HelloTriangleApplication.hpp:    std::optional<Terrain> terrain;
 ./HelloTriangleApplication.hpp:    std::optional<UI> ui;
 ./HelloTriangleApplication.hpp:
+./HelloTriangleApplication.hpp:    std::array<std::string, NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES> uiTexturePaths;
 ./HelloTriangleApplication.hpp:    std::vector<u_Texture> uiTextures;
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    VkInstance instance;
@@ -1081,7 +1114,7 @@
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    GameObjectPool gameObjectPool;
 ./HelloTriangleApplication.hpp:    std::unique_ptr<Event> event;
-./HelloTriangleApplication.hpp:    std::unique_ptr<Camera> camera;
+./HelloTriangleApplication.hpp:    std::unique_ptr<Player> playerS1;
 ./HelloTriangleApplication.hpp:
 ./HelloTriangleApplication.hpp:    struct QueueFamilyIndices
 ./HelloTriangleApplication.hpp:    {
@@ -2181,6 +2214,101 @@
 ./Textures.cxx:        textureImageMemory = VK_NULL_HANDLE;
 ./Textures.cxx:    }
 ./Textures.cxx:}
+./Player.cxx:#include "Player.h"
+./Player.cxx:#include "Camera.h"
+./Player.cxx:#include <ctime>
+./Player.cxx:#include <chrono>
+./Player.cxx:#include <iostream>
+./Player.cxx:
+./Player.cxx:Player::Player(VulkanContext &vkContext, GameObjectPool &gop) : gameObjectPool{gop}
+./Player.cxx:{
+./Player.cxx:    this->camera = std::move(Camera(vkContext, gop));
+./Player.cxx:}
+./Player.cxx:
+./Player.cxx:void Player::drawUIIfPossible(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui)
+./Player.cxx:{
+./Player.cxx:    if (playerState.inInventory)
+./Player.cxx:        camera->drawUIAt(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, ui, 0);
+./Player.cxx:    camera->drawUIAt(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, ui, 1);
+./Player.cxx:}
+./Player.cxx:
+./Player.cxx:void Player::handlePlayerMovement(UniformBufferObject &UBO, VkExtent2D &swapChainExtent, Event &event)
+./Player.cxx:{
+./Player.cxx:    constexpr float JUMP_TIMESCALE_MS = 200.f;
+./Player.cxx:    constexpr float JUMP_END_THRESHOLD = 4.5f;
+./Player.cxx:    constexpr float JUMP_SCALE = .5f;
+./Player.cxx:    constexpr float GRAVITY = 1.61f;
+./Player.cxx:
+./Player.cxx:    camera->updateUBO(UBO, swapChainExtent, event);
+./Player.cxx:
+./Player.cxx:    glm::vec3 playerCoords = camera->cameraPos;
+./Player.cxx:
+./Player.cxx:    aabb.max = playerCoords + glm::vec3(.15f, .15f, 0);
+./Player.cxx:    aabb.min = playerCoords - glm::vec3(.15f, .15f, 2);
+./Player.cxx:
+./Player.cxx:    // ground collision
+./Player.cxx:
+./Player.cxx:    Voxel *voxel = gameObjectPool.getVoxelGlobal(BlockCoordinates{floor(playerCoords.x), floor(playerCoords.y), floor(playerCoords.z - 2)});
+./Player.cxx:    if (voxel && voxel->getBlockType() != AIR)
+./Player.cxx:    {
+./Player.cxx:        std::cout << "Player AABB: "
+./Player.cxx:                  << "min(" << aabb.min.x << ", " << aabb.min.y << ", " << aabb.min.z << "), "
+./Player.cxx:                  << "max(" << aabb.max.x << ", " << aabb.max.y << ", " << aabb.max.z << ")\n";
+./Player.cxx:        std::cout << "Voxel AABB: "
+./Player.cxx:                  << "min(" << voxel->aabb.min.x << ", " << voxel->aabb.min.y << ", " << voxel->aabb.min.z << "), "
+./Player.cxx:                  << "max(" << voxel->aabb.max.x << ", " << voxel->aabb.max.y << ", " << voxel->aabb.max.z << ")\n";
+./Player.cxx:        // std::cout << "Voxel Coords: "
+./Player.cxx:        //           << "min(" << voxel->aabb.min.x << ", " << voxel->aabb.min.y << ", " << voxel->aabb.min.z << "), "
+./Player.cxx:        //           << "max(" << voxel->aabb.max.x << ", " << voxel->aabb.max.y << ", " << voxel->aabb.max.z << ")\n";
+./Player.cxx:        if ((aabb.max.x > voxel->aabb.min.x && aabb.min.x < voxel->aabb.max.x) &&
+./Player.cxx:            (aabb.max.y > voxel->aabb.min.y && aabb.min.y < voxel->aabb.max.y) &&
+./Player.cxx:            (aabb.max.z > voxel->aabb.min.z && aabb.min.z < voxel->aabb.max.z))
+./Player.cxx:        {
+./Player.cxx:            std::cout << "SKAHKHKS" << std::endl;
+./Player.cxx:        }
+./Player.cxx:    }
+./Player.cxx:
+./Player.cxx:    if (event.getKeyPressed(GLFW_KEY_LEFT_SHIFT))
+./Player.cxx:        camera->cameraPos.z -= camera->speed;
+./Player.cxx:
+./Player.cxx:    return;
+./Player.cxx:
+./Player.cxx:    auto now = std::chrono::steady_clock::now();
+./Player.cxx:    long long now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+./Player.cxx:                           now.time_since_epoch())
+./Player.cxx:                           .count();
+./Player.cxx:
+./Player.cxx:    if (playerState.onGround && ((now_ms - jumpStartTime) > 250))
+./Player.cxx:    {
+./Player.cxx:        playerState.inJump = false;
+./Player.cxx:    }
+./Player.cxx:
+./Player.cxx:    if (playerState.onGround && !playerState.inJump && event.getKeyPressed(GLFW_KEY_SPACE))
+./Player.cxx:    {
+./Player.cxx:        playerState.inJump = true;
+./Player.cxx:        jumpStartTime = now_ms;
+./Player.cxx:    }
+./Player.cxx:
+./Player.cxx:    if (playerState.inJump)
+./Player.cxx:    {
+./Player.cxx:        float te = (now_ms - jumpStartTime) / JUMP_TIMESCALE_MS;
+./Player.cxx:        camera->cameraPos.z += JUMP_SCALE * jump((te)) * camera->speed;
+./Player.cxx:
+./Player.cxx:        if (te > JUMP_END_THRESHOLD)
+./Player.cxx:        {
+./Player.cxx:            playerState.inJump = false;
+./Player.cxx:        }
+./Player.cxx:        std::cout << te << std::endl;
+./Player.cxx:    }
+./Player.cxx:    else if (!playerState.onGround)
+./Player.cxx:    {
+./Player.cxx:        camera->cameraPos.z -= camera->speed / GRAVITY;
+./Player.cxx:    }
+./Player.cxx:}
+./Player.cxx:
+./Player.cxx:Player::~Player()
+./Player.cxx:{
+./Player.cxx:}
 ./RayGraphicsPipeline.h:#pragma once
 ./RayGraphicsPipeline.h:
 ./RayGraphicsPipeline.h:#include "GraphicsPipeline.h"
@@ -2326,7 +2454,11 @@
 ./Voxel.h:    int blockType = AIR;
 ./Voxel.h:    const int* faceTexture = BlockFaces::corruptFaceTexture; // default to a bright pink texture to easily spot untextured blocks
 ./Voxel.h:
+./Voxel.h:    AxisAlignedBoundingBox aabb{};
+./Voxel.h:
 ./Voxel.h:    friend class Chunk;
+./Voxel.h:    friend class Player;
+./Voxel.h:    friend class Camera;
 ./Voxel.h:public:
 ./Voxel.h:    Voxel(VulkanContext &vkContext, BlockType blockType = AIR);
 ./Voxel.h:
@@ -2342,6 +2474,9 @@
 ./HelloTriangleApplication.cxx:#include <iostream>
 ./HelloTriangleApplication.cxx:#include "Camera.h"
 ./HelloTriangleApplication.cxx:#include "Ray.h"
+./HelloTriangleApplication.cxx:#include "Event.h"
+./HelloTriangleApplication.cxx:#include "Terrain.h"
+./HelloTriangleApplication.cxx:#include "Player.h"
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:void HelloTriangleApplication::mainLoop()
 ./HelloTriangleApplication.cxx:{
@@ -2377,8 +2512,8 @@
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    terrain.value().handelDirtyChunks();
 ./HelloTriangleApplication.cxx:    
+./HelloTriangleApplication.cxx:    
 ./HelloTriangleApplication.cxx:    updateUniformBuffer(currentFrame);
-./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    // 5️⃣ Submit the command buffer to the graphics queue
@@ -2440,7 +2575,7 @@
 ./HelloTriangleApplication.cxx:    renderPassInfo.renderArea.extent = swapChainExtent;
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    std::array<VkClearValue, 2> clearValues{};
-./HelloTriangleApplication.cxx:    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+./HelloTriangleApplication.cxx:    clearValues[0].color = {{0.102f, 0.133f, 0.255f, 1.0f}};
 ./HelloTriangleApplication.cxx:    clearValues[1].depthStencil = {1.0f, 0};
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -2453,11 +2588,11 @@
 ./HelloTriangleApplication.cxx:    
 ./HelloTriangleApplication.cxx:    
 ./HelloTriangleApplication.cxx:    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
-./HelloTriangleApplication.cxx:    camera->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+./HelloTriangleApplication.cxx:    playerS1->camera->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
 ./HelloTriangleApplication.cxx:    
 ./HelloTriangleApplication.cxx:    
 ./HelloTriangleApplication.cxx:    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, uiRenderPipeline.graphicsPipeline);
-./HelloTriangleApplication.cxx:    camera->drawUI(commandBuffer, uiRenderPipeline.pipelineLayout, uiRenderPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, ui.value());
+./HelloTriangleApplication.cxx:    playerS1->drawUIIfPossible(commandBuffer, uiRenderPipeline.pipelineLayout, uiRenderPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, ui.value());
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    vkCmdEndRenderPass(commandBuffer);
 ./HelloTriangleApplication.cxx:
@@ -2473,7 +2608,7 @@
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    gameObjectPool.cleanUpResources();
 ./HelloTriangleApplication.cxx:    terrain.value().cleanup();
-./HelloTriangleApplication.cxx:    camera->cleanup();
+./HelloTriangleApplication.cxx:    playerS1->camera->cleanup();
 ./HelloTriangleApplication.cxx:    ui->cleanup();
 ./HelloTriangleApplication.cxx:
 ./HelloTriangleApplication.cxx:    vkDestroyBuffer(device, indexBuffer, nullptr);
@@ -3202,6 +3337,10 @@
 ./Chunk.cxx:                    blockType = AIR;
 ./Chunk.cxx:                voxels.emplace_back(vkContext, BlockType(blockType));
 ./Chunk.cxx:                voxels.back().setType(BlockType(blockType));
+./Chunk.cxx:                voxels.back().transform.position = {
+./Chunk.cxx:                    (float)x + 0.5f,
+./Chunk.cxx:                    (float)y + 0.5f,
+./Chunk.cxx:                    (float)z + 0.5f};
 ./Chunk.cxx:            }
 ./Chunk.cxx:        }
 ./Chunk.cxx:    }
@@ -3294,8 +3433,8 @@
 ./Chunk.cxx:        {
 ./Chunk.cxx:            for (int y = 0; y < 16; y++)
 ./Chunk.cxx:            {
-./Chunk.cxx:                const int idx = z * 256 + x + y * 16;
-./Chunk.cxx:                    
+./Chunk.cxx:                const int idx = z * 256 + x * 16+ y;
+./Chunk.cxx:
 ./Chunk.cxx:                const BlockType type = voxels.at(idx).getBlockType();
 ./Chunk.cxx:                const int *faceTexture = voxels.at(idx).faceTexture;
 ./Chunk.cxx:
@@ -3303,7 +3442,7 @@
 ./Chunk.cxx:                    continue;
 ./Chunk.cxx:
 ./Chunk.cxx:                const glm::vec3 color = blockColor(type);
-./Chunk.cxx:                const glm::vec3 origin = {(float)x + 0.5f, (float)y + 0.5f, (float)z + 0.5f};
+./Chunk.cxx:                const glm::vec3 origin = voxels.at(idx).transform.position;
 ./Chunk.cxx:
 ./Chunk.cxx:                for (const FaceDef &face : faces)
 ./Chunk.cxx:                {
@@ -3515,6 +3654,14 @@
 ./Structs.h:    STONE
 ./Structs.h:};
 ./Structs.h:
+./Structs.h:struct PlayerState
+./Structs.h:{
+./Structs.h:    bool onGround{false};
+./Structs.h:    bool inGUI{false};
+./Structs.h:    bool inInventory{false};
+./Structs.h:    bool inJump{false};
+./Structs.h:};
+./Structs.h:
 ./Structs.h:struct FaceDef
 ./Structs.h:{
 ./Structs.h:    glm::vec3 corners[4]; // vertex positions relative to block origin
@@ -3540,6 +3687,12 @@
 ./Structs.h:    bool left;
 ./Structs.h:    bool front;
 ./Structs.h:    bool back;
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct AxisAlignedBoundingBox
+./Structs.h:{
+./Structs.h:    glm::vec3 min;
+./Structs.h:    glm::vec3 max;
 ./Structs.h:};
 ./UIRenderPipeline.cxx:#include "UIRenderPipeline.h"
 ./UIRenderPipeline.cxx:#include <iostream>
@@ -3657,7 +3810,11 @@
 ./UIRenderPipeline.cxx:    /// color blending
 ./UIRenderPipeline.cxx:    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 ./UIRenderPipeline.cxx:    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-./UIRenderPipeline.cxx:    colorBlendAttachment.blendEnable = VK_FALSE;
+./UIRenderPipeline.cxx:    colorBlendAttachment.blendEnable = VK_TRUE;
+./UIRenderPipeline.cxx:    // Standard alpha blending: result = srcColor * srcAlpha + dstColor * (1 - srcAlpha)
+./UIRenderPipeline.cxx:    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+./UIRenderPipeline.cxx:    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+./UIRenderPipeline.cxx:    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
 ./UIRenderPipeline.cxx:
 ./UIRenderPipeline.cxx:    VkPipelineColorBlendStateCreateInfo colorBlending{};
 ./UIRenderPipeline.cxx:    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -3747,7 +3904,7 @@
 ./UIRenderPipeline.cxx:    attributeDescriptions[2].binding = 0;
 ./UIRenderPipeline.cxx:    attributeDescriptions[2].location = 2;
 ./UIRenderPipeline.cxx:    attributeDescriptions[2].format = VK_FORMAT_R32_UINT; // vec2
-./UIRenderPipeline.cxx:    attributeDescriptions[2].offset = offsetof(UIVertex, textureIndex); 
+./UIRenderPipeline.cxx:    attributeDescriptions[2].offset = offsetof(UIVertex, textureIndex);
 ./UIRenderPipeline.cxx:
 ./UIRenderPipeline.cxx:    return attributeDescriptions;
 ./UIRenderPipeline.cxx:}
@@ -4122,16 +4279,26 @@
 ./UIComponents.cxx:    this->position = position;
 ./UIComponents.cxx:    this->size = size;
 ./UIComponents.cxx:
+./UIComponents.cxx:    float cx = position.x - size.x / 2; // also fix this, was missing /2
+./UIComponents.cxx:    float cy = position.y - size.y / 2;
+./UIComponents.cxx:    float w = size.x, h = size.y;
+./UIComponents.cxx:
 ./UIComponents.cxx:    vertices = {
-./UIComponents.cxx:    {{position.r, position.s - size.r / 2.f, 0.0f - size.r / 2.f}, {1.0f, 0.0f}, 0},
-./UIComponents.cxx:    {{position.r, position.s - size.r / 2.f, size.r - size.r / 2.f}, {0.0f, 1.0f}, 0},
-./UIComponents.cxx:    {{position.r, position.s - size.r / 2.f + size.s, size.r - size.r / 2.f}, {1.0f, 1.0f}, 0},
-./UIComponents.cxx:    {{position.r, position.s - size.r / 2.f + size.s, 0.0f - size.r / 2.f}, {1.0f, 0.0f}, 0}};
+./UIComponents.cxx:        {{cx, cy, 0.0f}, {0.0f, 0.0f}, (uint32_t)textureIDX},         // bottom-left
+./UIComponents.cxx:        {{cx, cy + h, 0.0f}, {0.0f, 1.0f}, (uint32_t)textureIDX},     // top-left
+./UIComponents.cxx:        {{cx + w, cy + h, 0.0f}, {1.0f, 1.0f}, (uint32_t)textureIDX}, // top-right
+./UIComponents.cxx:        {{cx + w, cy, 0.0f}, {1.0f, 0.0f}, (uint32_t)textureIDX},     // bottom-right
+./UIComponents.cxx:    };
 ./UIComponents.cxx:
 ./UIComponents.cxx:    indices = {0, 1, 2, 2, 3, 0};
 ./UIComponents.cxx:
 ./UIComponents.cxx:    createVertexBuffer();
 ./UIComponents.cxx:    createIndexBuffer();
+./UIComponents.cxx:}
+./UIComponents.cxx:
+./UIComponents.cxx:void UIComponents::setTextureIDX(int idx)
+./UIComponents.cxx:{
+./UIComponents.cxx:    this->textureIDX = idx;
 ./UIComponents.cxx:}
 ./UIComponents.cxx:
 ./UIComponents.cxx:void UIComponents::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1)
@@ -4360,11 +4527,30 @@
 ./Event.h:#define EVENT_H
 ./Event.h:#include "GLFW/glfw3.h"
 ./Event.h:#include <array>
+./Event.h:#include <unordered_map>
 ./Event.h:
 ./Event.h:struct KeyInfo
 ./Event.h:{
 ./Event.h:    int key;
 ./Event.h:    int action;
+./Event.h:};
+./Event.h:
+./Event.h:class KeyTracker {
+./Event.h:    std::unordered_map<int, bool> prevState;
+./Event.h:public:
+./Event.h:    // Call this once per frame AFTER all key checks
+./Event.h:    void update(auto* event, std::initializer_list<int> keys) {
+./Event.h:        for (int key : keys)
+./Event.h:            prevState[key] = event->getKeyPressed(key);
+./Event.h:    }
+./Event.h:
+./Event.h:    bool justPressed(auto* event, int key) {
+./Event.h:        return event->getKeyPressed(key) && !prevState[key];
+./Event.h:    }
+./Event.h:
+./Event.h:    bool justReleased(auto* event, int key) {
+./Event.h:        return !event->getKeyPressed(key) && prevState[key];
+./Event.h:    }
 ./Event.h:};
 ./Event.h:
 ./Event.h:class Event
@@ -4392,6 +4578,42 @@
 ./Event.h:};
 ./Event.h:
 ./Event.h:#endif
+./Player.h:#pragma once
+./Player.h:#include <optional>
+./Player.h:#include "Camera.h"
+./Player.h:
+./Player.h:class Camera;
+./Player.h:
+./Player.h:class Player
+./Player.h:{
+./Player.h:private:
+./Player.h:    std::optional<Camera> camera;
+./Player.h:    friend class HelloTriangleApplication;
+./Player.h:    bool jumpTriggered = false;
+./Player.h:
+./Player.h:    PlayerState playerState;
+./Player.h:    long long jumpStartTime;
+./Player.h:
+./Player.h:    AxisAlignedBoundingBox aabb;
+./Player.h:    GameObjectPool &gameObjectPool;
+./Player.h:
+./Player.h:    friend class HelloTriangleApplication;
+./Player.h:public:
+./Player.h:    float jump(float t)
+./Player.h:    {
+./Player.h:        return cos(t * 1.2f);
+./Player.h:    }
+./Player.h:
+./Player.h:    Player(VulkanContext &vkContext, GameObjectPool &gop);
+./Player.h:    void drawUIIfPossible(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
+./Player.h:                          VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets,
+./Player.h:                          uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui);
+./Player.h:
+./Player.h:    void handlePlayerMovement(UniformBufferObject &UBO,
+./Player.h:                              VkExtent2D &swapChainExtent,
+./Player.h:                              Event &event);
+./Player.h:    ~Player();
+./Player.h:};
 ./Camera.cxx:#include "Camera.h"
 ./Camera.cxx:#include "HelloTriangleApplication.hpp"
 ./Camera.cxx:#include "Ray.h"
@@ -4408,15 +4630,16 @@
 ./Camera.cxx:void Camera::getHitInfo(HitInfo &hitInfo)
 ./Camera.cxx:
 ./Camera.cxx:{
-./Camera.cxx:    glm::vec3 rayOrigin = gePositionInWorldCoords();
-./Camera.cxx:    glm::vec3 rayDir = forward;
-./Camera.cxx:
-./Camera.cxx:    float maxDistance = 5.0f; // Max ray distance
 ./Camera.cxx:    float stepSize = 0.1f;
 ./Camera.cxx:
-./Camera.cxx:    for (float t = 0.0f; t < maxDistance; t += stepSize)
+./Camera.cxx:    glm::vec3 rayOriginCR = gePositionInWorldCoords();
+./Camera.cxx:    glm::vec3 rayDirCR = forwardCR;
+./Camera.cxx:
+./Camera.cxx:    float maxDistanceCR = 5.0f; // Max ray distance
+./Camera.cxx:
+./Camera.cxx:    for (float t = 0.0f; t < maxDistanceCR; t += stepSize)
 ./Camera.cxx:    {
-./Camera.cxx:        glm::vec3 point = rayOrigin + rayDir * t;
+./Camera.cxx:        glm::vec3 point = rayOriginCR + rayDirCR * t;
 ./Camera.cxx:        BlockCoordinates blockCoords{
 ./Camera.cxx:            static_cast<int>(floor(point.x)),
 ./Camera.cxx:            static_cast<int>(floor(point.y)),
@@ -4434,7 +4657,10 @@
 ./Camera.cxx:}
 ./Camera.cxx:
 ./Camera.cxx:Camera::Camera(VulkanContext &vkContext, GameObjectPool &gop)
-./Camera.cxx:    : gameObjectPool{gop}, vkContext{vkContext}, cameraRay{vkContext, gop}
+./Camera.cxx:    : gameObjectPool{gop},
+./Camera.cxx:      vkContext{vkContext},
+./Camera.cxx:      cameraRay{vkContext, gop}
+./Camera.cxx:
 ./Camera.cxx:{
 ./Camera.cxx:}
 ./Camera.cxx:void Camera::updateUBO(UniformBufferObject &UBO,
@@ -4459,17 +4685,17 @@
 ./Camera.cxx:    pitch = glm::clamp(pitch, -89.9f, 89.9f);
 ./Camera.cxx:
 ./Camera.cxx:    // Z-up forward vector from yaw/pitch
-./Camera.cxx:    forward.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-./Camera.cxx:    forward.y = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-./Camera.cxx:    forward.z = sin(glm::radians(pitch));
-./Camera.cxx:    forward = glm::normalize(forward);
+./Camera.cxx:    forwardCR.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+./Camera.cxx:    forwardCR.y = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+./Camera.cxx:    forwardCR.z = sin(glm::radians(pitch));
+./Camera.cxx:    forwardCR = glm::normalize(forwardCR);
 ./Camera.cxx:
 ./Camera.cxx:    glm::vec3 worldUp(0.0f, 0.0f, 1.0f); // Z-up
 ./Camera.cxx:
-./Camera.cxx:    glm::vec3 forwardFlat = glm::normalize(glm::vec3(forward.x, forward.y, 0.0f));
+./Camera.cxx:    glm::vec3 forwardFlat = glm::normalize(glm::vec3(forwardCR.x, forwardCR.y, 0.0f));
 ./Camera.cxx:    glm::vec3 right = glm::normalize(glm::cross(worldUp, forwardFlat));
 ./Camera.cxx:
-./Camera.cxx:    float speed = 15.81f * dt;
+./Camera.cxx:    speed = 15.81f * dt;
 ./Camera.cxx:
 ./Camera.cxx:    if (event.getKeyPressed(GLFW_KEY_W))
 ./Camera.cxx:        cameraPos += forwardFlat * speed;
@@ -4479,18 +4705,14 @@
 ./Camera.cxx:        cameraPos -= -right * speed;
 ./Camera.cxx:    if (event.getKeyPressed(GLFW_KEY_D))
 ./Camera.cxx:        cameraPos += -right * speed;
-./Camera.cxx:    if (event.getKeyPressed(GLFW_KEY_SPACE))
-./Camera.cxx:        cameraPos.z += speed;
-./Camera.cxx:    if (event.getKeyPressed(GLFW_KEY_LEFT_SHIFT))
-./Camera.cxx:        cameraPos.z -= speed;
 ./Camera.cxx:
-./Camera.cxx:    UBO.view = glm::lookAt(cameraPos, cameraPos + forward, worldUp);
+./Camera.cxx:    UBO.view = glm::lookAt(cameraPos, cameraPos + forwardCR, worldUp);
 ./Camera.cxx:
 ./Camera.cxx:    UBO.proj = glm::perspective(
 ./Camera.cxx:        glm::radians(90.0f),
 ./Camera.cxx:        swapChainExtent.width / (float)swapChainExtent.height,
-./Camera.cxx:        0.1f,
-./Camera.cxx:        4000.0f);
+./Camera.cxx:        0.025f,
+./Camera.cxx:        1000.0f);
 ./Camera.cxx:
 ./Camera.cxx:    UBO.proj[1][1] *= -1;
 ./Camera.cxx:}
@@ -4501,6 +4723,7 @@
 ./Camera.cxx:void Camera::cleanup()
 ./Camera.cxx:{
 ./Camera.cxx:    cameraRay.cleanup();
+./Camera.cxx:
 ./Camera.cxx:}
 ./Camera.cxx:
 ./Camera.cxx:void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
@@ -4508,18 +4731,35 @@
 ./Camera.cxx:
 ./Camera.cxx:    cameraRay.transform.position = gePositionInWorldCoords();
 ./Camera.cxx:    cameraRay.transform.position.z -= .1f;
-./Camera.cxx:    cameraRay.direction = forward;
+./Camera.cxx:    cameraRay.direction = forwardCR;
 ./Camera.cxx:    cameraRay.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+./Camera.cxx:
 ./Camera.cxx:}
 ./Camera.cxx:
-./Camera.cxx:void Camera::drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui)
+./Camera.cxx:void Camera::drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
+./Camera.cxx:                    VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets,
+./Camera.cxx:                    uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui)
 ./Camera.cxx:{
 ./Camera.cxx:    PushConstantC1 c1;
-./Camera.cxx:    glm::mat4 model = glm::mat4(1.f);
-./Camera.cxx:    model = glm::translate(model, cameraPos + glm::vec3(1, 0, 0));
-./Camera.cxx:    c1.data = model;
-./Camera.cxx:    ui.render(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+./Camera.cxx:
+./Camera.cxx:    float aspect = (float)swapChainExtent.width / (float)swapChainExtent.height;
+./Camera.cxx:    c1.data = glm::ortho(-aspect, aspect, -1.0f, 1.0f, 0.0f, 1.0f);
+./Camera.cxx:
+./Camera.cxx:    ui.render(commandBuffer, pipelineLayout, graphicsPipeline,
+./Camera.cxx:              descriptorSets, currentFrame, swapChainExtent, c1);
 ./Camera.cxx:}
+./Camera.cxx:
+./Camera.cxx:void Camera::drawUIAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui, uint32_t idx)
+./Camera.cxx:{
+./Camera.cxx:    PushConstantC1 c1;
+./Camera.cxx:
+./Camera.cxx:    float aspect = (float)swapChainExtent.width / (float)swapChainExtent.height;
+./Camera.cxx:    c1.data = glm::ortho(-aspect, aspect, -1.0f, 1.0f, 0.0f, 1.0f);
+./Camera.cxx:
+./Camera.cxx:    ui.renderAt(commandBuffer, pipelineLayout, graphicsPipeline,
+./Camera.cxx:                descriptorSets, currentFrame, swapChainExtent, c1, idx);
+./Camera.cxx:}
+./Camera.cxx:
 ./Camera.cxx:
 ./Camera.cxx:Camera::~Camera()
 ./Camera.cxx:{
@@ -4560,10 +4800,14 @@
 ./UIComponents.h:    void createVertexBuffer();
 ./UIComponents.h:    void createIndexBuffer();
 ./UIComponents.h:
+./UIComponents.h:    int textureIDX{0};
+./UIComponents.h:
 ./UIComponents.h:public:
 ./UIComponents.h:    UIComponents(VulkanContext &vkContext);
 ./UIComponents.h:
 ./UIComponents.h:    void initUIComponent(glm::vec2 position = glm::vec2{0.f, 0.f}, glm::vec2 size=glm::vec2{1.f, 1.f});
+./UIComponents.h:
+./UIComponents.h:    void setTextureIDX(int idx);
 ./UIComponents.h:
 ./UIComponents.h:    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
 ./UIComponents.h:              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1);
@@ -4599,6 +4843,8 @@
 ./UI.h:
 ./UI.h:    void render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
 ./UI.h:              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 c1);
+./UI.h:    void renderAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
+./UI.h:              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 c1, uint32_t idx);
 ./UI.h:    void cleanup();
 ./UI.h:    ~UI();
 ./UI.h:};
@@ -4647,6 +4893,15 @@
 ./UI.cxx:    {
 ./UI.cxx:        component.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
 ./UI.cxx:    }
+./UI.cxx:}
+./UI.cxx:
+./UI.cxx:void UI::renderAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 c1, uint32_t idx)
+./UI.cxx:{
+./UI.cxx:    if(idx >= components.size())
+./UI.cxx:        return;
+./UI.cxx:    
+./UI.cxx:
+./UI.cxx:    components.at(idx).draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
 ./UI.cxx:}
 ./UI.cxx:
 ./UI.cxx:void UI::cleanup()
@@ -5055,8 +5310,11 @@
 ./Update.cxx:#include "HelloTriangleApplication.hpp"
 ./Update.cxx:#include "Camera.h"
 ./Update.cxx:#include "Chunk.h"
+./Update.cxx:#include "Event.h"
 ./Update.cxx:#include <memory>
+./Update.cxx:#include "Player.h"
 ./Update.cxx:#include "Ray.h"
+./Update.cxx:#include "Terrain.h"
 ./Update.cxx:#include "UI.h"
 ./Update.cxx:
 ./Update.cxx:void HelloTriangleApplication::initGameObjects()
@@ -5071,27 +5329,34 @@
 ./Update.cxx:
 ./Update.cxx:    gameObjectPool.uploadVBOsAndIBOs();
 ./Update.cxx:
-./Update.cxx:    camera = std::make_unique<Camera>(context, gameObjectPool);
+./Update.cxx:    playerS1 = std::make_unique<Player>(context, gameObjectPool);
 ./Update.cxx:
 ./Update.cxx:    terrain = std::move(Terrain(context, gameObjectPool));
 ./Update.cxx:    ui = std::move(UI(context));
 ./Update.cxx:
-./Update.cxx:    UIComponents testComponent(context);
-./Update.cxx:    testComponent.initUIComponent(glm::vec2(0.f),glm::vec2(2.f));
+./Update.cxx:    UIComponents Inventory(context);
+./Update.cxx:    Inventory.initUIComponent(glm::vec2(0.f), glm::vec2(2.5f, 1.5f));
 ./Update.cxx:
-./Update.cxx:    ui->attachComponent(testComponent);
+./Update.cxx:    UIComponents Crosshair(context);
+./Update.cxx:    Crosshair.setTextureIDX(1);
+./Update.cxx:    Crosshair.initUIComponent(glm::vec2(0, 0), glm::vec2(.1f, .1f));
+./Update.cxx:
+./Update.cxx:    ui->attachComponent(Inventory);
+./Update.cxx:    ui->attachComponent(Crosshair);
 ./Update.cxx:
 ./Update.cxx:    gameObjectPool.terrain = &terrain.value();
 ./Update.cxx:    terrain.value().generateChunks();
 ./Update.cxx:}
 ./Update.cxx:
+./Update.cxx:KeyTracker keys;
+./Update.cxx:
 ./Update.cxx:void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 ./Update.cxx:{
 ./Update.cxx:
-./Update.cxx:    std::cout << "Coordinates: " << "(x,y,z) (x" << camera->gePositionInWorldCoords().x << ", " << camera->gePositionInWorldCoords().y << ", " << camera->gePositionInWorldCoords().z << ")" << std::endl;
+./Update.cxx:    std::cout << "Coordinates: " << "(x,y,z) (x" << playerS1->camera->gePositionInWorldCoords().x << ", " << playerS1->camera->gePositionInWorldCoords().y << ", " << playerS1->camera->gePositionInWorldCoords().z << ")" << std::endl;
 ./Update.cxx:
 ./Update.cxx:    HitInfo hitInfo{};
-./Update.cxx:    camera->getHitInfo(hitInfo);
+./Update.cxx:    playerS1->camera->getHitInfo(hitInfo);
 ./Update.cxx:
 ./Update.cxx:    if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
 ./Update.cxx:        if (hitInfo.hitVoxel)
@@ -5113,26 +5378,23 @@
 ./Update.cxx:                terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) + 1);
 ./Update.cxx:        }
 ./Update.cxx:
-./Update.cxx:    if (event->getKeyPressed(GLFW_KEY_ESCAPE))
-./Update.cxx:        glfwSetWindowShouldClose(_window, GLFW_TRUE);
+./Update.cxx:    if (keys.justPressed(event.get(), GLFW_KEY_ESCAPE))
+./Update.cxx:    {
+./Update.cxx:        if (!playerS1->playerState.inInventory)
+./Update.cxx:            glfwSetWindowShouldClose(_window, GLFW_TRUE);
+./Update.cxx:        else
+./Update.cxx:            playerS1->playerState.inInventory = false;
+./Update.cxx:    }
 ./Update.cxx:
-./Update.cxx:    static auto startTime = std::chrono::high_resolution_clock::now();
-./Update.cxx:
-./Update.cxx:    auto currentTime = std::chrono::high_resolution_clock::now();
-./Update.cxx:    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+./Update.cxx:    if (keys.justPressed(event.get(), GLFW_KEY_E))
+./Update.cxx:    {
+./Update.cxx:        playerS1->playerState.inInventory = !playerS1->playerState.inInventory;
+./Update.cxx:    }
 ./Update.cxx:
 ./Update.cxx:    UniformBufferObject ubo{};
 ./Update.cxx:
-./Update.cxx:    // Model 0
-./Update.cxx:    // ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
-./Update.cxx:    ubo.model = glm::translate(glm::mat4(1.f), glm::vec3(0.f));
-./Update.cxx:    ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
-./Update.cxx:    ubo.model = glm::rotate(ubo.model, 3 * time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
-./Update.cxx:
-./Update.cxx:    camera->updateUBO(ubo, swapChainExtent, *event.get());
-./Update.cxx:
-./Update.cxx:    // ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 1.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
-./Update.cxx:    // ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.01f, 100.0f);
+./Update.cxx:    playerS1->handlePlayerMovement(ubo, swapChainExtent, *event.get());
 ./Update.cxx:
 ./Update.cxx:    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+./Update.cxx:    keys.update(event.get(), {GLFW_KEY_E, GLFW_KEY_ESCAPE});
 ./Update.cxx:}

@@ -12,7 +12,11 @@ private:
     int blockType = AIR;
     const int* faceTexture = BlockFaces::corruptFaceTexture; // default to a bright pink texture to easily spot untextured blocks
 
+    AxisAlignedBoundingBox aabb{};
+
     friend class Chunk;
+    friend class Player;
+    friend class Camera;
 public:
     Voxel(VulkanContext &vkContext, BlockType blockType = AIR);
 

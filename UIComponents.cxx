@@ -59,16 +59,21 @@ void UIComponents::initUIComponent(glm::vec2 position, glm::vec2 size)
     float w = size.x, h = size.y;
 
     vertices = {
-        {{cx, cy, 0.0f}, {0.0f, 0.0f}, 0},         // bottom-left
-        {{cx, cy + h, 0.0f}, {0.0f, 1.0f}, 0},     // top-left
-        {{cx + w, cy + h, 0.0f}, {1.0f, 1.0f}, 0}, // top-right
-        {{cx + w, cy, 0.0f}, {1.0f, 0.0f}, 0},     // bottom-right
+        {{cx, cy, 0.0f}, {0.0f, 0.0f}, (uint32_t)textureIDX},         // bottom-left
+        {{cx, cy + h, 0.0f}, {0.0f, 1.0f}, (uint32_t)textureIDX},     // top-left
+        {{cx + w, cy + h, 0.0f}, {1.0f, 1.0f}, (uint32_t)textureIDX}, // top-right
+        {{cx + w, cy, 0.0f}, {1.0f, 0.0f}, (uint32_t)textureIDX},     // bottom-right
     };
 
     indices = {0, 1, 2, 2, 3, 0};
 
     createVertexBuffer();
     createIndexBuffer();
+}
+
+void UIComponents::setTextureIDX(int idx)
+{
+    this->textureIDX = idx;
 }
 
 void UIComponents::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1)

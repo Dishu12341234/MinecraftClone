@@ -41,7 +41,10 @@ void Camera::getHitInfo(HitInfo &hitInfo)
 }
 
 Camera::Camera(VulkanContext &vkContext, GameObjectPool &gop)
-    : gameObjectPool{gop}, vkContext{vkContext}, cameraRay{vkContext, gop}, hitBoxR1{vkContext, gop}
+    : gameObjectPool{gop},
+      vkContext{vkContext},
+      cameraRay{vkContext, gop}
+
 {
 }
 void Camera::updateUBO(UniformBufferObject &UBO,
@@ -76,7 +79,7 @@ void Camera::updateUBO(UniformBufferObject &UBO,
     glm::vec3 forwardFlat = glm::normalize(glm::vec3(forwardCR.x, forwardCR.y, 0.0f));
     glm::vec3 right = glm::normalize(glm::cross(worldUp, forwardFlat));
 
-    speed = 15.81f * dt;
+    speed = 1.81f * dt;
 
     if (event.getKeyPressed(GLFW_KEY_W))
         cameraPos += forwardFlat * speed;
@@ -104,7 +107,7 @@ glm::vec3 Camera::gePositionInWorldCoords() { return cameraPos; }
 void Camera::cleanup()
 {
     cameraRay.cleanup();
-    hitBoxR1.cleanup();
+
 }
 
 void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
@@ -115,12 +118,6 @@ void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout
     cameraRay.direction = forwardCR;
     cameraRay.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
 
-    hitBoxR1.transform.position = gePositionInWorldCoords();
-    // hitBoxR1.transform.position.x += .1f;
-    // hitBoxR1.transform.position.y -= .025f;
-    // hitBoxR1.transform.position.z += .1f;
-    hitBoxR1.direction = glm::vec3(0, 0, -1);
-    hitBoxR1.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
 }
 
 void Camera::drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
@@ -147,33 +144,6 @@ void Camera::drawUIAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLa
                 descriptorSets, currentFrame, swapChainExtent, c1, idx);
 }
 
-PlayerState Camera::updateHitBox()
-{
-    float stepSize = 0.1f;
-
-    glm::vec3 rayOriginHBR1 = gePositionInWorldCoords();
-    glm::vec3 rayDirHBR1 = glm::vec3(0, 0, -1);
-
-    float maxDistanceHBR1 = 2.0f; // Max ray distance
-    bool groundCollision = false;
-    for (float t = 0.0f; t < maxDistanceHBR1; t += stepSize)
-    {
-        glm::vec3 point = rayOriginHBR1 + rayDirHBR1 * t;
-        BlockCoordinates blockCoords{
-            static_cast<int>(floor(point.x)),
-            static_cast<int>(floor(point.y)),
-            static_cast<int>(floor(point.z))};
-        std::cout << "Point: (x,y,z) (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
-        Voxel *voxel = gameObjectPool.getVoxelGlobal(blockCoords);
-        if (voxel && voxel->getBlockType() != AIR)
-        {
-            groundCollision = true;
-            break;
-        }
-    }
-
-    return {groundCollision, 0, 0};
-}
 
 Camera::~Camera()
 {

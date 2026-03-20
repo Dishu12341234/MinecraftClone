@@ -32,6 +32,9 @@ void Voxel::setType(BlockType blockType)
 void Voxel::setPosition(glm::vec3 position)
 {
     this->transform.position = position;
+    aabb.max = position + glm::vec3(.5f);
+    aabb.min = position - glm::vec3(.5f);
+
 }
 
 void Voxel::setRotation(glm::vec3 rotation)
