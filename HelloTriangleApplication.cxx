@@ -115,8 +115,8 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
     terrain.value().draw(commandBuffer, graphicsPipeline.pipelineLayout, graphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
     
     
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
-    playerS1->camera->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+    // vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
+    // playerS1->camera->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
     
     
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, uiRenderPipeline.graphicsPipeline);

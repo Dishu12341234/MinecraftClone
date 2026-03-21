@@ -32,5 +32,8 @@ public:
     void handlePlayerMovement(UniformBufferObject &UBO,
                               VkExtent2D &swapChainExtent,
                               Event &event);
+
+    void handleGroundCollision();
+    void handleWallColliders();
     ~Player();
 };

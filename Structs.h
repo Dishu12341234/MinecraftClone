@@ -52,6 +52,11 @@ enum BlockType
 struct PlayerState
 {
     bool onGround{false};
+    bool frontBlock{false};
+    bool backBlock{false};
+    bool leftBlock{false};
+    bool rightBlock{false};
+    bool topBlock{false};
     bool inGUI{false};
     bool inInventory{false};
     bool inJump{false};

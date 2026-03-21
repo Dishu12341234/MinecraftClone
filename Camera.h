@@ -23,8 +23,12 @@ private:
     float pitch;
     float yaw;
     float speed;
+    glm::vec2 x_velocityMultiplier, y_velocityMultiplier, z_velocityMultiplier;
+    float v_velocity;
     GameObjectPool &gameObjectPool;
     glm::vec3 forwardCR;
+    glm::vec3 forwardFlat;
+    glm::vec3 right;
     glm::vec3 worldUp{0, 0, 1};
 
     Ray cameraRay;
@@ -53,7 +57,6 @@ public:
 
     void drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui);
     void drawUIAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui, uint32_t idx);
-
 
     ~Camera();
 };

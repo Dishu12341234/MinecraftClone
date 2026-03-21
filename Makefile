@@ -75,12 +75,12 @@ RESET  := \033[0m
 all: $(BUILD_DIR)
 ifeq ($(UNAME_S),Darwin)
 	@echo -e "$(YELLOW)Building for macOS...$(RESET)"
-	$(MAKE) -j6 $(MAC_EXEC)
+	$(MAKE) -j4 $(MAC_EXEC)
 	@echo -e "$(GREEN)Running $(BGMAGENTA)$(MAC_EXEC)$(RESET)"
 	./$(MAC_EXEC)
 else
 	@echo -e "$(YELLOW)Building for Linux...$(RESET)"
-	$(MAKE) -j6 $(LINUX_EXEC)
+	$(MAKE) -j4 $(LINUX_EXEC)
 endif
 
 # =========================

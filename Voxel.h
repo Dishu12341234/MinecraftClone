@@ -10,6 +10,7 @@ private:
     VulkanContext &vkContext;
     Transform transform;
     int blockType = AIR;
+    //top , bottom, left, right, front, back
     const int* faceTexture = BlockFaces::corruptFaceTexture; // default to a bright pink texture to easily spot untextured blocks
 
     AxisAlignedBoundingBox aabb{};

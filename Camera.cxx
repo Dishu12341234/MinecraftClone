@@ -46,6 +46,9 @@ Camera::Camera(VulkanContext &vkContext, GameObjectPool &gop)
       cameraRay{vkContext, gop}
 
 {
+    x_velocityMultiplier = glm::vec2(1.f);
+    y_velocityMultiplier = glm::vec2(1.f);
+    z_velocityMultiplier = glm::vec2(1.f);
 }
 void Camera::updateUBO(UniformBufferObject &UBO,
                        VkExtent2D &swapChainExtent,
@@ -67,6 +70,7 @@ void Camera::updateUBO(UniformBufferObject &UBO,
     yaw += dx * sensitivity;
     pitch += dy * sensitivity;
     pitch = glm::clamp(pitch, -89.9f, 89.9f);
+    std::cout << yaw << std::endl;
 
     // Z-up forward vector from yaw/pitch
     forwardCR.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -76,19 +80,13 @@ void Camera::updateUBO(UniformBufferObject &UBO,
 
     glm::vec3 worldUp(0.0f, 0.0f, 1.0f); // Z-up
 
-    glm::vec3 forwardFlat = glm::normalize(glm::vec3(forwardCR.x, forwardCR.y, 0.0f));
-    glm::vec3 right = glm::normalize(glm::cross(worldUp, forwardFlat));
+    forwardFlat = glm::normalize(glm::vec3(forwardCR.x, forwardCR.y, 0.0f));
+    right = glm::normalize(glm::cross(worldUp, forwardFlat));
 
     speed = 1.81f * dt;
 
-    if (event.getKeyPressed(GLFW_KEY_W))
-        cameraPos += forwardFlat * speed;
-    if (event.getKeyPressed(GLFW_KEY_S))
-        cameraPos -= forwardFlat * speed;
-    if (event.getKeyPressed(GLFW_KEY_A))
-        cameraPos -= -right * speed;
-    if (event.getKeyPressed(GLFW_KEY_D))
-        cameraPos += -right * speed;
+    v_velocity = 9.81 * dt;
+
 
     UBO.view = glm::lookAt(cameraPos, cameraPos + forwardCR, worldUp);
 
@@ -107,7 +105,6 @@ glm::vec3 Camera::gePositionInWorldCoords() { return cameraPos; }
 void Camera::cleanup()
 {
     cameraRay.cleanup();
-
 }
 
 void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
@@ -117,7 +114,6 @@ void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout
     cameraRay.transform.position.z -= .1f;
     cameraRay.direction = forwardCR;
     cameraRay.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
-
 }
 
 void Camera::drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
@@ -143,7 +139,6 @@ void Camera::drawUIAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLa
     ui.renderAt(commandBuffer, pipelineLayout, graphicsPipeline,
                 descriptorSets, currentFrame, swapChainExtent, c1, idx);
 }
-
 
 Camera::~Camera()
 {
