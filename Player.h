@@ -18,6 +18,9 @@ private:
     GameObjectPool &gameObjectPool;
 
     friend class HelloTriangleApplication;
+    void resolveAxis(float amount, int axis, float &vertVel);
+    bool checkAABBOverlap(const AxisAlignedBoundingBox &a, const AxisAlignedBoundingBox &b);
+
 public:
     float jump(float t)
     {
@@ -33,7 +36,5 @@ public:
                               VkExtent2D &swapChainExtent,
                               Event &event);
 
-    void handleGroundCollision();
-    void handleWallColliders();
     ~Player();
 };

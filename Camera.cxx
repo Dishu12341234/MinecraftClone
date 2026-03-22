@@ -46,9 +46,6 @@ Camera::Camera(VulkanContext &vkContext, GameObjectPool &gop)
       cameraRay{vkContext, gop}
 
 {
-    x_velocityMultiplier = glm::vec2(1.f);
-    y_velocityMultiplier = glm::vec2(1.f);
-    z_velocityMultiplier = glm::vec2(1.f);
 }
 void Camera::updateUBO(UniformBufferObject &UBO,
                        VkExtent2D &swapChainExtent,
@@ -83,9 +80,11 @@ void Camera::updateUBO(UniformBufferObject &UBO,
     forwardFlat = glm::normalize(glm::vec3(forwardCR.x, forwardCR.y, 0.0f));
     right = glm::normalize(glm::cross(worldUp, forwardFlat));
 
-    speed = 1.81f * dt;
+    
 
-    v_velocity = 9.81 * dt;
+    speed = 5.81f * dt;
+
+    v_velocity = 30.81 * dt;
 
 
     UBO.view = glm::lookAt(cameraPos, cameraPos + forwardCR, worldUp);

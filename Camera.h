@@ -23,7 +23,6 @@ private:
     float pitch;
     float yaw;
     float speed;
-    glm::vec2 x_velocityMultiplier, y_velocityMultiplier, z_velocityMultiplier;
     float v_velocity;
     GameObjectPool &gameObjectPool;
     glm::vec3 forwardCR;
