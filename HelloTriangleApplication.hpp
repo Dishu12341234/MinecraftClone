@@ -9,7 +9,6 @@
 #include "RayGraphicsPipeline.h"
 #include "UIRenderPipeline.h"
 #include "GameObjectPool.h" 
-#include "Terrain.h"
 #include "UI.h"
 
 class Event;
@@ -20,6 +19,7 @@ class Event;
 class Ray;
 class Player;
 class Camera;
+class Terrain;
 class UI;
 
 class HelloTriangleApplication
@@ -28,7 +28,7 @@ private:
     const int MAX_FRAMES_IN_FLIGHT = 2;
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
-    std::optional<Terrain> terrain;
+    std::unique_ptr<Terrain> terrain;
     std::optional<UI> ui;
 
     std::array<std::string, NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES> uiTexturePaths;

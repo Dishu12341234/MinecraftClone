@@ -2,6 +2,13 @@
 #include <iostream>
 #include <chrono>
 
+void Terrain::rebuildChunkLookup()
+{
+    chunkLookup.clear();
+    chunkLookup.reserve(chunks.size());
+    for (Chunk &c : chunks)
+        chunkLookup[chunkKey(c.chunkOffsetX, c.chunkOffsetY)] = &c;
+}
 
 Terrain::Terrain(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{vkContext}, gameObjectPool{gameObjectPool}
 {
@@ -10,6 +17,7 @@ Terrain::Terrain(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkC
 void Terrain::generateChunks()
 {
     TIMER_START(GENERATE_CHUNKS);
+    chunks.reserve((RENDER_DISTANCE * 2) * (RENDER_DISTANCE * 2));
 
     // Pass 1 — populate all chunks into the pool first
     for (int x = -RENDER_DISTANCE; x < RENDER_DISTANCE; x++)
@@ -20,6 +28,7 @@ void Terrain::generateChunks()
             chunks.back().populateBlocks();
         }
 
+    rebuildChunkLookup();
     // Pass 2 — all neighbours now exist, cross-chunk culling works
     for (auto &chunk : chunks)
         chunk.buildChunkMesh();
@@ -35,16 +44,16 @@ void Terrain::draw(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, V
     }
 }
 
-
 void Terrain::updateChunkMesh(int chunkX, int chunkY)
 {
     int idx = chunkIndex(chunkX, chunkY);
-    if(idx < 0 || idx >= chunks.size())
+    if (idx < 0 || idx >= chunks.size())
     {
         std::cerr << "Invalid chunk coordinates: (" << chunkX << ", " << chunkY << ")" << std::endl;
         return;
     }
     chunks.at(idx).dirty = true;
+    rebuildChunkLookup();
     chunks.at(idx).updateChunkMesh();
 }
 

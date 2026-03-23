@@ -4,16 +4,9 @@
 
 Chunk *GameObjectPool::getChunk(int chunkX, int chunkY)
 {
-    if (!terrain)
-        return nullptr;
-
-    for (auto &chunk : terrain->chunks)
-    {
-        if (chunk.chunkOffsetX == chunkX && chunk.chunkOffsetY == chunkY)
-            return &chunk;
-    }
-
-    return nullptr;
+    if (!terrain) return nullptr;
+    auto it = terrain->chunkLookup.find(terrain->chunkKey(chunkX, chunkY));
+    return it != terrain->chunkLookup.end() ? it->second : nullptr;
 }
 
 GameObjectPool::GameObjectPool()
@@ -39,29 +32,20 @@ void GameObjectPool::cleanUpResources()
 
 Voxel *GameObjectPool::getVoxelGlobal(BlockCoordinates globalCoords)
 {
-    if (!terrain)
-        return nullptr;
+    if (!terrain) return nullptr;
 
-    int chunkX = globalCoords.x >> 4;
-    int chunkY = globalCoords.y >> 4;
-    int localX = globalCoords.x & 15;
-    int localY = globalCoords.y & 15;
-    int localZ = globalCoords.z;
+    const int localZ = globalCoords.z;
+    if (localZ < 0 || localZ >= 256) return nullptr;
 
-    // Bounds check before touching any chunk
-    if (localZ < 0 || localZ >= 256)
-        return nullptr;
+    const int chunkX = globalCoords.x >> 4;
+    const int chunkY = globalCoords.y >> 4;
 
-    for (auto &chunk : terrain->chunks)
-    {
-        if (chunk.chunkOffsetX == chunkX && chunk.chunkOffsetY == chunkY)
-        {
-            int idx = localX * 16 + localY + localZ * 256;
-            return &chunk.voxels[idx];
-        }
-    }
+    auto it = terrain->chunkLookup.find(terrain->chunkKey(chunkX, chunkY));
+    if (it == terrain->chunkLookup.end()) return nullptr;
 
-    return nullptr;
+    const int localX = globalCoords.x & 15;
+    const int localY = globalCoords.y & 15;
+    return &it->second->voxels[localX * 16 + localY + localZ * 256];
 }
 
 GameObjectPool::~GameObjectPool()

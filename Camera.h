@@ -19,7 +19,7 @@ class Camera
 {
 private:
     VulkanContext vkContext;
-    glm::vec3 cameraPos{1.f, 0.f, 66.f};
+    glm::vec3 cameraPos{1.f, 0.f, 76.f};
     float pitch;
     float yaw;
     float speed;

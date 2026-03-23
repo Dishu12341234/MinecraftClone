@@ -11,6 +11,7 @@
 #include "Ray.h"
 #include "Terrain.h"
 #include "UI.h"
+#include <random>
 
 void HelloTriangleApplication::initGameObjects()
 {
@@ -24,9 +25,11 @@ void HelloTriangleApplication::initGameObjects()
 
     gameObjectPool.uploadVBOsAndIBOs();
 
+    srand(87844057);
+
     playerS1 = std::make_unique<Player>(context, gameObjectPool);
 
-    terrain = std::move(Terrain(context, gameObjectPool));
+    terrain = std::make_unique<Terrain>(Terrain(context, gameObjectPool));
     ui = std::move(UI(context));
 
     UIComponents Inventory(context);
@@ -39,8 +42,8 @@ void HelloTriangleApplication::initGameObjects()
     ui->attachComponent(Inventory);
     ui->attachComponent(Crosshair);
 
-    gameObjectPool.terrain = &terrain.value();
-    terrain.value().generateChunks();
+    gameObjectPool.terrain = terrain.get();
+    terrain->generateChunks();
 }
 
 KeyTracker keys;
@@ -49,6 +52,7 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 {
 
     std::cout << "Coordinates: " << "(x,y,z) (x" << playerS1->camera->gePositionInWorldCoords().x << ", " << playerS1->camera->gePositionInWorldCoords().y << ", " << playerS1->camera->gePositionInWorldCoords().z << ")" << std::endl;
+    std::cout << "CMs: " << "(x,y) (x" << (int(playerS1->camera->gePositionInWorldCoords().x) / 16) << ", " << (int(playerS1->camera->gePositionInWorldCoords().y) / 16) << ")" << std::endl;
 
     HitInfo hitInfo{};
     playerS1->camera->getHitInfo(hitInfo);

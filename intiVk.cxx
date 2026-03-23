@@ -1,6 +1,5 @@
 #include "HelloTriangleApplication.hpp"
 #include "Event.h"
-#include "Terrain.h"
 #include <vulkan/vulkan.h>
 #include <iostream>
 #include <stdexcept>

@@ -10,21 +10,16 @@ bool Player::checkAABBOverlap(const AxisAlignedBoundingBox &a,
            (a.max.y > b.min.y && a.min.y < b.max.y) &&
            (a.max.z > b.min.z && a.min.z < b.max.z);
 }
-
 void Player::resolveAxis(float amount, int axis, float &vertVel)
 {
-    auto rebuildAABB = [&]()
-    {
-        aabb.max = camera->cameraPos + glm::vec3(0.2f, 0.2f, 0.2f); // head 0.2 above eye
-        aabb.min = camera->cameraPos - glm::vec3(0.2f, 0.2f, 1.75f); // feet 1.7 below eye
+    auto rebuildAABB = [&]() {
+        aabb.max = camera->cameraPos + glm::vec3(0.2f, 0.2f, 0.0f);
+        aabb.min = camera->cameraPos - glm::vec3(0.2f, 0.2f, 1.8f);
     };
 
-    if (axis == 0)
-        camera->cameraPos.x += amount;
-    else if (axis == 1)
-        camera->cameraPos.y += amount;
-    else
-        camera->cameraPos.z += amount;
+    if      (axis == 0) camera->cameraPos.x += amount;
+    else if (axis == 1) camera->cameraPos.y += amount;
+    else                camera->cameraPos.z += amount;
 
     rebuildAABB();
 
@@ -33,50 +28,55 @@ void Player::resolveAxis(float amount, int axis, float &vertVel)
     int minZ = (int)floor(aabb.min.z), maxZ = (int)floor(aabb.max.z);
 
     for (int x = minX; x <= maxX; ++x)
-        for (int y = minY; y <= maxY; ++y)
-            for (int z = minZ; z <= maxZ; ++z)
+    for (int y = minY; y <= maxY; ++y)
+    for (int z = minZ; z <= maxZ; ++z)
+    {
+        Voxel *voxel = gameObjectPool.getVoxelGlobal({x, y, z});
+        if (!voxel || voxel->getBlockType() == AIR) continue;
+        if (!checkAABBOverlap(aabb, voxel->aabb))   continue;
+
+        // Calculate penetration depth on this axis
+        // If it's far larger than this frame's movement, player is deeply
+        // embedded — skip to avoid flinging them out
+        float penetration = 0.0f;
+        if (axis == 0) penetration = (amount > 0) ? (aabb.max.x - voxel->aabb.min.x) : (voxel->aabb.max.x - aabb.min.x);
+        if (axis == 1) penetration = (amount > 0) ? (aabb.max.y - voxel->aabb.min.y) : (voxel->aabb.max.y - aabb.min.y);
+        if (axis == 2) penetration = (amount > 0) ? (aabb.max.z - voxel->aabb.min.z) : (voxel->aabb.max.z - aabb.min.z);
+
+        if (penetration > fabs(amount) + 0.5f) continue;  // deeply embedded, skip
+
+        switch (axis)
+        {
+        case 0:
+            camera->cameraPos.x = (amount > 0)
+                ? voxel->aabb.min.x - 0.2f
+                : voxel->aabb.max.x + 0.2f;
+            break;
+
+        case 1:
+            camera->cameraPos.y = (amount > 0)
+                ? voxel->aabb.min.y - 0.2f
+                : voxel->aabb.max.y + 0.2f;
+            break;
+
+        case 2:
+            if (amount < 0)
             {
-                Voxel *voxel = gameObjectPool.getVoxelGlobal({x, y, z});
-                if (!voxel || voxel->getBlockType() == AIR)
-                    continue;
-                if (!checkAABBOverlap(aabb, voxel->aabb))
-                    continue;
-
-                switch (axis)
-                {
-                case 0:
-                    camera->cameraPos.x = (amount > 0)
-                                              ? voxel->aabb.min.x - 0.2f
-                                              : voxel->aabb.max.x + 0.2f;
-                    break;
-
-                case 1:
-                    camera->cameraPos.y = (amount > 0)
-                                              ? voxel->aabb.min.y - 0.2f
-                                              : voxel->aabb.max.y + 0.2f;
-                    break;
-
-                case 2:
-                    if (amount < 0)
-                    {
-                        // Falling — feet land on top of voxel
-                        camera->cameraPos.z = voxel->aabb.max.z + 1.75f;
-                        vertVel = 0.0f;
-                        playerState.onGround = true;
-                    }
-                    else
-                    {
-                        // Jumping — eye hits bottom of voxel, pull down just clear
-                        camera->cameraPos.z = voxel->aabb.min.z - 0.2f;
-                        vertVel = 0.0f;
-                    }
-                    break;
-                }
-
-                rebuildAABB();
+                camera->cameraPos.z  = voxel->aabb.max.z + 1.8f;
+                vertVel              = 0.0f;
+                playerState.onGround = true;
             }
-}
+            else
+            {
+                camera->cameraPos.z = voxel->aabb.min.z - 0.01f;
+                vertVel             = 0.0f;
+            }
+            break;
+        }
 
+        rebuildAABB();
+    }
+}
 Player::Player(VulkanContext &vkContext, GameObjectPool &gop)
     : gameObjectPool{gop}
 {

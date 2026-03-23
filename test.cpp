@@ -1,64 +1,218 @@
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
-#include <netinet/in.h>
+# include <cassert>
+# include <iostream>
+# include <fstream>
+# include <sstream>
+# include "PerlinNoise.hpp"
 
-constexpr int PORT = 25565;
-constexpr size_t BUFFER_SIZE = 4096;
+# pragma pack (push, 1)
+struct BMPHeader
+{
+	std::uint16_t bfType;
+	std::uint32_t bfSize;
+	std::uint16_t bfReserved1;
+	std::uint16_t bfReserved2;
+	std::uint32_t bfOffBits;
+	std::uint32_t biSize;
+	std::int32_t  biWidth;
+	std::int32_t  biHeight;
+	std::uint16_t biPlanes;
+	std::uint16_t biBitCount;
+	std::uint32_t biCompression;
+	std::uint32_t biSizeImage;
+	std::int32_t  biXPelsPerMeter;
+	std::int32_t  biYPelsPerMeter;
+	std::uint32_t biClrUsed;
+	std::uint32_t biClrImportant;
+};
+static_assert(sizeof(BMPHeader) == 54);
+# pragma pack (pop)
 
-int main() {
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd < 0) {
-        perror("socket");
-        return 1;
-    }
+struct RGB
+{
+	double r = 0.0;
+	double g = 0.0;
+	double b = 0.0;
+	constexpr RGB() = default;
+	explicit constexpr RGB(double _rgb) noexcept
+		: r{ _rgb }, g{ _rgb }, b{ _rgb } {}
+	constexpr RGB(double _r, double _g, double _b) noexcept
+		: r{ _r }, g{ _g }, b{ _b } {}
+};
 
-    sockaddr_in addr{};
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port = htons(PORT);
+class Image
+{
+public:
 
-    int opt = 1;
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+	Image() = default;
 
-    if (bind(server_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-        perror("bind");
-        close(server_fd);
-        return 1;
-    }
+	Image(std::size_t width, std::size_t height)
+		: m_data(width* height)
+		, m_width{ static_cast<std::int32_t>(width) }
+		, m_height{ static_cast<std::int32_t>(height) } {}
 
-    if (listen(server_fd, 8) < 0) {
-        perror("listen");
-        close(server_fd);
-        return 1;
-    }
+	void set(std::int32_t x, std::int32_t y, const RGB& color)
+	{
+		if (not inBounds(y, x))
+		{
+			return;
+		}
 
-    std::cout << "Server listening on port " << PORT << "...\n";
+		m_data[static_cast<std::size_t>(y) * m_width + x] = color;
+	}
 
-    while (true) {
-        sockaddr_in client{};
-        socklen_t len = sizeof(client);
-        int client_fd = accept(server_fd, reinterpret_cast<sockaddr*>(&client), &len);
-        if (client_fd < 0) {
-            perror("accept");
-            continue;
-        }
+	std::int32_t width() const noexcept { return m_width; }
 
-        std::cout << "Client connected!\n";
-        char buffer[BUFFER_SIZE];
+	std::int32_t height() const noexcept { return m_height; }
 
-        // simple bounded read loop
-        ssize_t bytes = recv(client_fd, buffer, sizeof(buffer), 0);
-        if (bytes > 0) {
-            std::cout << "Received " << bytes << " bytes\n";
-            // echo or process data here
-            send(client_fd, buffer, bytes, 0);
-        }
+	bool saveBMP(const std::string& path)
+	{
+		const std::int32_t  rowSize = m_width * 3 + m_width % 4;
+		const std::uint32_t bmpsize = rowSize * m_height;
+		const BMPHeader header =
+		{
+			0x4d42,
+			static_cast<std::uint32_t>(bmpsize + sizeof(BMPHeader)),
+			0, 0, sizeof(BMPHeader), 40,
+			m_width, m_height, 1, 24,
+			0, bmpsize, 0, 0, 0, 0
+		};
 
-        close(client_fd);
-        std::cout << "Client disconnected.\n";
-    }
+		if (std::ofstream ofs{ path, std::ios_base::binary })
+		{
+			ofs.write(reinterpret_cast<const char*>(&header), sizeof(header));
 
-    close(server_fd);
-    return 0;
+			std::vector<std::uint8_t> line(rowSize);
+
+			for (std::int32_t y = m_height - 1; -1 < y; --y)
+			{
+				size_t pos = 0;
+
+				for (std::int32_t x = 0; x < m_width; ++x)
+				{
+					const RGB& col = m_data[static_cast<std::size_t>(y) * m_width + x];
+					line[pos++] = ToUint8(col.b);
+					line[pos++] = ToUint8(col.g);
+					line[pos++] = ToUint8(col.r);
+				}
+
+				ofs.write(reinterpret_cast<const char*>(line.data()), line.size());
+			}
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+private:
+
+	std::vector<RGB> m_data;
+
+	std::int32_t m_width = 0, m_height = 0;
+
+	bool inBounds(std::int32_t y, std::int32_t x) const noexcept
+	{
+		return (0 <= y) && (y < m_height) && (0 <= x) && (x < m_width);
+	}
+
+	static constexpr std::uint8_t ToUint8(double x) noexcept
+	{
+		return (x <= 0.0) ? 0 : (1.0 <= x) ? 255 : static_cast<std::uint8_t>(x * 255.0 + 0.5);
+	}
+};
+
+void Test()
+{
+	siv::PerlinNoise perlinA{ std::random_device{} };
+	siv::PerlinNoise perlinB;
+
+	perlinB.deserialize(perlinA.serialize());
+
+	assert(perlinA.octave3D(0.1, 0.2, 0.3, 4)
+		== perlinB.octave3D(0.1, 0.2, 0.3, 4));
+
+	perlinA.reseed(12345u);
+	perlinB.reseed(12345u);
+
+	assert(perlinA.octave3D(0.1, 0.2, 0.3, 4)
+		== perlinB.octave3D(0.1, 0.2, 0.3, 4));
+
+	perlinA.reseed(std::mt19937{ 67890u });
+	perlinB.reseed(std::mt19937{ 67890u });
+
+	assert(perlinA.octave3D(0.1, 0.2, 0.3, 4)
+		== perlinB.octave3D(0.1, 0.2, 0.3, 4));
+
+	for (std::int32_t y = 0; y < 20; ++y)
+	{
+		for (std::int32_t x = 0; x < 20; ++x)
+		{
+			const double noise = perlinA.octave2D_01(x * 0.1, y * 0.1, 6);
+			std::cout << static_cast<int>(std::floor(noise * 10) - 0.5);
+		}
+		std::cout << '\n';
+	}
+}
+
+int main()
+{
+	Test();
+
+	Image image{ 512, 512 };
+
+	std::cout << "---------------------------------\n";
+	std::cout << "* frequency [0.1 .. 8.0 .. 64.0] \n";
+	std::cout << "* octaves   [1 .. 8 .. 16]       \n";
+	std::cout << "* seed      [0 .. 2^32-1]        \n";
+	std::cout << "---------------------------------\n";
+
+	for (;;)
+	{
+		double frequency;
+		std::cout << "double frequency = ";
+		std::cin >> frequency;
+		frequency = std::clamp(frequency, 0.1, 64.0);
+
+		std::int32_t octaves;
+		std::cout << "int32 octaves    = ";
+		std::cin >> octaves;
+		octaves = std::clamp(octaves, 1, 16);
+
+		std::uint32_t seed;
+		std::cout << "uint32 seed      = ";
+		std::cin >> seed;
+
+		const siv::PerlinNoise perlin{ seed };
+		const double fx = (frequency / image.width());
+		const double fy = (frequency / image.height());
+
+		for (std::int32_t y = 0; y < image.height(); ++y)
+		{
+			for (std::int32_t x = 0; x < image.width(); ++x)
+			{
+				const RGB color(perlin.octave2D_01((x * fx), (y * fy), octaves));
+				image.set(x, y, color);
+			}
+		}
+
+		std::stringstream ss;
+		ss << 'f' << frequency << 'o' << octaves << '_' << seed << ".bmp";
+
+		if (image.saveBMP(ss.str()))
+		{
+			std::cout << "...saved \"" << ss.str() << "\"\n";
+		}
+		else
+		{
+			std::cout << "...failed\n";
+		}
+
+		char c;
+		std::cout << "continue? [y/n] >";
+		std::cin >> c;
+		if (c != 'y') break;
+		std::cout << '\n';
+	}
 }

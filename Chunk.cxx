@@ -1,6 +1,7 @@
 #include "Chunk.h"
 #include <chrono>
 #include <iostream>
+#include "PerlinNoise.hpp"
 
 Chunk::Chunk(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{vkContext}, chunkMesh{vkContext}, backMesh{vkContext}, gameObjectPool{gameObjectPool}
 {
@@ -15,6 +16,12 @@ void Chunk::setOffset(int x, int y)
 void Chunk::populateBlocks()
 {
     voxels.reserve(16 * 16 * 256);
+    int cmx = chunkOffsetX * 16;
+    int cmy = chunkOffsetY * 16;
+
+    const siv::PerlinNoise::seed_type seed = 87844057u;
+
+    const siv::PerlinNoise perlin{seed};
 
     for (int z = 0; z < 256; z++)
     {
@@ -22,21 +29,27 @@ void Chunk::populateBlocks()
         {
             for (int y = 0; y < 16; y++)
             {
+                const double noise = perlin.octave2D_01((x + cmx) * .015f, (y + cmy) * .015f, 6) * 5;
                 int blockType;
 
                 if (z <= 50)
                     blockType = STONE;
-                else if (z <= 64)
-                    blockType = GRASS;
+                else if (z <= 64 + int(noise))
+                {
+                    if (z == 64 + int(noise))
+                        blockType = GRASS;
+                    else
+                        blockType = DIRT;
+                }
                 else
                     blockType = AIR;
                 voxels.emplace_back(vkContext, BlockType(blockType));
                 voxels.back().setType(BlockType(blockType));
 
-                //storing global coords for GC detection
-                voxels.back().setPosition({(float)x + 0.5f + 16 * chunkOffsetX,
-                                           (float)y + 0.5f + 16 * chunkOffsetY,
-                                           (float)z + 0.5f});
+                // storing global coords for GC detection
+                voxels.back().setPosition({x + 0.5f + cmx,
+                                           y + 0.5f + cmy,
+                                           z + 0.5f});
             }
         }
     }
@@ -110,7 +123,7 @@ void Chunk::genMesh(bool useChunkMesh)
          0},
     };
 
-    auto blockColor = [](BlockType type) -> glm::vec3
+    static auto blockColor = [](BlockType type) -> glm::vec3
     {
         switch (type)
         {
@@ -130,15 +143,14 @@ void Chunk::genMesh(bool useChunkMesh)
             for (int y = 0; y < 16; y++)
             {
                 const int idx = z * 256 + x * 16 + y;
-
-                const BlockType type = voxels.at(idx).getBlockType();
-                const int *faceTexture = voxels.at(idx).faceTexture;
+                const BlockType type = voxels[idx].getBlockType();
+                const int *faceTexture = voxels[idx].faceTexture;
 
                 if (type == AIR)
                     continue;
 
                 const glm::vec3 color = blockColor(type);
-                const glm::vec3 origin = voxels.at(idx).transform.position - glm::vec3(16 * chunkOffsetX, 16 * chunkOffsetY, 0);
+                const glm::vec3 origin = voxels[idx].transform.position - glm::vec3(16 * chunkOffsetX, 16 * chunkOffsetY, 0);
 
                 for (const FaceDef &face : faces)
                 {
@@ -174,7 +186,9 @@ void Chunk::buildChunkMesh()
 {
 
     genMesh(true);
-    genMesh();
+    backMesh.vertices = chunkMesh.vertices;
+    backMesh.indices = chunkMesh.indices;
+    // genMesh();
     chunkMesh.createVertexBuffer();
     chunkMesh.createIndexBuffer();
     backMesh.createVertexBuffer();

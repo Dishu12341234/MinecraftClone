@@ -38,7 +38,7 @@ void HelloTriangleApplication::drawFrame()
 
     vkResetCommandBuffer(commandBuffers[currentFrame], 0); // or VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
 
-    terrain.value().handelDirtyChunks();
+    terrain->handelDirtyChunks();
     
     
     updateUniformBuffer(currentFrame);
@@ -112,7 +112,7 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.graphicsPipeline);
-    terrain.value().draw(commandBuffer, graphicsPipeline.pipelineLayout, graphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+    terrain->draw(commandBuffer, graphicsPipeline.pipelineLayout, graphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
     
     
     // vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
@@ -135,7 +135,7 @@ void HelloTriangleApplication::cleanup()
     vkDeviceWaitIdle(device);
 
     gameObjectPool.cleanUpResources();
-    terrain.value().cleanup();
+    terrain->cleanup();
     playerS1->camera->cleanup();
     ui->cleanup();
 
