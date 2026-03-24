@@ -16,6 +16,7 @@ namespace BlockFaces
     inline int woodFaceTexture[6] = {3, 3, 3, 3, 3, 3};
     inline int leavesFaceTexture[6] = {4, 4, 4, 4, 4, 4};
     inline int stoneFaceTexture[6] = {5, 5, 5, 5, 5, 5};
+    inline int bedrockFaceTexture[6] = {6, 6, 6, 6, 6, 6};
     inline int corruptFaceTexture[6] = {19, 19, 19, 19, 19, 19};
 };
 
@@ -46,7 +47,8 @@ enum BlockType
     AIR = 0,
     GRASS,
     DIRT,
-    STONE
+    STONE,
+    BEDROCK,
 };
 
 struct PlayerState

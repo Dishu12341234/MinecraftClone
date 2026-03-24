@@ -22,6 +22,9 @@ void Voxel::setType(BlockType blockType)
     case STONE:
         faceTexture = BlockFaces::stoneFaceTexture;
         break;
+    case BEDROCK:
+        faceTexture = BlockFaces::bedrockFaceTexture;
+        break;
     
     default:
         faceTexture = BlockFaces::corruptFaceTexture;

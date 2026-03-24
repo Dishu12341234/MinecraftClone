@@ -123,7 +123,7 @@ void Camera::drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayo
 
     float aspect = (float)swapChainExtent.width / (float)swapChainExtent.height;
     c1.data = glm::ortho(-aspect, aspect, -1.0f, 1.0f, 0.0f, 1.0f);
-
+    
     ui.render(commandBuffer, pipelineLayout, graphicsPipeline,
               descriptorSets, currentFrame, swapChainExtent, c1);
 }

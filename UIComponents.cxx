@@ -54,7 +54,7 @@ void UIComponents::initUIComponent(glm::vec2 position, glm::vec2 size)
     this->position = position;
     this->size = size;
 
-    float cx = position.x - size.x / 2; // also fix this, was missing /2
+    float cx = position.x - size.x / 2;
     float cy = position.y - size.y / 2;
     float w = size.x, h = size.y;
 
@@ -92,7 +92,12 @@ void UIComponents::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipeline
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
                             0, 1, &(descriptorSets[currentFrame]), 0, nullptr);
 
-    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), instanceCount, 0, 0, 0);
+}
+
+void UIComponents::setInstanceCount(int instanceCount)
+{
+    this->instanceCount = instanceCount;
 }
 
 void UIComponents::cleanup()

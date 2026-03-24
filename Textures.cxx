@@ -444,9 +444,9 @@ void u_Texture::createTextureSampler()
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
     // 🔥 NO mipmaps
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = 0.0f;
+    samplerInfo.maxLod = 2;
     samplerInfo.mipLodBias = 0.0f;
 
     // 🔥 Standard

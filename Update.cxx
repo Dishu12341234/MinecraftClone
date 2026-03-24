@@ -23,15 +23,17 @@ void HelloTriangleApplication::initGameObjects()
     context.presentQueue = presentQueue;
     context.commandPool = commandPool;
 
-    gameObjectPool.uploadVBOsAndIBOs();
-
-    srand(87844057);
-
     playerS1 = std::make_unique<Player>(context, gameObjectPool);
 
     terrain = std::make_unique<Terrain>(Terrain(context, gameObjectPool));
     ui = std::move(UI(context));
+    gameObjectPool.uploadVBOsAndIBOs();
 
+    srand(87844057);
+
+    float aspect = float(swapChainExtent.width) / float(swapChainExtent.height);
+
+    // UI Components
     UIComponents Inventory(context);
     Inventory.initUIComponent(glm::vec2(0.f), glm::vec2(2.5f, 1.5f));
 
@@ -39,8 +41,13 @@ void HelloTriangleApplication::initGameObjects()
     Crosshair.setTextureIDX(1);
     Crosshair.initUIComponent(glm::vec2(0, 0), glm::vec2(.1f, .1f));
 
+    UIComponents Heart(context);
+    Heart.setTextureIDX(2);
+    Heart.initUIComponent(glm::vec2(-1 * aspect + .04f, 1 - .04f), glm::vec2(.08f, .08f));
+
     ui->attachComponent(Inventory);
     ui->attachComponent(Crosshair);
+    ui->attachComponent(Heart);
 
     gameObjectPool.terrain = terrain.get();
     terrain->generateChunks();
@@ -63,6 +70,9 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
             std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType() << std::endl;
             std::cout << "Hit block coordinates: (x,y,z) (" << hitInfo.blockCoords.x << ", " << hitInfo.blockCoords.y << ", " << hitInfo.blockCoords.z << ")" << std::endl;
 
+            if (hitInfo.hitVoxel->getBlockType() == BEDROCK)
+                goto _no;
+
             hitInfo.hitVoxel->setType(AIR);
 
             terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, hitInfo.blockCoords.y >> 4);
@@ -75,6 +85,7 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
                 terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) - 1);
             if ((hitInfo.blockCoords.y & 15) == 15)
                 terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) + 1);
+        _no:;
         }
 
     if (keys.justPressed(event.get(), GLFW_KEY_ESCAPE))

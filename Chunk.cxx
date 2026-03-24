@@ -29,20 +29,24 @@ void Chunk::populateBlocks()
         {
             for (int y = 0; y < 16; y++)
             {
-                const double noise = perlin.octave2D_01((x + cmx) * .015f, (y + cmy) * .015f, 6) * 5;
+                const double surfaceNoise = 10.f - floor(perlin.octave2D_01((x + cmx) * .02f, (y + cmy) * .02f, 2) * 10);
+                const double stoneNoise = 8.f - floor(perlin.octave2D_01((x + cmx) * .025f, (y + cmy) * .025f, 6) * 8);
                 int blockType;
 
-                if (z <= 50)
-                    blockType = STONE;
-                else if (z <= 64 + int(noise))
-                {
-                    if (z == 64 + int(noise))
-                        blockType = GRASS;
-                    else
-                        blockType = DIRT;
-                }
-                else
+                int zP = z + surfaceNoise;
+                int height = 60 + (int)surfaceNoise; // grass/dirt surface
+                int stoneHeight = 50 + (int)stoneNoise;
+
+                if (z > height)
                     blockType = AIR;
+                else if (z == height)
+                    blockType = GRASS;
+                else if (z > stoneHeight)
+                    blockType = DIRT;
+                else if (z == 0)
+                    blockType = BEDROCK;
+                else
+                    blockType = STONE;
                 voxels.emplace_back(vkContext, BlockType(blockType));
                 voxels.back().setType(BlockType(blockType));
 

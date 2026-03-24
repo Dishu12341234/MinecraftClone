@@ -132,6 +132,7 @@ void HelloTriangleApplication::initVulkan()
 
     uiTexturePaths[0] = "textures/inventory.png";
     uiTexturePaths[1] = "textures/crosshair.png";
+    uiTexturePaths[2] = "textures/heart.png";
     for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
     {
         texturePassInfo.texturePath = uiTexturePaths[i];

@@ -8,7 +8,7 @@
 #include <unordered_map>
 // #include <thread>
 
-#define RENDER_DISTANCE 5
+#define RENDER_DISTANCE 3
 
 class GameObjectPool;
 

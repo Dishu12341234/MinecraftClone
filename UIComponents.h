@@ -35,16 +35,19 @@ private:
     void createIndexBuffer();
 
     int textureIDX{0};
+    int instanceCount{1};
 
 public:
     UIComponents(VulkanContext &vkContext);
 
-    void initUIComponent(glm::vec2 position = glm::vec2{0.f, 0.f}, glm::vec2 size=glm::vec2{1.f, 1.f});
+    void initUIComponent(glm::vec2 position = glm::vec2{0.f, 0.f}, glm::vec2 size = glm::vec2{1.f, 1.f});
 
     void setTextureIDX(int idx);
 
     void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
               std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1);
+
+    void setInstanceCount(int instanceCount);
     void cleanup();
     ~UIComponents();
 };

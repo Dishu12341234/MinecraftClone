@@ -21,7 +21,10 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
     gl_PointSize = 4.f;
-    gl_Position = pc.data * vec4(inPosition, 1.0);
+    mat4 model = mat4(1.0);
+    model[3] = vec4(0.0, 0.0, 0.0, 1.0);
+    //            proj
+    gl_Position = pc.data * model * vec4(inPosition, 1.0);
     uvOut = uvIn;
     outTextureIndex = inTextureIndex;
 }
