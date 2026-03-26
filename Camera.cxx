@@ -65,6 +65,8 @@ void Camera::updateUBO(UniformBufferObject &UBO,
     float sensitivity = 0.1f;
 
     yaw += dx * sensitivity;
+    std::cout << "yaw: " << yaw << std::endl;
+    std::cout << "dx * sensitivity: " << dx * sensitivity << std::endl;
     pitch += dy * sensitivity;
     pitch = glm::clamp(pitch, -89.9f, 89.9f);
     std::cout << yaw << std::endl;

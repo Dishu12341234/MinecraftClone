@@ -45,7 +45,10 @@ Voxel *GameObjectPool::getVoxelGlobal(BlockCoordinates globalCoords)
 
     const int localX = globalCoords.x & 15;
     const int localY = globalCoords.y & 15;
-    return &it->second->voxels[localX * 16 + localY + localZ * 256];
+    auto chunk = it->second;
+    if(!chunk || !chunk->populated)
+        return nullptr;
+    return &chunk->voxels[localX * 16 + localY + localZ * 256];
 }
 
 GameObjectPool::~GameObjectPool()

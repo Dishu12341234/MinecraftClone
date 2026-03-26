@@ -30,6 +30,7 @@ const vec2 uvTable[4] = vec2[4](
 );
 
 void main() {
+    gl_PointSize = 5.f;
 
     const float WORLD_SCALE = 1.f;
     vec4 viewPos = ubo.view * pc.data * vec4(inPosition, 1.0);

@@ -10,8 +10,8 @@ Event::Event(GLFWwindow &window) : window{window}
 
     if (glfwRawMouseMotionSupported())
     {
-        glfwSetInputMode(&window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-        std::cout << "RawInput" << std::endl;
+        // glfwSetInputMode(&window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+        // std::cout << "RawInput" << std::endl;
     }
 }
 
@@ -39,6 +39,11 @@ void Event::cursorPositionCallback(GLFWwindow *window, double xpos, double ypos)
 
     event->mouseX = xpos;
     event->mouseY = ypos;
+
+    std::cout << "--------" << std::endl;
+    std::cout << xpos << std::endl;
+    std::cout << ypos << std::endl;
+    std::cout << "--------" << std::endl;
 }
 // TODO cursor callback this wont work
 void Event::eventLoop()

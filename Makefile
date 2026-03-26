@@ -32,9 +32,7 @@ LINUX_VULKAN_SDK := /home/divyansh/SDKs/vksdk/1.4.335.0/x86_64
 # Flags
 # =========================
 COMMON_CXXFLAGS := -std=c++2b -Wall -g -O3 \
-	-fsanitize=address -fno-omit-frame-pointer \
 	-MMD -MP \
-	-fno-diagnostics-show-template-tree \
 	-lprofiler \
 	-I/usr/include
 
@@ -75,12 +73,12 @@ RESET  := \033[0m
 all: $(BUILD_DIR)
 ifeq ($(UNAME_S),Darwin)
 	@echo -e "$(YELLOW)Building for macOS...$(RESET)"
-	$(MAKE) -j4 $(MAC_EXEC)
+	$(MAKE) -j8 $(MAC_EXEC)
 	@echo -e "$(GREEN)Running $(BGMAGENTA)$(MAC_EXEC)$(RESET)"
 	./$(MAC_EXEC)
 else
 	@echo -e "$(YELLOW)Building for Linux...$(RESET)"
-	$(MAKE) -j4 $(LINUX_EXEC)
+	$(MAKE) -j8 $(LINUX_EXEC)
 endif
 
 # =========================

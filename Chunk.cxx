@@ -69,6 +69,9 @@ bool Chunk::isFaceVisible(int x, int y, int z)
 
 void Chunk::genMesh(bool useChunkMesh)
 {
+    if(!populated)
+        return;
+
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
@@ -184,6 +187,7 @@ void Chunk::genMesh(bool useChunkMesh)
         backMesh.vertices = std::move(vertices);
         backMesh.indices = std::move(indices);
     }
+
 }
 
 void Chunk::buildChunkMesh()
@@ -197,6 +201,8 @@ void Chunk::buildChunkMesh()
     chunkMesh.createIndexBuffer();
     backMesh.createVertexBuffer();
     backMesh.createIndexBuffer();
+
+    renderable = populated;
 }
 
 void Chunk::updateChunkMesh()
@@ -221,6 +227,9 @@ void Chunk::swapMesh()
 void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
                  std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)
 {
+    if(!renderable)
+        return;
+
     VkBuffer vertexBuffers[] = {chunkMesh.vertexBuffer};
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);

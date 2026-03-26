@@ -39,9 +39,10 @@ void HelloTriangleApplication::drawFrame()
     vkResetCommandBuffer(commandBuffers[currentFrame], 0); // or VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
 
     terrain->handelDirtyChunks();
-    
-    
-    updateUniformBuffer(currentFrame);
+    terrain->makeChunksRenderable();
+
+    [[likely]] if (terrain->populationDone)
+        updateUniformBuffer(currentFrame);
     recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
     // 5️⃣ Submit the command buffer to the graphics queue
@@ -111,14 +112,14 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+    TIMER_START(DRAW_TERRRAIN);
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.graphicsPipeline);
     terrain->draw(commandBuffer, graphicsPipeline.pipelineLayout, graphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
-    
-    
+    TIMER_END(DRAW_TERRRAIN);
+
     // vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
     // playerS1->camera->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
-    
-    
+
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, uiRenderPipeline.graphicsPipeline);
     playerS1->drawUIIfPossible(commandBuffer, uiRenderPipeline.pipelineLayout, uiRenderPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, ui.value());
 
@@ -139,11 +140,11 @@ void HelloTriangleApplication::cleanup()
     playerS1->camera->cleanup();
     ui->cleanup();
 
-    vkDestroyBuffer(device, indexBuffer, nullptr);
-    vkFreeMemory(device, indexBufferMemory, nullptr);
+    // vkDestroyBuffer(device, indexBuffer, nullptr);
+    // vkFreeMemory(device, indexBufferMemory, nullptr);
 
-    vkDestroyBuffer(device, vertexBuffer, nullptr);
-    vkFreeMemory(device, vertexBufferMemory, nullptr);
+    // vkDestroyBuffer(device, vertexBuffer, nullptr);
+    // vkFreeMemory(device, vertexBufferMemory, nullptr);
 
     // Destroy per-frame semaphores and fences
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -185,7 +186,6 @@ void HelloTriangleApplication::cleanup()
     {
         uiTextures.at(i).destroy();
     }
-    
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -202,7 +202,6 @@ void HelloTriangleApplication::cleanup()
 
     glfwDestroyWindow(_window);
     glfwTerminate();
-
 
     std::cout << "Byeeeee :)" << std::endl;
 }

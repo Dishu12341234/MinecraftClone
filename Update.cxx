@@ -25,7 +25,7 @@ void HelloTriangleApplication::initGameObjects()
 
     playerS1 = std::make_unique<Player>(context, gameObjectPool);
 
-    terrain = std::make_unique<Terrain>(Terrain(context, gameObjectPool));
+    terrain = std::make_unique<Terrain>(context, gameObjectPool);
     ui = std::move(UI(context));
     gameObjectPool.uploadVBOsAndIBOs();
 
@@ -39,7 +39,7 @@ void HelloTriangleApplication::initGameObjects()
 
     UIComponents Crosshair(context);
     Crosshair.setTextureIDX(1);
-    Crosshair.initUIComponent(glm::vec2(0, 0), glm::vec2(.1f, .1f));
+    Crosshair.initUIComponent(glm::vec2(0, 0), glm::vec2(.05f, .05f));
 
     UIComponents Heart(context);
     Heart.setTextureIDX(2);

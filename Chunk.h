@@ -50,6 +50,8 @@ private:
     
     public:
     bool dirty = false;
+    bool populated = false;
+    bool renderable = false;
 
     Chunk(VulkanContext &vkContext, GameObjectPool &gameObjectPool);
     Chunk(const Chunk &) = delete;

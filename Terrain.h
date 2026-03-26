@@ -6,9 +6,12 @@
 #include "Chunk.h"
 #include <vector>
 #include <unordered_map>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 // #include <thread>
 
-#define RENDER_DISTANCE 3
+#define RENDER_DISTANCE 5
 
 class GameObjectPool;
 
@@ -27,16 +30,20 @@ private:
     std::unordered_map<uint64_t, Chunk *> chunkLookup;
     GameObjectPool &gameObjectPool;
 
+    std::condition_variable cv;
+    std::mutex chunkBuilderMutex;
+    std::thread chunkBuilder;
+
     friend class GameObjectPool;
+    friend class HelloTriangleApplication;
+
+
+    std::vector<Chunk *> newChunks;
+    std::vector<Chunk *> newChunks_r;
+    bool closed = false;
+    bool populationDone = false;
 
 public:
-    Terrain(const Terrain &) = delete;
-    Terrain &operator=(const Terrain &other)
-    {
-        // allocate new Vulkan buffers, copy data
-        return *this;
-    }
-
     static inline uint64_t chunkKey(int x, int y)
     {
         return (static_cast<uint64_t>(static_cast<uint32_t>(x)) << 32) | static_cast<uint64_t>(static_cast<uint32_t>(y));
@@ -44,14 +51,14 @@ public:
 
     void rebuildChunkLookup();
 
-    Terrain(Terrain &&) = default; // allow moves
-    Terrain &operator=(Terrain &&) = default;
     Terrain(VulkanContext &vkContext, GameObjectPool &gameObjectPool);
 
     void generateChunks();
     void draw(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
 
     void updateChunkMesh(int chunkX, int chunkY);
+
+    void makeChunksRenderable();
 
     void handelDirtyChunks();
 
