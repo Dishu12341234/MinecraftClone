@@ -25,7 +25,7 @@ class UI;
 class HelloTriangleApplication
 {
 private:
-    const int MAX_FRAMES_IN_FLIGHT = 2;
+    const int MAX_FRAMES_IN_FLIGHT = 3;
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
     std::unique_ptr<Terrain> terrain;

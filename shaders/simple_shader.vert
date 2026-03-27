@@ -14,6 +14,8 @@ layout(location = 3) in float brightness;
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 layout(location = 2) out float brightnessO;
+layout(location = 3) out vec2 tileMin;
+layout(location = 4) out vec2 tileMax;
 
 layout(push_constant) uniform PushConstants {
     mat4 data;
@@ -28,6 +30,9 @@ const vec2 uvTable[4] = vec2[4](
     vec2(1.0, 1.0),
     vec2(1.0, 0.0)
 );
+
+const float ATLAS_SIZE_PX = 512.0;
+const float HALF_TEXEL = 0.5 / ATLAS_SIZE_PX;
 
 void main() {
     gl_PointSize = 5.f;
@@ -50,8 +55,10 @@ void main() {
     int x = tid % 20;
     int y = tid / int(ATLAS_COLS);
 
-
-    fragTexCoord = (cornerUV + vec2(x,y)) * tileSize;
+    vec2 insetUV = cornerUV * (tileSize - 2.0 * HALF_TEXEL) + HALF_TEXEL;
+    fragTexCoord = vec2(x, y) * tileSize + insetUV;
+    tileMin = vec2(x, y) * tileSize + HALF_TEXEL;
+    tileMax = vec2(x + 1, y + 1) * tileSize - HALF_TEXEL;
 
     brightnessO = brightness;
 }

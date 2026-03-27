@@ -84,7 +84,7 @@ void Camera::updateUBO(UniformBufferObject &UBO,
 
     
 
-    speed = 5.81f * dt;
+    speed = 10.81f * dt;
 
     v_velocity = 30.81 * dt;
 

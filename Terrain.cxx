@@ -4,6 +4,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <unordered_set>
 
 void Terrain::rebuildChunkLookup()
 {
@@ -31,6 +32,7 @@ void Terrain::generateChunks()
         {
             chunks.emplace_back(vkContext, gameObjectPool);
             chunks.back().setOffset(x, y);
+            chunkIndices.emplace(chunkIndex(x, y));
 
             {
                 std::lock_guard<std::mutex> lock(chunkBuilderMutex);
@@ -66,7 +68,6 @@ void Terrain::generateChunks()
                 chunk->populateBlocks();
                 chunk->populated = true;
 
-                std::lock_guard<std::mutex> lock2(chunkBuilderMutex);
                 newChunks_r.push_back(chunk);
 
             }
@@ -111,18 +112,53 @@ void Terrain::makeChunksRenderable()
 
 void Terrain::updateChunkMesh(int chunkX, int chunkY)
 {
+
     int idx = chunkIndex(chunkX, chunkY);
 
-    if (idx < 0 || idx >= (int)chunks.size())
+    if (chunkIndices.find(idx) == chunkIndices.end())
     {
-        std::cerr << "Invalid chunk coordinates: ("
-                  << chunkX << ", " << chunkY << ")\n";
+
         return;
     }
-
-    Chunk &chunk = chunks[idx];
+    auto it = chunkLookup.find(chunkKey(chunkX, chunkY));
+    if (it == chunkLookup.end())
+        return;
+    Chunk &chunk = *it->second;
     chunk.dirty = true;
+
     chunk.updateChunkMesh();
+}
+
+std::unordered_set<int> appendedChunks;
+
+void Terrain::generateNewChunks(int chunkX, int chunkY)
+{
+    int idx = chunkIndex(chunkX, chunkY);
+
+    auto it = chunkLookup.find(chunkKey(chunkX, chunkY));
+
+    if (it == chunkLookup.end())
+    {
+        std::cerr << "new chunk at (" << chunkX << "," << chunkY << ");\n";
+        appendedChunks.emplace(idx);
+
+        chunks.emplace_back(vkContext, gameObjectPool);
+        Chunk *newChunk = &chunks.back();
+
+        newChunk->setOffset(chunkX, chunkY);
+        chunkIndices.emplace(chunkIndex(chunkX, chunkY));
+
+        {
+            std::lock_guard<std::mutex> lock(chunkBuilderMutex);
+            populationDone = false;
+            newChunks.push_back(newChunk);
+        }
+
+        rebuildChunkLookup();
+
+        // 🔥 CRITICAL: wake worker thread
+        cv.notify_one();
+    }
 }
 
 void Terrain::handelDirtyChunks()

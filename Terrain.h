@@ -6,12 +6,13 @@
 #include "Chunk.h"
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 // #include <thread>
 
-#define RENDER_DISTANCE 5
+#define RENDER_DISTANCE 3
 
 class GameObjectPool;
 
@@ -40,6 +41,8 @@ private:
 
     std::vector<Chunk *> newChunks;
     std::vector<Chunk *> newChunks_r;
+    std::unordered_set<int> chunkIndices;
+
     bool closed = false;
     bool populationDone = false;
 
@@ -57,6 +60,8 @@ public:
     void draw(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
 
     void updateChunkMesh(int chunkX, int chunkY);
+
+    void generateNewChunks(int chunkX, int chunkY);
 
     void makeChunksRenderable();
 

@@ -182,7 +182,7 @@ void HelloTriangleApplication::createInstance()
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "No Engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_1; // Use 1.1 for MoltenVK
+    appInfo.apiVersion = VK_API_VERSION_1_3; // Use 1.1 for MoltenVK
 
     // --- Instance create info ---
     VkInstanceCreateInfo createInfo{};

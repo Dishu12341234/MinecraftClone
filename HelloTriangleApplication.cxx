@@ -42,7 +42,11 @@ void HelloTriangleApplication::drawFrame()
     terrain->makeChunksRenderable();
 
     [[likely]] if (terrain->populationDone)
+    {
         updateUniformBuffer(currentFrame);
+
+        terrain->generateNewChunks(int(playerS1->camera->gePositionInWorldCoords().x) >> 4, int(playerS1->camera->gePositionInWorldCoords().y) >> 4);
+    }
     recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
     // 5️⃣ Submit the command buffer to the graphics queue
