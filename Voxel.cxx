@@ -19,6 +19,12 @@ void Voxel::setType(BlockType blockType)
     case DIRT:
         faceTexture = BlockFaces::dirtFaceTexture;
         break;
+    case WOOD:
+        faceTexture = BlockFaces::woodFaceTexture;
+        break;
+    case LEAF:
+        faceTexture = BlockFaces::leavesFaceTexture;
+        break;
     case STONE:
         faceTexture = BlockFaces::stoneFaceTexture;
         break;

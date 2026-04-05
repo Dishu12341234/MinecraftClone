@@ -1,10 +1,10 @@
-# include <cassert>
-# include <iostream>
-# include <fstream>
-# include <sstream>
-# include "PerlinNoise.hpp"
+#include <cassert>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include "PerlinNoise.hpp"
 
-# pragma pack (push, 1)
+#pragma pack(push, 1)
 struct BMPHeader
 {
 	std::uint16_t bfType;
@@ -13,19 +13,19 @@ struct BMPHeader
 	std::uint16_t bfReserved2;
 	std::uint32_t bfOffBits;
 	std::uint32_t biSize;
-	std::int32_t  biWidth;
-	std::int32_t  biHeight;
+	std::int32_t biWidth;
+	std::int32_t biHeight;
 	std::uint16_t biPlanes;
 	std::uint16_t biBitCount;
 	std::uint32_t biCompression;
 	std::uint32_t biSizeImage;
-	std::int32_t  biXPelsPerMeter;
-	std::int32_t  biYPelsPerMeter;
+	std::int32_t biXPelsPerMeter;
+	std::int32_t biYPelsPerMeter;
 	std::uint32_t biClrUsed;
 	std::uint32_t biClrImportant;
 };
 static_assert(sizeof(BMPHeader) == 54);
-# pragma pack (pop)
+#pragma pack(pop)
 
 struct RGB
 {
@@ -34,23 +34,20 @@ struct RGB
 	double b = 0.0;
 	constexpr RGB() = default;
 	explicit constexpr RGB(double _rgb) noexcept
-		: r{ _rgb }, g{ _rgb }, b{ _rgb } {}
+		: r{_rgb}, g{_rgb}, b{_rgb} {}
 	constexpr RGB(double _r, double _g, double _b) noexcept
-		: r{ _r }, g{ _g }, b{ _b } {}
+		: r{_r}, g{_g}, b{_b} {}
 };
 
 class Image
 {
 public:
-
 	Image() = default;
 
 	Image(std::size_t width, std::size_t height)
-		: m_data(width* height)
-		, m_width{ static_cast<std::int32_t>(width) }
-		, m_height{ static_cast<std::int32_t>(height) } {}
+		: m_data(width * height), m_width{static_cast<std::int32_t>(width)}, m_height{static_cast<std::int32_t>(height)} {}
 
-	void set(std::int32_t x, std::int32_t y, const RGB& color)
+	void set(std::int32_t x, std::int32_t y, const RGB &color)
 	{
 		if (not inBounds(y, x))
 		{
@@ -64,22 +61,21 @@ public:
 
 	std::int32_t height() const noexcept { return m_height; }
 
-	bool saveBMP(const std::string& path)
+	bool saveBMP(const std::string &path)
 	{
-		const std::int32_t  rowSize = m_width * 3 + m_width % 4;
+		const std::int32_t rowSize = m_width * 3 + m_width % 4;
 		const std::uint32_t bmpsize = rowSize * m_height;
 		const BMPHeader header =
-		{
-			0x4d42,
-			static_cast<std::uint32_t>(bmpsize + sizeof(BMPHeader)),
-			0, 0, sizeof(BMPHeader), 40,
-			m_width, m_height, 1, 24,
-			0, bmpsize, 0, 0, 0, 0
-		};
+			{
+				0x4d42,
+				static_cast<std::uint32_t>(bmpsize + sizeof(BMPHeader)),
+				0, 0, sizeof(BMPHeader), 40,
+				m_width, m_height, 1, 24,
+				0, bmpsize, 0, 0, 0, 0};
 
-		if (std::ofstream ofs{ path, std::ios_base::binary })
+		if (std::ofstream ofs{path, std::ios_base::binary})
 		{
-			ofs.write(reinterpret_cast<const char*>(&header), sizeof(header));
+			ofs.write(reinterpret_cast<const char *>(&header), sizeof(header));
 
 			std::vector<std::uint8_t> line(rowSize);
 
@@ -89,13 +85,13 @@ public:
 
 				for (std::int32_t x = 0; x < m_width; ++x)
 				{
-					const RGB& col = m_data[static_cast<std::size_t>(y) * m_width + x];
+					const RGB &col = m_data[static_cast<std::size_t>(y) * m_width + x];
 					line[pos++] = ToUint8(col.b);
 					line[pos++] = ToUint8(col.g);
 					line[pos++] = ToUint8(col.r);
 				}
 
-				ofs.write(reinterpret_cast<const char*>(line.data()), line.size());
+				ofs.write(reinterpret_cast<const char *>(line.data()), line.size());
 			}
 
 			return true;
@@ -107,7 +103,6 @@ public:
 	}
 
 private:
-
 	std::vector<RGB> m_data;
 
 	std::int32_t m_width = 0, m_height = 0;
@@ -119,31 +114,29 @@ private:
 
 	static constexpr std::uint8_t ToUint8(double x) noexcept
 	{
-		return (x <= 0.0) ? 0 : (1.0 <= x) ? 255 : static_cast<std::uint8_t>(x * 255.0 + 0.5);
+		return (x <= 0.0) ? 0 : (1.0 <= x) ? 255
+										   : static_cast<std::uint8_t>(x * 255.0 + 0.5);
 	}
 };
 
 void Test()
 {
-	siv::PerlinNoise perlinA{ std::random_device{} };
+	siv::PerlinNoise perlinA{std::random_device{}};
 	siv::PerlinNoise perlinB;
 
 	perlinB.deserialize(perlinA.serialize());
 
-	assert(perlinA.octave3D(0.1, 0.2, 0.3, 4)
-		== perlinB.octave3D(0.1, 0.2, 0.3, 4));
+	assert(perlinA.octave3D(0.1, 0.2, 0.3, 4) == perlinB.octave3D(0.1, 0.2, 0.3, 4));
 
 	perlinA.reseed(12345u);
 	perlinB.reseed(12345u);
 
-	assert(perlinA.octave3D(0.1, 0.2, 0.3, 4)
-		== perlinB.octave3D(0.1, 0.2, 0.3, 4));
+	assert(perlinA.octave3D(0.1, 0.2, 0.3, 4) == perlinB.octave3D(0.1, 0.2, 0.3, 4));
 
-	perlinA.reseed(std::mt19937{ 67890u });
-	perlinB.reseed(std::mt19937{ 67890u });
+	perlinA.reseed(std::mt19937{67890u});
+	perlinB.reseed(std::mt19937{67890u});
 
-	assert(perlinA.octave3D(0.1, 0.2, 0.3, 4)
-		== perlinB.octave3D(0.1, 0.2, 0.3, 4));
+	assert(perlinA.octave3D(0.1, 0.2, 0.3, 4) == perlinB.octave3D(0.1, 0.2, 0.3, 4));
 
 	for (std::int32_t y = 0; y < 20; ++y)
 	{
@@ -160,7 +153,7 @@ int main()
 {
 	Test();
 
-	Image image{ 512, 512 };
+	Image image{512, 512};
 
 	std::cout << "---------------------------------\n";
 	std::cout << "* frequency [0.1 .. 8.0 .. 64.0] \n";
@@ -184,7 +177,7 @@ int main()
 		std::cout << "uint32 seed      = ";
 		std::cin >> seed;
 
-		const siv::PerlinNoise perlin{ seed };
+		const siv::PerlinNoise perlin{seed};
 		const double fx = (frequency / image.width());
 		const double fy = (frequency / image.height());
 
@@ -192,13 +185,15 @@ int main()
 		{
 			for (std::int32_t x = 0; x < image.width(); ++x)
 			{
-				const RGB color(perlin.octave2D_01((x * fx), (y * fy), octaves));
+				double pn = perlin.octave2D_01((x * fx), (y * fy), octaves);
+				int o = pn > .99f ? 1 : 0;
+				const RGB color(o);
 				image.set(x, y, color);
 			}
 		}
 
 		std::stringstream ss;
-		ss << 'f' << frequency << 'o' << octaves << '_' << seed << ".bmp";
+		ss << "bmps/f" << frequency << 'o' << octaves << '_' << seed << ".bmp";
 
 		if (image.saveBMP(ss.str()))
 		{
@@ -212,7 +207,8 @@ int main()
 		char c;
 		std::cout << "continue? [y/n] >";
 		std::cin >> c;
-		if (c != 'y') break;
+		if (c != 'y')
+			break;
 		std::cout << '\n';
 	}
 }

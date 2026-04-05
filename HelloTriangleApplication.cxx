@@ -43,10 +43,13 @@ void HelloTriangleApplication::drawFrame()
 
     [[likely]] if (terrain->populationDone)
     {
-        updateUniformBuffer(currentFrame);
 
         terrain->generateNewChunks(int(playerS1->camera->gePositionInWorldCoords().x) >> 4, int(playerS1->camera->gePositionInWorldCoords().y) >> 4);
     }
+
+    [[likely]]if (terrain->uboMove)
+        updateUniformBuffer(currentFrame);
+
     recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
     // 5️⃣ Submit the command buffer to the graphics queue
@@ -202,6 +205,7 @@ void HelloTriangleApplication::cleanup()
 
     vkDestroyDevice(device, nullptr);
     vkDestroySurfaceKHR(instance, surface, nullptr);
+    destroyDebugMessenger();
     vkDestroyInstance(instance, nullptr);
 
     glfwDestroyWindow(_window);

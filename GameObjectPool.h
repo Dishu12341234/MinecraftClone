@@ -18,6 +18,7 @@ private:
     
     public:
     Chunk *getChunk(int chunkX, int chunkY);
+    void pushUnloaded(UnloadedVoxelPayload &unloadedVoxelPayload); //push the blocks needed to be added to a specific chunk which is not possible now due to the chunk being unloaded
 
     GameObjectPool();
     void init(VulkanContext context);

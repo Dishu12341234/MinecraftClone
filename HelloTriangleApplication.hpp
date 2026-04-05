@@ -4,17 +4,17 @@
 #include <vector>
 #include <optional>
 #include <chrono>
+#include <memory>
 #include "Textures.hpp"
 #include "GraphicsPipeline.h"
 #include "RayGraphicsPipeline.h"
 #include "UIRenderPipeline.h"
-#include "GameObjectPool.h" 
+#include "GameObjectPool.h"
 #include "UI.h"
 
 class Event;
 
 #define NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES 16
-
 
 class Ray;
 class Player;
@@ -30,6 +30,9 @@ private:
 
     std::unique_ptr<Terrain> terrain;
     std::optional<UI> ui;
+    std::unique_ptr<UIComponents> Inventory;
+    std::unique_ptr<UIComponents> Crosshair;
+    std::unique_ptr<UIComponents> Heart;
 
     std::array<std::string, NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES> uiTexturePaths;
     std::vector<u_Texture> uiTextures;
@@ -40,6 +43,33 @@ private:
     GameObjectPool gameObjectPool;
     std::unique_ptr<Event> event;
     std::unique_ptr<Player> playerS1;
+
+    // --- Debug Messenger ---
+    VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
+
+    // Static callback (required signature)
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageType,
+        const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+        void *pUserData);
+
+    // Helpers
+    void setupDebugMessenger();
+    void destroyDebugMessenger();
+    static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
+
+    // Proxy loaders (extension functions aren't auto-loaded)
+    static VkResult CreateDebugUtilsMessengerEXT(
+        VkInstance instance,
+        const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+        const VkAllocationCallbacks *pAllocator,
+        VkDebugUtilsMessengerEXT *pDebugMessenger);
+
+    static void DestroyDebugUtilsMessengerEXT(
+        VkInstance instance,
+        VkDebugUtilsMessengerEXT debugMessenger,
+        const VkAllocationCallbacks *pAllocator);
 
     struct QueueFamilyIndices
     {
@@ -192,7 +222,7 @@ private:
     std::string PROCESS_NAME = "Vulkos";
 
     const std::string MODEL_PATH = "models/Cube.obj";
-    const std::string TEXTURE_PATH = "textures/atlas.png";
+    const std::string TEXTURE_PATH = "/home/divyansh/MinecraftClone/textures/atlas.png";
 
     const std::vector<const char *> validationLayers = {
         "VK_LAYER_KHRONOS_validation"};

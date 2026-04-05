@@ -48,8 +48,13 @@ void Event::cursorPositionCallback(GLFWwindow *window, double xpos, double ypos)
 // TODO cursor callback this wont work
 void Event::eventLoop()
 {
-    static auto lastTime = std::chrono::high_resolution_clock::now();
+    static auto startingTime = std::chrono::high_resolution_clock::now();
+    static auto lastTime = startingTime;
+
+    
     auto currentTime = std::chrono::high_resolution_clock::now();
+    timeElapsed_ms = std::chrono::duration<double, std::milli>(currentTime - startingTime).count();
+
     auto delta = currentTime - lastTime;
     lastTime = currentTime;
 
@@ -62,6 +67,11 @@ void Event::eventLoop()
 bool Event::getKeyPressed(int key)
 {
     return keyDown[key];
+}
+
+const unsigned long long Event::getTimeElapsed_ms()
+{
+    return timeElapsed_ms;
 }
 
 Event::~Event()

@@ -112,15 +112,17 @@ void Player::drawUIIfPossible(VkCommandBuffer commandBuffer,
     camera->drawUIAt(commandBuffer, pipelineLayout, graphicsPipeline,
                      descriptorSets, currentFrame, swapChainExtent, ui, 2);
 }
+
 void Player::handlePlayerMovement(UniformBufferObject &UBO,
                                   VkExtent2D &swapChainExtent,
                                   Event &event)
 {
-    constexpr float GRAVITY = 0.00025f; // tune
-    constexpr float JUMP_FORCE = 0.10f; // tune
-    constexpr float TERMINAL_VEL = -.30f;
+    constexpr float GRAVITY     = 0.00025f;
+    constexpr float JUMP_FORCE  = 0.10f;
+    constexpr float TERMINAL_VEL = -0.30f;
 
-    static float vertVel = 0.0f;
+    static float vertVel    = 0.0f;
+    static float fallStartZ = 0.0f;  // z when the player left the ground
 
     camera->updateUBO(UBO, swapChainExtent, event);
 
@@ -137,6 +139,7 @@ void Player::handlePlayerMovement(UniformBufferObject &UBO,
 
     if (playerState.onGround && event.getKeyPressed(GLFW_KEY_SPACE))
         vertVel = JUMP_FORCE;
+
     if (!playerState.onGround)
         vertVel -= GRAVITY * float(event.dt);
     if (vertVel < TERMINAL_VEL)
@@ -148,6 +151,34 @@ void Player::handlePlayerMovement(UniformBufferObject &UBO,
 
     resolveAxis(delta.x, 0, vertVel);
     resolveAxis(delta.y, 1, vertVel);
+
+    bool wasOnGround = playerState.onGround;
     playerState.onGround = false;
     resolveAxis(delta.z, 2, vertVel);
+
+    // ── Leaving the ground: snapshot the takeoff height ──────────────────────
+    if (wasOnGround && !playerState.onGround)
+    {
+        fallStartZ = camera->gePositionInWorldCoords().z;
+    }
+
+    // ── Landing: compare takeoff height to landing height ────────────────────
+    if (!wasOnGround && playerState.onGround)
+    {
+        float landingZ = camera->gePositionInWorldCoords().z;
+        float fell     = fallStartZ - landingZ;   // positive = fell downward
+
+        if (fell > 3.0f)
+        {
+            int damage = static_cast<int>(fell - 3.0f);
+            healtPoints = std::fmax(0, int(healtPoints) - damage);
+            std::cerr << "Fell " << fell << " units, damage: "
+                      << damage << "  HP: " << healtPoints << "\n";
+        }
+    }
+}
+
+const int Player::getHealthPoints()
+{
+    return healtPoints;
 }

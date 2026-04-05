@@ -11,7 +11,53 @@
 #include <unordered_map>
 #include <chrono>
 #include <map>
+#include <execinfo.h>
+#include <cxxabi.h>
 #include <set>
+
+static void printStackTrace()
+{
+    static const int MAX_FRAMES = 20;
+    void* frames[MAX_FRAMES];
+    int frameCount = backtrace(frames, MAX_FRAMES);
+    char** symbols = backtrace_symbols(frames, frameCount);
+
+    std::cerr << "  --- Stack Trace ---\n";
+    for (int i = 1; i < frameCount; ++i) // skip frame 0 (this function itself)
+    {
+        std::string sym = symbols[i];
+
+        // Try to extract and demangle the mangled name
+        // backtrace_symbols format: "./binary(_ZmangledName+0xoffset) [0xaddr]"
+        size_t start = sym.find('(');
+        size_t end   = sym.find('+', start);
+
+        if (start != std::string::npos && end != std::string::npos)
+        {
+            std::string mangled = sym.substr(start + 1, end - start - 1);
+            int status = 0;
+            char* demangled = abi::__cxa_demangle(mangled.c_str(), nullptr, nullptr, &status);
+
+            if (status == 0 && demangled)
+            {
+                std::cerr << "  #" << i << "  " << demangled
+                          << "  (" << sym.substr(sym.find('[')) << "\n";
+                free(demangled);
+            }
+            else
+            {
+                std::cerr << "  #" << i << "  " << sym << "\n";
+            }
+        }
+        else
+        {
+            std::cerr << "  #" << i << "  " << sym << "\n";
+        }
+    }
+    std::cerr << "  -------------------\n";
+
+    free(symbols);
+}
 
 VkSampleCountFlagBits HelloTriangleApplication::getMaxUsableSampleCount()
 {
@@ -65,9 +111,9 @@ void HelloTriangleApplication::initWindow()
 void HelloTriangleApplication::initVulkan()
 {
     createInstance();
+    setupDebugMessenger();
     createSurface();
 
-    
     pickPhysicalDevice();
     isDeviceSuitable(physicalDevice);
     createLogicalDevice();
@@ -101,9 +147,8 @@ void HelloTriangleApplication::initVulkan()
 
     for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
     {
-        uiTexturePaths[i] = "textures/corrupt.png";
+        uiTexturePaths[i] = "/home/divyansh/MinecraftClone/textures/corrupt.png";
     }
-    
 
     for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
     {
@@ -129,10 +174,9 @@ void HelloTriangleApplication::initVulkan()
     texturePassInfo.texturePath = TEXTURE_PATH;
     texture.passTextureCreateInfo(texturePassInfo);
 
-
-    uiTexturePaths[0] = "textures/inventory.png";
-    uiTexturePaths[1] = "textures/crosshair.png";
-    uiTexturePaths[2] = "textures/heart.png";
+    uiTexturePaths[0] = "/home/divyansh/MinecraftClone/textures/inventory.png";
+    uiTexturePaths[1] = "/home/divyansh/MinecraftClone/textures/crosshair.png";
+    uiTexturePaths[2] = "/home/divyansh/MinecraftClone/textures/heart.png";
     for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++)
     {
         texturePassInfo.texturePath = uiTexturePaths[i];
@@ -206,10 +250,18 @@ void HelloTriangleApplication::createInstance()
     const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
     std::vector<const char *> requiredExtensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
     requiredExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
     createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
     createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+    if (enableValidationLayers)
+    {
+        populateDebugMessengerCreateInfo(debugCreateInfo);
+        createInfo.pNext = &debugCreateInfo; // catches errors during instance create/destroy
+    }
 
     // --- Create instance ---
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
@@ -388,6 +440,117 @@ HelloTriangleApplication::QueueFamilyIndices HelloTriangleApplication::findQueue
     return indices;
 }
 
+// -----------------------------------------------------------------------
+// Proxy loaders — vkCreate/DestroyDebugUtilsMessengerEXT are extension
+// functions and must be resolved at runtime via vkGetInstanceProcAddr.
+// -----------------------------------------------------------------------
+VkResult HelloTriangleApplication::CreateDebugUtilsMessengerEXT(
+    VkInstance instance,
+    const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+    const VkAllocationCallbacks *pAllocator,
+    VkDebugUtilsMessengerEXT *pDebugMessenger)
+{
+    auto func = (PFN_vkCreateDebugUtilsMessengerEXT)
+        vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+
+    if (func != nullptr)
+        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
+}
+
+void HelloTriangleApplication::DestroyDebugUtilsMessengerEXT(
+    VkInstance instance,
+    VkDebugUtilsMessengerEXT debugMessenger,
+    const VkAllocationCallbacks *pAllocator)
+{
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)
+        vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+
+    if (func != nullptr)
+        func(instance, debugMessenger, pAllocator);
+}
+
+// -----------------------------------------------------------------------
+// Shared helper — used both for the live messenger and for wiring into
+// VkInstanceCreateInfo.pNext so early instance-creation errors are caught.
+// -----------------------------------------------------------------------
+void HelloTriangleApplication::populateDebugMessengerCreateInfo(
+    VkDebugUtilsMessengerCreateInfoEXT &createInfo)
+{
+    createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+
+    createInfo.messageSeverity =
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | // general diagnostics
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | // likely bugs
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;    // violations / crashes
+
+    createInfo.messageType =
+        VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |    // unrelated to spec
+        VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | // spec violations
+        VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT; // non-optimal usage
+
+    createInfo.pfnUserCallback = debugCallback;
+    createInfo.pUserData = nullptr; // passed as pUserData in the callback
+}
+
+// -----------------------------------------------------------------------
+// The actual callback — Vulkan calls this whenever a message is generated.
+// Returning VK_TRUE aborts the call that triggered the message (only useful
+// for testing the validation layers themselves; keep it VK_FALSE normally).
+// -----------------------------------------------------------------------
+VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT             messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void*                                       /*pUserData*/)
+{
+    const char* severity = "VERBOSE";
+    if      (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)   severity = "ERROR  ";
+    else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) severity = "WARNING";
+    else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)    severity = "INFO   ";
+
+    const char* type = "GENERAL   ";
+    if      (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)  type = "VALIDATION";
+    else if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) type = "PERF      ";
+
+    std::cerr << "\n[VK " << severity << "][" << type << "] "
+              << pCallbackData->pMessage << "\n";
+
+    // Print stack trace for warnings and errors only
+    if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+        printStackTrace();
+
+    return VK_FALSE;
+}
+
+// -----------------------------------------------------------------------
+// Call this right after createInstance().
+// -----------------------------------------------------------------------
+void HelloTriangleApplication::setupDebugMessenger()
+{
+    if (!enableValidationLayers)
+        return;
+
+    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+    populateDebugMessengerCreateInfo(createInfo);
+
+    if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
+        throw std::runtime_error("Failed to set up debug messenger!");
+
+    std::cout << "Debug messenger created.\n";
+}
+
+// -----------------------------------------------------------------------
+// Call this in your cleanup() / destructor before vkDestroyInstance().
+// -----------------------------------------------------------------------
+void HelloTriangleApplication::destroyDebugMessenger()
+{
+    if (enableValidationLayers && debugMessenger != VK_NULL_HANDLE)
+        DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+}
+
 // Logical device -> A brige between the program and the GPU
 void HelloTriangleApplication::createLogicalDevice()
 {
@@ -418,7 +581,7 @@ void HelloTriangleApplication::createLogicalDevice()
     // If you're on Vulkan 1.2, use VkPhysicalDeviceVulkan12Features instead:
     VkPhysicalDeviceVulkan12Features vk12Features{};
     vk12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    vk12Features.descriptorIndexing                        = VK_TRUE;
+    vk12Features.descriptorIndexing = VK_TRUE;
     vk12Features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
     vk12Features.pNext = nullptr;
 

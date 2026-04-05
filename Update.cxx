@@ -34,21 +34,27 @@ void HelloTriangleApplication::initGameObjects()
     float aspect = float(swapChainExtent.width) / float(swapChainExtent.height);
 
     // UI Components
-    UIComponents Inventory(context);
-    Inventory.initUIComponent(glm::vec2(0.f), glm::vec2(2.5f, 1.5f));
+    
+    Inventory = std::make_unique<UIComponents>(context);
+    Crosshair = std::make_unique<UIComponents>(context);
+    Heart = std::make_unique<UIComponents>(context);
 
-    UIComponents Crosshair(context);
-    Crosshair.setTextureIDX(1);
-    Crosshair.initUIComponent(glm::vec2(0, 0), glm::vec2(.05f, .05f));
 
-    UIComponents Heart(context);
-    Heart.setTextureIDX(2);
-    Heart.initUIComponent(glm::vec2(-1 * aspect + .04f, 1 - .04f), glm::vec2(.08f, .08f));
+    Inventory->initUIComponent(glm::vec2(0.f), glm::vec2(2.5f, 1.5f));
 
-    ui->attachComponent(Inventory);
-    ui->attachComponent(Crosshair);
-    ui->attachComponent(Heart);
+    
+    Crosshair->setTextureIDX(1);
+    Crosshair->initUIComponent(glm::vec2(0, 0), glm::vec2(.05f, .05f));
 
+    
+    Heart->setTextureIDX(2);
+    Heart->initUIComponent(glm::vec2(-1 * aspect + .04f, 1 - .04f), glm::vec2(.08f, .08f));
+    Heart->setInstanceCount(0);
+
+    ui->attachComponent(Inventory.get());
+    ui->attachComponent(Crosshair.get());
+    ui->attachComponent(Heart.get());
+    
     gameObjectPool.terrain = terrain.get();
     terrain->generateChunks();
 }
@@ -57,10 +63,11 @@ KeyTracker keys;
 
 void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 {
-
+    
     std::cout << "Coordinates: " << "(x,y,z) (x" << playerS1->camera->gePositionInWorldCoords().x << ", " << playerS1->camera->gePositionInWorldCoords().y << ", " << playerS1->camera->gePositionInWorldCoords().z << ")" << std::endl;
     std::cout << "CMs: " << "(x,y) (x" << (int(playerS1->camera->gePositionInWorldCoords().x) / 16) << ", " << (int(playerS1->camera->gePositionInWorldCoords().y) / 16) << ")" << std::endl;
-
+    
+    Heart->setInstanceCount(playerS1->getHealthPoints());
     HitInfo hitInfo{};
     playerS1->camera->getHitInfo(hitInfo);
 

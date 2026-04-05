@@ -47,9 +47,12 @@ enum BlockType
     AIR = 0,
     GRASS,
     DIRT,
+    WOOD,
+    LEAF,
     STONE,
     BEDROCK,
 };
+
 
 struct PlayerState
 {
@@ -95,4 +98,13 @@ struct AxisAlignedBoundingBox
 {
     glm::vec3 min;
     glm::vec3 max;
+};
+
+
+
+struct UnloadedVoxelPayload
+{
+    BlockCoordinates blockCoordinates_Global;
+    BlockType blockType;
+    uint64_t chunkKey;
 };

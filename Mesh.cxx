@@ -140,9 +140,9 @@ void Mesh::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, 
 void Mesh::cleanup()
 {
     if (StagingVertexBufferMemory != VK_NULL_HANDLE)
-        vkUnmapMemory(vkContext.device, StagingVertexBufferMemory); // missing from your code!
+        vkUnmapMemory(vkContext.device, StagingVertexBufferMemory);
     if (StagingIndexBufferMemory != VK_NULL_HANDLE)
-        vkUnmapMemory(vkContext.device, StagingIndexBufferMemory); // missing too!
+        vkUnmapMemory(vkContext.device, StagingIndexBufferMemory);
 
     if (indexBuffer != VK_NULL_HANDLE)
     {

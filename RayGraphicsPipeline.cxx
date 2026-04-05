@@ -9,8 +9,8 @@ void RayGraphicsPipeline::createGraphicsPipeline()
 {
     std::cout << "Creating Ray Graphics Pipeline..." << std::endl;
 
-    auto vertShaderCode = readFile("shaders/simple_shader_ray_v.spv");
-    auto fragShaderCode = readFile("shaders/simple_shader_ray_f.spv");
+    auto vertShaderCode = readFile("/home/divyansh/MinecraftClone/shaders/simple_shader_ray_v.spv");
+    auto fragShaderCode = readFile("/home/divyansh/MinecraftClone/shaders/simple_shader_ray_f.spv");
 
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);

@@ -5,9 +5,9 @@ UI::UI(VulkanContext &vkContext) : vkContext{vkContext}
 {
 }
 
-void UI::attachComponent(UIComponents &component)
+void UI::attachComponent(UIComponents *component)
 {
-    this->components.push_back(component);
+    this->components.emplace_back(component);
 }
 
 void UI::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 c1)
@@ -15,7 +15,7 @@ void UI::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, 
     for (auto &&component : components)
     {
 
-        component.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+        component->draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
     }
 }
 
@@ -24,17 +24,17 @@ void UI::renderAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout
     if (idx >= components.size())
         return;
 
-    UIComponents &component = components.at(idx);
+    UIComponents *component = components[idx];
 
 
-    component.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+    component->draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
 }
 
 void UI::cleanup()
 {
     for (auto &component : components)
     {
-        component.cleanup();
+        component->cleanup();
     }
 }
 

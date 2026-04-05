@@ -4,9 +4,15 @@
 
 Chunk *GameObjectPool::getChunk(int chunkX, int chunkY)
 {
-    if (!terrain) return nullptr;
+    if (!terrain)
+        return nullptr;
     auto it = terrain->chunkLookup.find(terrain->chunkKey(chunkX, chunkY));
     return it != terrain->chunkLookup.end() ? it->second : nullptr;
+}
+
+void GameObjectPool::pushUnloaded(UnloadedVoxelPayload &unloadedVoxelPayload)
+{
+    this->terrain->unloadedVoxels.emplace_back(std::make_pair(unloadedVoxelPayload.chunkKey, unloadedVoxelPayload));
 }
 
 GameObjectPool::GameObjectPool()
@@ -32,21 +38,24 @@ void GameObjectPool::cleanUpResources()
 
 Voxel *GameObjectPool::getVoxelGlobal(BlockCoordinates globalCoords)
 {
-    if (!terrain) return nullptr;
+    if (!terrain)
+        return nullptr;
 
     const int localZ = globalCoords.z;
-    if (localZ < 0 || localZ >= 256) return nullptr;
+    if (localZ < 0 || localZ >= 256)
+        return nullptr;
 
     const int chunkX = globalCoords.x >> 4;
     const int chunkY = globalCoords.y >> 4;
 
     auto it = terrain->chunkLookup.find(terrain->chunkKey(chunkX, chunkY));
-    if (it == terrain->chunkLookup.end()) return nullptr;
+    if (it == terrain->chunkLookup.end())
+        return nullptr;
 
     const int localX = globalCoords.x & 15;
     const int localY = globalCoords.y & 15;
     auto chunk = it->second;
-    if(!chunk || !chunk->populated)
+    if (!chunk || !chunk->populated)
         return nullptr;
     return &chunk->voxels[localX * 16 + localY + localZ * 256];
 }

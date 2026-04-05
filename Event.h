@@ -37,6 +37,7 @@ private:
     int mouseButtonDown = 0; // bitfield for mouse buttons
     int mouseButtonAction = 0; // GLFW_PRESS, GLFW_RELEASE, or GLFW_REPEAT
 
+    unsigned long long timeElapsed_ms = 0;//elapsed Time in millseconds
 public:
 
     double dt;
@@ -49,6 +50,8 @@ public:
     void eventLoop();
     bool getKeyPressed(int key);
     bool getMouseButtonPressed(int button);
+
+    const unsigned long long getTimeElapsed_ms();
     ~Event();
 };
 

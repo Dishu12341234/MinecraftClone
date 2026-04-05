@@ -4,6 +4,7 @@
 
 class Camera;
 
+
 class Player
 {
 private:
@@ -12,7 +13,14 @@ private:
     bool jumpTriggered = false;
 
     PlayerState playerState;
+    uint healtPoints = 20; 
+    int LBOC = 0;//last block when the player was in contact with the ground
+    int LZOC = 0;//last z when the player was not in contact with the ground
+
+    int dz = 0;
+
     long long jumpStartTime;
+
 
     AxisAlignedBoundingBox aabb;
     GameObjectPool &gameObjectPool;
@@ -35,6 +43,9 @@ public:
     void handlePlayerMovement(UniformBufferObject &UBO,
                               VkExtent2D &swapChainExtent,
                               Event &event);
+
+
+    const int getHealthPoints();
 
     ~Player();
 };
