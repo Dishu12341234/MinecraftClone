@@ -6088,231 +6088,236 @@
 ./Chunk.cxx:37:
 ./Chunk.cxx:38:    std::vector<Vertex> vertices;
 ./Chunk.cxx:39:    std::vector<uint32_t> indices;
-./Chunk.cxx:40:
-./Chunk.cxx:41:    auto appendToBuffer = [&vertices, &indices](glm::vec3 pos, glm::vec2 uv)
-./Chunk.cxx:42:    {
-./Chunk.cxx:43:        static int c = 0;
-./Chunk.cxx:44:
-./Chunk.cxx:45:        vertices.emplace_back(Vertex{pos,
-./Chunk.cxx:46:                                     glm::vec3(1.f),
-./Chunk.cxx:47:                                     uv,
-./Chunk.cxx:48:                                     1.f});
-./Chunk.cxx:49:        indices.push_back(c);
-./Chunk.cxx:50:
-./Chunk.cxx:51:        c++;
-./Chunk.cxx:52:    };
-./Chunk.cxx:53:
-./Chunk.cxx:54:    auto cullTopVoxels = [&appendToBuffer](Voxel &voxel, int &x, int &y, int &z, Layer *layers)
-./Chunk.cxx:55:    {
-./Chunk.cxx:56:        if (voxel.blockType == AIR)
-./Chunk.cxx:57:            return;
-./Chunk.cxx:58:
-./Chunk.cxx:59:        if (z < 255)
-./Chunk.cxx:60:        {
-./Chunk.cxx:61:            Voxel &topVoxel = layers[z + 1].voxels[x][y];
-./Chunk.cxx:62:            if (topVoxel.blockType != AIR)
-./Chunk.cxx:63:                return;
-./Chunk.cxx:64:        }
-./Chunk.cxx:65:
-./Chunk.cxx:66:        glm::vec3 &vPos = voxel.transform.position;
-./Chunk.cxx:67:        // topface
-./Chunk.cxx:68:        // bottom right[0] = (x      , y)
-./Chunk.cxx:69:        // bottom left[1]  = (x      , y + 1.f)
-./Chunk.cxx:70:        // top left[2]     = (x + 1.f, y + 1.f)
-./Chunk.cxx:71:        // top right[3]    = (x + 1.f, y)
-./Chunk.cxx:72:        // indices  0 1 2 2 3 0
-./Chunk.cxx:73:        float vz = vPos.z;
-./Chunk.cxx:74:        glm::vec2 v0{vPos.x, vPos.y};
-./Chunk.cxx:75:        glm::vec2 v1{vPos.x, vPos.y + 1.0f};
-./Chunk.cxx:76:        glm::vec2 v2{vPos.x + 1.0f, vPos.y + 1.0f};
-./Chunk.cxx:77:        glm::vec2 v3{vPos.x + 1.0f, vPos.y};
-./Chunk.cxx:78:
-./Chunk.cxx:79:        appendToBuffer(glm::vec3{v0, vz}, glm::vec2{voxel.faceTexture[TOP], 0});
-./Chunk.cxx:80:        appendToBuffer(glm::vec3{v1, vz}, glm::vec2{voxel.faceTexture[TOP], 1});
+./Chunk.cxx:40:    int c = 0;
+./Chunk.cxx:41:
+./Chunk.cxx:42:    auto appendToBuffer = [&vertices, &indices, &c](glm::vec3 pos, glm::vec2 uv)
+./Chunk.cxx:43:    {
+./Chunk.cxx:44:        vertices.emplace_back(Vertex{pos,
+./Chunk.cxx:45:                                     glm::vec3(1.f),
+./Chunk.cxx:46:                                     uv,
+./Chunk.cxx:47:                                     1.f});
+./Chunk.cxx:48:        indices.push_back(c);
+./Chunk.cxx:49:
+./Chunk.cxx:50:        c++;
+./Chunk.cxx:51:    };
+./Chunk.cxx:52:
+./Chunk.cxx:53:    auto cullTopVoxels = [&appendToBuffer](Voxel &voxel, int &x, int &y, int &z, Layer *layers)
+./Chunk.cxx:54:    {
+./Chunk.cxx:55:        if (voxel.blockType == AIR)
+./Chunk.cxx:56:            return;
+./Chunk.cxx:57:
+./Chunk.cxx:58:        if (z < 255)
+./Chunk.cxx:59:        {
+./Chunk.cxx:60:            Voxel &topVoxel = layers[z + 1].voxels[x][y];
+./Chunk.cxx:61:            if (topVoxel.blockType != AIR)
+./Chunk.cxx:62:                return;
+./Chunk.cxx:63:        }
+./Chunk.cxx:64:
+./Chunk.cxx:65:        glm::vec3 &vPos = voxel.transform.position;
+./Chunk.cxx:66:        // topface
+./Chunk.cxx:67:        // bottom right[0] = (x      , y)
+./Chunk.cxx:68:        // bottom left[1]  = (x      , y + 1.f)
+./Chunk.cxx:69:        // top left[2]     = (x + 1.f, y + 1.f)
+./Chunk.cxx:70:        // top right[3]    = (x + 1.f, y)
+./Chunk.cxx:71:        // indices  0 1 2 2 3 0
+./Chunk.cxx:72:        float vz = vPos.z;
+./Chunk.cxx:73:        glm::vec2 v0{vPos.x, vPos.y};
+./Chunk.cxx:74:        glm::vec2 v1{vPos.x, vPos.y + 1.0f};
+./Chunk.cxx:75:        glm::vec2 v2{vPos.x + 1.0f, vPos.y + 1.0f};
+./Chunk.cxx:76:        glm::vec2 v3{vPos.x + 1.0f, vPos.y};
+./Chunk.cxx:77:
+./Chunk.cxx:78:        appendToBuffer(glm::vec3{v0, vz}, glm::vec2{voxel.faceTexture[TOP], 0});
+./Chunk.cxx:79:        appendToBuffer(glm::vec3{v1, vz}, glm::vec2{voxel.faceTexture[TOP], 1});
+./Chunk.cxx:80:        appendToBuffer(glm::vec3{v2, vz}, glm::vec2{voxel.faceTexture[TOP], 2});
 ./Chunk.cxx:81:        appendToBuffer(glm::vec3{v2, vz}, glm::vec2{voxel.faceTexture[TOP], 2});
-./Chunk.cxx:82:        appendToBuffer(glm::vec3{v2, vz}, glm::vec2{voxel.faceTexture[TOP], 2});
-./Chunk.cxx:83:        appendToBuffer(glm::vec3{v3, vz}, glm::vec2{voxel.faceTexture[TOP], 3});
-./Chunk.cxx:84:        appendToBuffer(glm::vec3{v0, vz}, glm::vec2{voxel.faceTexture[TOP], 0});
-./Chunk.cxx:85:    };
-./Chunk.cxx:86:
-./Chunk.cxx:87:    auto cullBottomVoxels = [&appendToBuffer](Voxel &voxel, int &x, int &y, int &z, Layer *layers)
-./Chunk.cxx:88:    {
-./Chunk.cxx:89:        if (voxel.blockType == AIR)
-./Chunk.cxx:90:            return;
-./Chunk.cxx:91:
-./Chunk.cxx:92:        if (z > 0)
-./Chunk.cxx:93:        {
-./Chunk.cxx:94:            Voxel &topVoxel = layers[z - 1].voxels[x][y];
-./Chunk.cxx:95:            if (topVoxel.blockType != AIR)
-./Chunk.cxx:96:                return;
-./Chunk.cxx:97:        }
-./Chunk.cxx:98:
-./Chunk.cxx:99:        glm::vec3 &vPos = voxel.transform.position;
-./Chunk.cxx:100:
-./Chunk.cxx:101:        float vz = vPos.z - 1.f;
-./Chunk.cxx:102:        glm::vec2 v0{vPos.x, vPos.y};
-./Chunk.cxx:103:        glm::vec2 v1{vPos.x, vPos.y + 1.0f};
-./Chunk.cxx:104:        glm::vec2 v2{vPos.x + 1.0f, vPos.y + 1.0f};
-./Chunk.cxx:105:        glm::vec2 v3{vPos.x + 1.0f, vPos.y};
-./Chunk.cxx:106:
-./Chunk.cxx:107:        appendToBuffer(glm::vec3{v0, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 0});
-./Chunk.cxx:108:        appendToBuffer(glm::vec3{v1, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 1});
+./Chunk.cxx:82:        appendToBuffer(glm::vec3{v3, vz}, glm::vec2{voxel.faceTexture[TOP], 3});
+./Chunk.cxx:83:        appendToBuffer(glm::vec3{v0, vz}, glm::vec2{voxel.faceTexture[TOP], 0});
+./Chunk.cxx:84:    };
+./Chunk.cxx:85:
+./Chunk.cxx:86:    auto cullBottomVoxels = [&appendToBuffer](Voxel &voxel, int &x, int &y, int &z, Layer *layers)
+./Chunk.cxx:87:    {
+./Chunk.cxx:88:        if (voxel.blockType == AIR)
+./Chunk.cxx:89:            return;
+./Chunk.cxx:90:
+./Chunk.cxx:91:        if (z > 0)
+./Chunk.cxx:92:        {
+./Chunk.cxx:93:            Voxel &topVoxel = layers[z - 1].voxels[x][y];
+./Chunk.cxx:94:            if (topVoxel.blockType != AIR)
+./Chunk.cxx:95:                return;
+./Chunk.cxx:96:        }
+./Chunk.cxx:97:
+./Chunk.cxx:98:        glm::vec3 &vPos = voxel.transform.position;
+./Chunk.cxx:99:
+./Chunk.cxx:100:        float vz = vPos.z - 1.f;
+./Chunk.cxx:101:        glm::vec2 v0{vPos.x, vPos.y};
+./Chunk.cxx:102:        glm::vec2 v1{vPos.x, vPos.y + 1.0f};
+./Chunk.cxx:103:        glm::vec2 v2{vPos.x + 1.0f, vPos.y + 1.0f};
+./Chunk.cxx:104:        glm::vec2 v3{vPos.x + 1.0f, vPos.y};
+./Chunk.cxx:105:
+./Chunk.cxx:106:        appendToBuffer(glm::vec3{v0, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 0});
+./Chunk.cxx:107:        appendToBuffer(glm::vec3{v1, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 1});
+./Chunk.cxx:108:        appendToBuffer(glm::vec3{v2, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 2});
 ./Chunk.cxx:109:        appendToBuffer(glm::vec3{v2, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 2});
-./Chunk.cxx:110:        appendToBuffer(glm::vec3{v2, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 2});
-./Chunk.cxx:111:        appendToBuffer(glm::vec3{v3, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 3});
-./Chunk.cxx:112:        appendToBuffer(glm::vec3{v0, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 0});
-./Chunk.cxx:113:    };
-./Chunk.cxx:114:
-./Chunk.cxx:115:    auto cullLeftVoxels = [&appendToBuffer, this](Voxel &voxel, int &x, int &y, int &z, Layer *layers)
-./Chunk.cxx:116:    {
-./Chunk.cxx:117:        if (voxel.blockType == AIR)
-./Chunk.cxx:118:            return;
-./Chunk.cxx:119:
-./Chunk.cxx:120:        auto voxelLeft = gop.getVoxelGlobal({x, y + 1, z});
-./Chunk.cxx:121:        if (voxelLeft && voxelLeft->blockType != AIR)
-./Chunk.cxx:122:        {
-./Chunk.cxx:123:            return;
-./Chunk.cxx:124:        }
-./Chunk.cxx:125:
-./Chunk.cxx:126:        glm::vec3 &vPos = voxel.transform.position;
-./Chunk.cxx:127:
-./Chunk.cxx:128:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z - 1}, glm::vec2{voxel.faceTexture[LEFT], 0});
-./Chunk.cxx:129:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y + 1, vPos.z - 1}, glm::vec2{voxel.faceTexture[LEFT], 1});
-./Chunk.cxx:130:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y + 1, vPos.z}, glm::vec2{voxel.faceTexture[LEFT], 2});
+./Chunk.cxx:110:        appendToBuffer(glm::vec3{v3, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 3});
+./Chunk.cxx:111:        appendToBuffer(glm::vec3{v0, vz}, glm::vec2{voxel.faceTexture[BOTTOM], 0});
+./Chunk.cxx:112:    };
+./Chunk.cxx:113:
+./Chunk.cxx:114:    auto cullLeftVoxels = [&appendToBuffer, this](Voxel &voxel, int &x, int &y, int &z, Layer *layers)
+./Chunk.cxx:115:    {
+./Chunk.cxx:116:        if (voxel.blockType == AIR)
+./Chunk.cxx:117:            return;
+./Chunk.cxx:118:
+./Chunk.cxx:119:        auto voxelLeft = gop.getVoxelGlobal({chunkOffset[0] * 16 + x,
+./Chunk.cxx:120:                                      chunkOffset[1] * 16 + y + 1,
+./Chunk.cxx:121:                                      z});
+./Chunk.cxx:122:        if (voxelLeft && voxelLeft->blockType != AIR)
+./Chunk.cxx:123:        {
+./Chunk.cxx:124:            return;
+./Chunk.cxx:125:        }
+./Chunk.cxx:126:
+./Chunk.cxx:127:        glm::vec3 &vPos = voxel.transform.position;
+./Chunk.cxx:128:
+./Chunk.cxx:129:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z - 1}, glm::vec2{voxel.faceTexture[LEFT], 0});
+./Chunk.cxx:130:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y + 1, vPos.z - 1}, glm::vec2{voxel.faceTexture[LEFT], 1});
 ./Chunk.cxx:131:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y + 1, vPos.z}, glm::vec2{voxel.faceTexture[LEFT], 2});
-./Chunk.cxx:132:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z}, glm::vec2{voxel.faceTexture[LEFT], 3});
-./Chunk.cxx:133:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z - 1}, glm::vec2{voxel.faceTexture[LEFT], 0});
-./Chunk.cxx:134:    };
-./Chunk.cxx:135:
-./Chunk.cxx:136:    auto cullRightVoxels = [&appendToBuffer, this](Voxel &voxel, int &x, int &y, int &z, Layer *layers)
-./Chunk.cxx:137:    {
-./Chunk.cxx:138:        if (voxel.blockType == AIR)
-./Chunk.cxx:139:            return;
-./Chunk.cxx:140:
-./Chunk.cxx:141:        auto voxelRight = gop.getVoxelGlobal({x, y - 1, z});
-./Chunk.cxx:142:        if (voxelRight && voxelRight->blockType != AIR)
-./Chunk.cxx:143:        {
-./Chunk.cxx:144:            return;
-./Chunk.cxx:145:        }
-./Chunk.cxx:146:
-./Chunk.cxx:147:        glm::vec3 &vPos = voxel.transform.position;
-./Chunk.cxx:148:
-./Chunk.cxx:149:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z - 1}, glm::vec2{voxel.faceTexture[RIGHT], 0});
-./Chunk.cxx:150:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y, vPos.z - 1}, glm::vec2{voxel.faceTexture[RIGHT], 1});
-./Chunk.cxx:151:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y, vPos.z}, glm::vec2{voxel.faceTexture[RIGHT], 2});
-./Chunk.cxx:152:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y, vPos.z}, glm::vec2{voxel.faceTexture[RIGHT], 2});
-./Chunk.cxx:153:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z}, glm::vec2{voxel.faceTexture[RIGHT], 3});
-./Chunk.cxx:154:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z - 1}, glm::vec2{voxel.faceTexture[RIGHT], 0});
-./Chunk.cxx:155:    };
-./Chunk.cxx:156:
-./Chunk.cxx:157:    auto cullFrontVoxels = [&appendToBuffer, this](Voxel &voxel, int &x, int &y, int &z, Layer *layers)
-./Chunk.cxx:158:    {
-./Chunk.cxx:159:        if (voxel.blockType == AIR)
-./Chunk.cxx:160:            return;
-./Chunk.cxx:161:
-./Chunk.cxx:162:        auto voxelFront = gop.getVoxelGlobal({x - 1, y, z});
-./Chunk.cxx:163:        if (voxelFront && voxelFront->blockType != AIR)
-./Chunk.cxx:164:        {
-./Chunk.cxx:165:            return;
-./Chunk.cxx:166:        }
-./Chunk.cxx:167:
-./Chunk.cxx:168:        glm::vec3 &vPos = voxel.transform.position;
-./Chunk.cxx:169:
-./Chunk.cxx:170:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z - 1}, glm::vec2{voxel.faceTexture[FRONT], 0});
-./Chunk.cxx:171:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z - 1}, glm::vec2{voxel.faceTexture[FRONT], 1});
-./Chunk.cxx:172:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z}, glm::vec2{voxel.faceTexture[FRONT], 2});
-./Chunk.cxx:173:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z}, glm::vec2{voxel.faceTexture[FRONT], 2});
-./Chunk.cxx:174:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z}, glm::vec2{voxel.faceTexture[FRONT], 3});
+./Chunk.cxx:132:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y + 1, vPos.z}, glm::vec2{voxel.faceTexture[LEFT], 2});
+./Chunk.cxx:133:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z}, glm::vec2{voxel.faceTexture[LEFT], 3});
+./Chunk.cxx:134:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z - 1}, glm::vec2{voxel.faceTexture[LEFT], 0});
+./Chunk.cxx:135:    };
+./Chunk.cxx:136:
+./Chunk.cxx:137:    auto cullRightVoxels = [&appendToBuffer, this](Voxel &voxel, int &x, int &y, int &z, Layer *layers)
+./Chunk.cxx:138:    {
+./Chunk.cxx:139:        if (voxel.blockType == AIR)
+./Chunk.cxx:140:            return;
+./Chunk.cxx:141:
+./Chunk.cxx:142:        auto voxelRight = gop.getVoxelGlobal({chunkOffset[0] * 16 + x,
+./Chunk.cxx:143:                                       chunkOffset[1] * 16 + y - 1,
+./Chunk.cxx:144:                                       z});
+./Chunk.cxx:145:        if (voxelRight && voxelRight->blockType != AIR)
+./Chunk.cxx:146:        {
+./Chunk.cxx:147:            return;
+./Chunk.cxx:148:        }
+./Chunk.cxx:149:
+./Chunk.cxx:150:        glm::vec3 &vPos = voxel.transform.position;
+./Chunk.cxx:151:
+./Chunk.cxx:152:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z - 1}, glm::vec2{voxel.faceTexture[RIGHT], 0});
+./Chunk.cxx:153:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y, vPos.z - 1}, glm::vec2{voxel.faceTexture[RIGHT], 1});
+./Chunk.cxx:154:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y, vPos.z}, glm::vec2{voxel.faceTexture[RIGHT], 2});
+./Chunk.cxx:155:        appendToBuffer(glm::vec3{vPos.x + 1, vPos.y, vPos.z}, glm::vec2{voxel.faceTexture[RIGHT], 2});
+./Chunk.cxx:156:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z}, glm::vec2{voxel.faceTexture[RIGHT], 3});
+./Chunk.cxx:157:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z - 1}, glm::vec2{voxel.faceTexture[RIGHT], 0});
+./Chunk.cxx:158:    };
+./Chunk.cxx:159:
+./Chunk.cxx:160:    auto cullFrontVoxels = [&appendToBuffer, this](Voxel &voxel, int &x, int &y, int &z, Layer *layers)
+./Chunk.cxx:161:    {
+./Chunk.cxx:162:        if (voxel.blockType == AIR)
+./Chunk.cxx:163:            return;
+./Chunk.cxx:164:
+./Chunk.cxx:165:        auto voxelFront = gop.getVoxelGlobal({chunkOffset[0] * 16 + x - 1,
+./Chunk.cxx:166:                                              chunkOffset[1] * 16 + y,
+./Chunk.cxx:167:                                              z});
+./Chunk.cxx:168:        if (voxelFront && voxelFront->blockType != AIR)
+./Chunk.cxx:169:        {
+./Chunk.cxx:170:            return;
+./Chunk.cxx:171:        }
+./Chunk.cxx:172:
+./Chunk.cxx:173:        glm::vec3 &vPos = voxel.transform.position;
+./Chunk.cxx:174:
 ./Chunk.cxx:175:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z - 1}, glm::vec2{voxel.faceTexture[FRONT], 0});
-./Chunk.cxx:176:    };
-./Chunk.cxx:177:
-./Chunk.cxx:178:    for (int z = 0; z < 256; ++z)
-./Chunk.cxx:179:    {
-./Chunk.cxx:180:        for (int x = 0; x < 16; ++x)
-./Chunk.cxx:181:        {
-./Chunk.cxx:182:            for (int y = 0; y < 16; ++y)
-./Chunk.cxx:183:            {
-./Chunk.cxx:184:                Voxel &voxel = layers[z].voxels[x][y];
-./Chunk.cxx:185:                cullTopVoxels(voxel, x, y, z, layers);
-./Chunk.cxx:186:                cullBottomVoxels(voxel, x, y, z, layers);
-./Chunk.cxx:187:                cullLeftVoxels(voxel, x, y, z, layers);
-./Chunk.cxx:188:                cullRightVoxels(voxel, x, y, z, layers);
-./Chunk.cxx:189:                cullFrontVoxels(voxel, x, y, z, layers);
-./Chunk.cxx:190:            }
-./Chunk.cxx:191:        }
-./Chunk.cxx:192:    }
-./Chunk.cxx:193:
-./Chunk.cxx:194:    chunkMesh.loadVertices(vertices);
-./Chunk.cxx:195:    chunkMesh.loadIndices(indices);
-./Chunk.cxx:196:
-./Chunk.cxx:197:    chunkMesh.createVertexBuffer();
-./Chunk.cxx:198:    chunkMesh.createIndexBuffer();
-./Chunk.cxx:199:}
-./Chunk.cxx:200:
-./Chunk.cxx:201:void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1)
-./Chunk.cxx:202:{
-./Chunk.cxx:203:    chunkMesh.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
+./Chunk.cxx:176:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z - 1}, glm::vec2{voxel.faceTexture[FRONT], 1});
+./Chunk.cxx:177:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z}, glm::vec2{voxel.faceTexture[FRONT], 2});
+./Chunk.cxx:178:        appendToBuffer(glm::vec3{vPos.x, vPos.y + 1, vPos.z}, glm::vec2{voxel.faceTexture[FRONT], 2});
+./Chunk.cxx:179:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z}, glm::vec2{voxel.faceTexture[FRONT], 3});
+./Chunk.cxx:180:        appendToBuffer(glm::vec3{vPos.x, vPos.y, vPos.z - 1}, glm::vec2{voxel.faceTexture[FRONT], 0});
+./Chunk.cxx:181:    };
+./Chunk.cxx:182:
+./Chunk.cxx:183:    for (int z = 0; z < 256; ++z)
+./Chunk.cxx:184:    {
+./Chunk.cxx:185:        for (int x = 0; x < 16; ++x)
+./Chunk.cxx:186:        {
+./Chunk.cxx:187:            for (int y = 0; y < 16; ++y)
+./Chunk.cxx:188:            {
+./Chunk.cxx:189:                Voxel &voxel = layers[z].voxels[x][y];
+./Chunk.cxx:190:                cullTopVoxels(voxel, x, y, z, layers);
+./Chunk.cxx:191:                cullBottomVoxels(voxel, x, y, z, layers);
+./Chunk.cxx:192:                cullLeftVoxels(voxel, x, y, z, layers);
+./Chunk.cxx:193:                cullRightVoxels(voxel, x, y, z, layers);
+./Chunk.cxx:194:                cullFrontVoxels(voxel, x, y, z, layers);
+./Chunk.cxx:195:            }
+./Chunk.cxx:196:        }
+./Chunk.cxx:197:    }
+./Chunk.cxx:198:
+./Chunk.cxx:199:    chunkMesh.loadVertices(vertices);
+./Chunk.cxx:200:    chunkMesh.loadIndices(indices);
+./Chunk.cxx:201:
+./Chunk.cxx:202:    chunkMesh.createVertexBuffer();
+./Chunk.cxx:203:    chunkMesh.createIndexBuffer();
 ./Chunk.cxx:204:}
 ./Chunk.cxx:205:
-./Chunk.cxx:206:void Chunk::cleanup()
+./Chunk.cxx:206:void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1)
 ./Chunk.cxx:207:{
-./Chunk.cxx:208:    chunkMesh.cleanup();
+./Chunk.cxx:208:    chunkMesh.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, c1);
 ./Chunk.cxx:209:}
 ./Chunk.cxx:210:
-./Chunk.cxx:211:Chunk::~Chunk()
+./Chunk.cxx:211:void Chunk::cleanup()
 ./Chunk.cxx:212:{
-./Chunk.cxx:213:}
-./Chunk.cxx:214:
-./Chunk.cxx:215:// std::vector<Vertex> vertices;
-./Chunk.cxx:216://     std::vector<uint32_t> indices;
-./Chunk.cxx:217:
-./Chunk.cxx:218://     auto appendToBuffer = [&vertices, &indices](glm::vec3 pos, glm::vec2 uv)
-./Chunk.cxx:219://     {
-./Chunk.cxx:220://         static int c = 0;
-./Chunk.cxx:221:
-./Chunk.cxx:222://         vertices.emplace_back(Vertex{pos,
-./Chunk.cxx:223://                                      glm::vec3(1.f),
-./Chunk.cxx:224://                                      uv,
-./Chunk.cxx:225://                                      1.f});
-./Chunk.cxx:226://         indices.push_back(c);
-./Chunk.cxx:227:
-./Chunk.cxx:228://         c++;
-./Chunk.cxx:229://     };
-./Chunk.cxx:230:
-./Chunk.cxx:231://     for (int z = 0; z < 256; ++z)
-./Chunk.cxx:232://     {
-./Chunk.cxx:233://         auto &layer = layers[z];
-./Chunk.cxx:234:
-./Chunk.cxx:235://         for (int x = 0; x < 16; ++x)
-./Chunk.cxx:236://         {
-./Chunk.cxx:237://             auto &column = layer.voxels[x];
-./Chunk.cxx:238:
-./Chunk.cxx:239://             for (int y = 0; y < 16; ++y)
-./Chunk.cxx:240://             {
-./Chunk.cxx:241://                 Voxel &voxel = column[y];
-./Chunk.cxx:242://                 glm::vec3 &vPos = voxel.transform.position;
-./Chunk.cxx:243://                 // topface
-./Chunk.cxx:244://                 // bottom right[0] = (x      , y)
-./Chunk.cxx:245://                 // bottom left[1]  = (x      , y + .5f)
-./Chunk.cxx:246://                 // top left[2]     = (x + .5f, y + .5f)
-./Chunk.cxx:247://                 // top right[3]    = (x + .5f, y)
-./Chunk.cxx:248://                 // indices  0 1 2 2 3 0
-./Chunk.cxx:249://                 float z = vPos.z;
-./Chunk.cxx:250://                 glm::vec2 v0{vPos.x, vPos.y};
-./Chunk.cxx:251://                 glm::vec2 v1{vPos.x, vPos.y + .5f};
-./Chunk.cxx:252://                 glm::vec2 v2{vPos.x + .5f, vPos.y + .5f};
-./Chunk.cxx:253://                 glm::vec2 v3{vPos.x + .5f, vPos.y};
-./Chunk.cxx:254:
-./Chunk.cxx:255://                 appendToBuffer(glm::vec3{v0, z}, glm::vec2{voxel.faceTexture[TOP], 0});
-./Chunk.cxx:256://                 appendToBuffer(glm::vec3{v1, z}, glm::vec2{voxel.faceTexture[TOP], 1});
-./Chunk.cxx:257://                 appendToBuffer(glm::vec3{v2, z}, glm::vec2{voxel.faceTexture[TOP], 2});
-./Chunk.cxx:258://                 appendToBuffer(glm::vec3{v3, z}, glm::vec2{voxel.faceTexture[TOP], 3});
-./Chunk.cxx:259://             }
-./Chunk.cxx:260://         }
-./Chunk.cxx:261://     }
-./Chunk.cxx:262:
-./Chunk.cxx:263://     chunkMesh.loadVertices(vertices);
-./Chunk.cxx:264://     chunkMesh.loadIndices(indices);
-./Chunk.cxx:265:
-./Chunk.cxx:266://     chunkMesh.createVertexBuffer();
-./Chunk.cxx:267://     chunkMesh.createIndexBuffer();
+./Chunk.cxx:213:    chunkMesh.cleanup();
+./Chunk.cxx:214:}
+./Chunk.cxx:215:
+./Chunk.cxx:216:Chunk::~Chunk()
+./Chunk.cxx:217:{
+./Chunk.cxx:218:}
+./Chunk.cxx:219:
+./Chunk.cxx:220:// std::vector<Vertex> vertices;
+./Chunk.cxx:221://     std::vector<uint32_t> indices;
+./Chunk.cxx:222:
+./Chunk.cxx:223://     auto appendToBuffer = [&vertices, &indices](glm::vec3 pos, glm::vec2 uv)
+./Chunk.cxx:224://     {
+./Chunk.cxx:225://         static int c = 0;
+./Chunk.cxx:226:
+./Chunk.cxx:227://         vertices.emplace_back(Vertex{pos,
+./Chunk.cxx:228://                                      glm::vec3(1.f),
+./Chunk.cxx:229://                                      uv,
+./Chunk.cxx:230://                                      1.f});
+./Chunk.cxx:231://         indices.push_back(c);
+./Chunk.cxx:232:
+./Chunk.cxx:233://         c++;
+./Chunk.cxx:234://     };
+./Chunk.cxx:235:
+./Chunk.cxx:236://     for (int z = 0; z < 256; ++z)
+./Chunk.cxx:237://     {
+./Chunk.cxx:238://         auto &layer = layers[z];
+./Chunk.cxx:239:
+./Chunk.cxx:240://         for (int x = 0; x < 16; ++x)
+./Chunk.cxx:241://         {
+./Chunk.cxx:242://             auto &column = layer.voxels[x];
+./Chunk.cxx:243:
+./Chunk.cxx:244://             for (int y = 0; y < 16; ++y)
+./Chunk.cxx:245://             {
+./Chunk.cxx:246://                 Voxel &voxel = column[y];
+./Chunk.cxx:247://                 glm::vec3 &vPos = voxel.transform.position;
+./Chunk.cxx:248://                 // topface
+./Chunk.cxx:249://                 // bottom right[0] = (x      , y)
+./Chunk.cxx:250://                 // bottom left[1]  = (x      , y + .5f)
+./Chunk.cxx:251://                 // top left[2]     = (x + .5f, y + .5f)
+./Chunk.cxx:252://                 // top right[3]    = (x + .5f, y)
+./Chunk.cxx:253://                 // indices  0 1 2 2 3 0
+./Chunk.cxx:254://                 float z = vPos.z;
+./Chunk.cxx:255://                 glm::vec2 v0{vPos.x, vPos.y};
+./Chunk.cxx:256://                 glm::vec2 v1{vPos.x, vPos.y + .5f};
+./Chunk.cxx:257://                 glm::vec2 v2{vPos.x + .5f, vPos.y + .5f};
+./Chunk.cxx:258://                 glm::vec2 v3{vPos.x + .5f, vPos.y};
+./Chunk.cxx:259:
+./Chunk.cxx:260://                 appendToBuffer(glm::vec3{v0, z}, glm::vec2{voxel.faceTexture[TOP], 0});
+./Chunk.cxx:261://                 appendToBuffer(glm::vec3{v1, z}, glm::vec2{voxel.faceTexture[TOP], 1});
+./Chunk.cxx:262://                 appendToBuffer(glm::vec3{v2, z}, glm::vec2{voxel.faceTexture[TOP], 2});
+./Chunk.cxx:263://                 appendToBuffer(glm::vec3{v3, z}, glm::vec2{voxel.faceTexture[TOP], 3});
+./Chunk.cxx:264://             }
+./Chunk.cxx:265://         }
+./Chunk.cxx:266://     }
+./Chunk.cxx:267:
+./Chunk.cxx:268://     chunkMesh.loadVertices(vertices);
+./Chunk.cxx:269://     chunkMesh.loadIndices(indices);
+./Chunk.cxx:270:
+./Chunk.cxx:271://     chunkMesh.createVertexBuffer();
+./Chunk.cxx:272://     chunkMesh.createIndexBuffer();

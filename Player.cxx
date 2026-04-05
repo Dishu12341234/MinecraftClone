@@ -117,7 +117,7 @@ void Player::handlePlayerMovement(UniformBufferObject &UBO,
                                   VkExtent2D &swapChainExtent,
                                   Event &event)
 {
-    constexpr float GRAVITY     = 0.00025f;
+    constexpr float GRAVITY     = 0.000f;
     constexpr float JUMP_FORCE  = 0.10f;
     constexpr float TERMINAL_VEL = -0.30f;
 

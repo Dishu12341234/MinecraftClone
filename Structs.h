@@ -20,6 +20,16 @@ namespace BlockFaces
     inline int corruptFaceTexture[6] = {19, 19, 19, 19, 19, 19};
 };
 
+enum FaceDirection
+{
+    TOP = 0,
+    BOTTOM,
+    LEFT,
+    RIGHT,
+    FRONT,
+    BACK
+};
+
 // UBO
 struct UniformBufferObject
 {
@@ -52,7 +62,6 @@ enum BlockType
     STONE,
     BEDROCK,
 };
-
 
 struct PlayerState
 {
@@ -99,8 +108,6 @@ struct AxisAlignedBoundingBox
     glm::vec3 min;
     glm::vec3 max;
 };
-
-
 
 struct UnloadedVoxelPayload
 {

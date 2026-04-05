@@ -1,6 +1,6 @@
 #include "Voxel.h"
 
-Voxel::Voxel(VulkanContext &vkContext, BlockType blockType) : vkContext{vkContext}
+Voxel::Voxel(BlockType blockType)
 {
     this->blockType = blockType;
 }

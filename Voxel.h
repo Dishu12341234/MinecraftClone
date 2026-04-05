@@ -7,7 +7,6 @@
 class Voxel
 {
 private:
-    VulkanContext &vkContext;
     Transform transform;
     int blockType = AIR;
     //top , bottom, left, right, front, back
@@ -19,7 +18,7 @@ private:
     friend class Player;
     friend class Camera;
 public:
-    Voxel(VulkanContext &vkContext, BlockType blockType = AIR);
+    Voxel(BlockType blockType = AIR);
 
     void setType(BlockType blockType);
     void setPosition(glm::vec3 position);

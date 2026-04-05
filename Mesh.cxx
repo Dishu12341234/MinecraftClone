@@ -123,7 +123,7 @@ void Mesh::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, 
     VkBuffer vertexBuffers[] = {vertexBuffer};
     VkDeviceSize offsets[] = {0};
 
-    [[likely]] if (vertices.size() == 0 || indices.size() == 0)
+    [[unlikely]] if (vertices.size() == 0 || indices.size() == 0)
         return;
 
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
@@ -135,6 +135,9 @@ void Mesh::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, 
                             0, 1, &(descriptorSets[currentFrame]), 0, nullptr);
 
     vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+
+    std::cout << "Drawing\n";
+
 }
 
 void Mesh::cleanup()
