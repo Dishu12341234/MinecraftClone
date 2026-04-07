@@ -8,12 +8,11 @@
 #include <iostream>
 #include <limits>
 #include <algorithm>
-#include <unordered_map>
-#include <chrono>
 #include <map>
 #include <execinfo.h>
 #include <cxxabi.h>
 #include <set>
+#include <vulkan/vulkan_core.h>
 
 static void printStackTrace()
 {
@@ -740,7 +739,7 @@ VkPresentModeKHR HelloTriangleApplication::chooseSwapPresentMode(const std::vect
             }
         }
 
-        return VK_PRESENT_MODE_MAILBOX_KHR;
+        return VK_PRESENT_MODE_FIFO_KHR;
     }
 }
 

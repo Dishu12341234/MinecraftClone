@@ -14,8 +14,8 @@ private:
 
     PlayerState playerState;
     uint healtPoints = 20; 
-    int LBOC = 0;//last block when the player was in contact with the ground
-    int LZOC = 0;//last z when the player was not in contact with the ground
+    // int LBOC = 0;//last block when the player was in contact with the ground
+    // int LZOC = 0;//last z when the player was not in contact with the ground
 
     int dz = 0;
 
@@ -25,10 +25,12 @@ private:
     AxisAlignedBoundingBox aabb;
     GameObjectPool &gameObjectPool;
 
-    friend class HelloTriangleApplication;
-    void resolveAxis(float amount, int axis, float &vertVel);
-    bool checkAABBOverlap(const AxisAlignedBoundingBox &a, const AxisAlignedBoundingBox &b);
+    //fornt -> NORTH ,left -> WEST
+    CardinalFacing facingDirection{};
 
+    Transform selfTransform;
+
+    friend class HelloTriangleApplication;
 public:
     float jump(float t)
     {

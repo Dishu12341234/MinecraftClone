@@ -9,25 +9,6 @@ struct KeyInfo
     int key;
     int action;
 };
-
-class KeyTracker {
-    std::unordered_map<int, bool> prevState;
-public:
-    // Call this once per frame AFTER all key checks
-    void update(auto* event, std::initializer_list<int> keys) {
-        for (int key : keys)
-            prevState[key] = event->getKeyPressed(key);
-    }
-
-    bool justPressed(auto* event, int key) {
-        return event->getKeyPressed(key) && !prevState[key];
-    }
-
-    bool justReleased(auto* event, int key) {
-        return !event->getKeyPressed(key) && prevState[key];
-    }
-};
-
 class Event
 {
 private:
@@ -54,5 +35,26 @@ public:
     const unsigned long long getTimeElapsed_ms();
     ~Event();
 };
+
+
+
+class KeyTracker {
+    std::unordered_map<int, bool> prevState;
+public:
+    // Call this once per frame AFTER all key checks
+    void update(Event* event, std::initializer_list<int> keys) {
+        for (int key : keys)
+            prevState[key] = event->getKeyPressed(key);
+    }
+
+    bool justPressed(Event* event, int key) {
+        return event->getKeyPressed(key) && !prevState[key];
+    }
+
+    bool justReleased(Event* event, int key) {
+        return !event->getKeyPressed(key) && prevState[key];
+    }
+};
+
 
 #endif

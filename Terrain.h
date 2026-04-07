@@ -13,8 +13,8 @@ private:
     GameObjectPool &gop;
     bool ready{false};
     friend class HelloTriangleApplication;
-    
-    public:
+
+public:
     Terrain(VulkanContext &vkContext, GameObjectPool &gop);
     static inline uint64_t chunkKey(int x, int y)
     {
@@ -23,6 +23,7 @@ private:
     Chunk *getChunkByKey(uint64_t key);
 
     void generateChunks();
+    void updateChunkMesh(int cmx, int cmy);
 
     void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
 

@@ -65,11 +65,14 @@ void Camera::updateUBO(UniformBufferObject &UBO,
     float sensitivity = 0.1f;
 
     yaw += dx * sensitivity;
-    std::cout << "yaw: " << yaw << std::endl;
-    std::cout << "dx * sensitivity: " << dx * sensitivity << std::endl;
+    if (yaw >= 360)
+        yaw -= 360;
+
+    if(yaw < 0)
+        yaw += 360;
+    // std::cout << "yaw: " << yaw << std::endl;
     pitch += dy * sensitivity;
     pitch = glm::clamp(pitch, -89.9f, 89.9f);
-    std::cout << yaw << std::endl;
 
     // Z-up forward vector from yaw/pitch
     forwardCR.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -82,12 +85,9 @@ void Camera::updateUBO(UniformBufferObject &UBO,
     forwardFlat = glm::normalize(glm::vec3(forwardCR.x, forwardCR.y, 0.0f));
     right = glm::normalize(glm::cross(worldUp, forwardFlat));
 
-    
+    speed = .001f;
 
-    speed = 10.81f * dt;
-
-    v_velocity = 30.81 * dt;
-
+    v_velocity = 30;
 
     UBO.view = glm::lookAt(cameraPos, cameraPos + forwardCR, worldUp);
 
@@ -100,7 +100,6 @@ void Camera::updateUBO(UniformBufferObject &UBO,
     UBO.proj[1][1] *= -1;
 }
 
-// Camera space: 1 unit = 10 voxels
 glm::vec3 Camera::gePositionInWorldCoords() { return cameraPos; }
 
 void Camera::cleanup()
@@ -112,7 +111,7 @@ void Camera::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout
 {
 
     cameraRay.transform.position = gePositionInWorldCoords();
-    cameraRay.transform.position.z -= .1f;
+    // cameraRay.transform.position.z -= .1f;
     cameraRay.direction = forwardCR;
     cameraRay.draw(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
 }
@@ -125,7 +124,7 @@ void Camera::drawUI(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayo
 
     float aspect = (float)swapChainExtent.width / (float)swapChainExtent.height;
     c1.data = glm::ortho(-aspect, aspect, -1.0f, 1.0f, 0.0f, 1.0f);
-    
+
     ui.render(commandBuffer, pipelineLayout, graphicsPipeline,
               descriptorSets, currentFrame, swapChainExtent, c1);
 }

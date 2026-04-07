@@ -30,6 +30,14 @@ enum FaceDirection
     BACK
 };
 
+enum CardinalFacing
+{
+    EAST=0,
+    WEST,
+    NORTH,
+    SOUTH
+};
+
 // UBO
 struct UniformBufferObject
 {

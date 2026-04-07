@@ -41,6 +41,8 @@ private:
 public:
     Chunk(int cmx, int cmy, VulkanContext &vkContext, GameObjectPool &gop);
     void generateMesh();
+    void createBuffers();
+    void updateChunkMesh();
 
     void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 &c1);
 

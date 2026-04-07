@@ -39,11 +39,6 @@ void Event::cursorPositionCallback(GLFWwindow *window, double xpos, double ypos)
 
     event->mouseX = xpos;
     event->mouseY = ypos;
-
-    std::cout << "--------" << std::endl;
-    std::cout << xpos << std::endl;
-    std::cout << ypos << std::endl;
-    std::cout << "--------" << std::endl;
 }
 // TODO cursor callback this wont work
 void Event::eventLoop()
@@ -60,7 +55,6 @@ void Event::eventLoop()
 
     dt = std::chrono::duration<double, std::milli>(delta).count();
     // std::cout << "Δt = " << dt << std::endl;
-    std::cout << "FPS: " << 1000.f / dt << std::endl;
     glfwPollEvents();
 }
 

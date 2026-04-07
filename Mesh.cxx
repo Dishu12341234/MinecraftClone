@@ -136,7 +136,6 @@ void Mesh::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, 
 
     vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
-    std::cout << "Drawing\n";
 
 }
 

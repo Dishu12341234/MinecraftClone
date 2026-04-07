@@ -1,96 +1,12 @@
 #include "Player.h"
 #include "Camera.h"
+#include "Structs.h"
 #include <cmath>
 #include <iostream>
 
-bool Player::checkAABBOverlap(const AxisAlignedBoundingBox &a,
-                              const AxisAlignedBoundingBox &b)
-{
-    return (a.max.x > b.min.x && a.min.x < b.max.x) &&
-           (a.max.y > b.min.y && a.min.y < b.max.y) &&
-           (a.max.z > b.min.z && a.min.z < b.max.z);
-}
-void Player::resolveAxis(float amount, int axis, float &vertVel)
-{
-    auto rebuildAABB = [&]()
-    {
-        aabb.max = camera->cameraPos + glm::vec3(0.2f, 0.2f, 0.0f);
-        aabb.min = camera->cameraPos - glm::vec3(0.2f, 0.2f, 1.8f);
-    };
-
-    if (axis == 0)
-        camera->cameraPos.x += amount;
-    else if (axis == 1)
-        camera->cameraPos.y += amount;
-    else
-        camera->cameraPos.z += amount;
-
-    rebuildAABB();
-
-    int minX = (int)floor(aabb.min.x), maxX = (int)floor(aabb.max.x);
-    int minY = (int)floor(aabb.min.y), maxY = (int)floor(aabb.max.y);
-    int minZ = (int)floor(aabb.min.z), maxZ = (int)floor(aabb.max.z);
-
-    for (int x = minX; x <= maxX; ++x)
-        for (int y = minY; y <= maxY; ++y)
-            for (int z = minZ; z <= maxZ; ++z)
-            {
-                Voxel *voxel = gameObjectPool.getVoxelGlobal({x, y, z});
-                if (!voxel || voxel->getBlockType() == AIR)
-                    continue;
-                if (!checkAABBOverlap(aabb, voxel->aabb))
-                    continue;
-
-                // Calculate penetration depth on this axis
-                // If it's far larger than this frame's movement, player is deeply
-                // embedded — skip to avoid flinging them out
-                float penetration = 0.0f;
-                if (axis == 0)
-                    penetration = (amount > 0) ? (aabb.max.x - voxel->aabb.min.x) : (voxel->aabb.max.x - aabb.min.x);
-                if (axis == 1)
-                    penetration = (amount > 0) ? (aabb.max.y - voxel->aabb.min.y) : (voxel->aabb.max.y - aabb.min.y);
-                if (axis == 2)
-                    penetration = (amount > 0) ? (aabb.max.z - voxel->aabb.min.z) : (voxel->aabb.max.z - aabb.min.z);
-
-                if (penetration > fabs(amount) + 0.5f)
-                    continue; // deeply embedded, skip
-
-                switch (axis)
-                {
-                case 0:
-                    camera->cameraPos.x = (amount > 0)
-                                              ? voxel->aabb.min.x - 0.2f
-                                              : voxel->aabb.max.x + 0.2f;
-                    break;
-
-                case 1:
-                    camera->cameraPos.y = (amount > 0)
-                                              ? voxel->aabb.min.y - 0.2f
-                                              : voxel->aabb.max.y + 0.2f;
-                    break;
-
-                case 2:
-                    if (amount < 0)
-                    {
-                        camera->cameraPos.z = voxel->aabb.max.z + 1.8f;
-                        vertVel = 0.0f;
-                        playerState.onGround = true;
-                    }
-                    else
-                    {
-                        camera->cameraPos.z = voxel->aabb.min.z - 0.01f;
-                        vertVel = 0.0f;
-                    }
-                    break;
-                }
-
-                rebuildAABB();
-            }
-}
 Player::Player(VulkanContext &vkContext, GameObjectPool &gop)
-    : gameObjectPool{gop}
-{
-    this->camera = std::move(Camera(vkContext, gop));
+    : gameObjectPool{gop} {
+  this->camera = std::move(Camera(vkContext, gop));
 }
 
 Player::~Player() {}
@@ -100,85 +16,124 @@ void Player::drawUIIfPossible(VkCommandBuffer commandBuffer,
                               VkPipeline graphicsPipeline,
                               std::vector<VkDescriptorSet> &descriptorSets,
                               uint32_t currentFrame,
-                              VkExtent2D &swapChainExtent,
-                              UI &ui)
-{
-    if (playerState.inInventory)
-        camera->drawUIAt(commandBuffer, pipelineLayout, graphicsPipeline,
-                         descriptorSets, currentFrame, swapChainExtent, ui, 0);
+                              VkExtent2D &swapChainExtent, UI &ui) {
+  if (playerState.inInventory)
     camera->drawUIAt(commandBuffer, pipelineLayout, graphicsPipeline,
-                     descriptorSets, currentFrame, swapChainExtent, ui, 1);
+                     descriptorSets, currentFrame, swapChainExtent, ui, 0);
 
-    camera->drawUIAt(commandBuffer, pipelineLayout, graphicsPipeline,
-                     descriptorSets, currentFrame, swapChainExtent, ui, 2);
+  camera->drawUIAt(commandBuffer, pipelineLayout, graphicsPipeline,
+                   descriptorSets, currentFrame, swapChainExtent, ui, 1);
+  camera->drawUIAt(commandBuffer, pipelineLayout, graphicsPipeline,
+                   descriptorSets, currentFrame, swapChainExtent, ui, 2);
 }
 
 void Player::handlePlayerMovement(UniformBufferObject &UBO,
-                                  VkExtent2D &swapChainExtent,
-                                  Event &event)
-{
-    constexpr float GRAVITY     = 0.000f;
-    constexpr float JUMP_FORCE  = 0.10f;
-    constexpr float TERMINAL_VEL = -0.30f;
+                                  VkExtent2D &swapChainExtent, Event &event) {
+  static float deltaJZ = 0;
 
-    static float vertVel    = 0.0f;
-    static float fallStartZ = 0.0f;  // z when the player left the ground
+  double dx = 0, dy = 0, dz = 0;
 
-    camera->updateUBO(UBO, swapChainExtent, event);
+  selfTransform.position   = camera->cameraPos;
+  selfTransform.position.z += .2f;
 
-    glm::vec3 delta(0.0f);
+  aabb.max = selfTransform.position + glm::vec3(.25f, .25f,  .0f);
+  aabb.min = selfTransform.position - glm::vec3(.25f, .25f, 1.8f);
 
-    if (event.getKeyPressed(GLFW_KEY_W))
-        delta += camera->forwardFlat * camera->speed;
-    if (event.getKeyPressed(GLFW_KEY_S))
-        delta -= camera->forwardFlat * camera->speed;
-    if (event.getKeyPressed(GLFW_KEY_A))
-        delta += camera->right * camera->speed;
-    if (event.getKeyPressed(GLFW_KEY_D))
-        delta -= camera->right * camera->speed;
+  AxisAlignedBoundingBox groundAABB{};
+  groundAABB.max = selfTransform.position + glm::vec3(.1f, .1f,  .0f);
+  groundAABB.min = selfTransform.position - glm::vec3(.1f, .1f, 1.8f);
 
-    if (playerState.onGround && event.getKeyPressed(GLFW_KEY_SPACE))
-        vertVel = JUMP_FORCE;
+  // ── ground check ────────────────────────────────────────────────────────
+  playerState.onGround = false;
+  {
+    int feet = floor(groundAABB.min.z);
+    int head = floor(groundAABB.max.z);
+    int minX = floor(groundAABB.min.x);
+    int maxX = floor(groundAABB.max.x);
+    int minY = floor(groundAABB.min.y);
+    int maxY = floor(groundAABB.max.y);
 
-    if (!playerState.onGround)
-        vertVel -= GRAVITY * float(event.dt);
-    if (vertVel < TERMINAL_VEL)
-        vertVel = TERMINAL_VEL;
-
-    delta.z += vertVel;
-    if (std::abs(vertVel) < 0.00001f)
-        vertVel = 0.0f;
-
-    resolveAxis(delta.x, 0, vertVel);
-    resolveAxis(delta.y, 1, vertVel);
-
-    bool wasOnGround = playerState.onGround;
-    playerState.onGround = false;
-    resolveAxis(delta.z, 2, vertVel);
-
-    // ── Leaving the ground: snapshot the takeoff height ──────────────────────
-    if (wasOnGround && !playerState.onGround)
-    {
-        fallStartZ = camera->gePositionInWorldCoords().z;
-    }
-
-    // ── Landing: compare takeoff height to landing height ────────────────────
-    if (!wasOnGround && playerState.onGround)
-    {
-        float landingZ = camera->gePositionInWorldCoords().z;
-        float fell     = fallStartZ - landingZ;   // positive = fell downward
-
-        if (fell > 3.0f)
-        {
-            int damage = static_cast<int>(fell - 3.0f);
-            healtPoints = std::fmax(0, int(healtPoints) - damage);
-            std::cerr << "Fell " << fell << " units, damage: "
-                      << damage << "  HP: " << healtPoints << "\n";
+    for (int k = feet; k <= head && !playerState.onGround; k++)
+      for (int i = minX; i <= maxX && !playerState.onGround; i++)
+        for (int j = minY; j <= maxY; j++) {
+          auto v = gameObjectPool.getVoxelGlobal({i, j, k});
+          if (v && v->blockType != AIR) { playerState.onGround = true; break; }
         }
-    }
+  }
+
+  // ── gravity / jump ───────────────────────────────────────────────────────
+  if (!playerState.onGround && !playerState.inJump)
+    dz -= .01f * event.dt;
+  else if (playerState.inJump) {
+    deltaJZ -= .003f * event.dt;
+    dz      += .01f  * event.dt * deltaJZ;
+  }
+
+  // ── desired XY movement ──────────────────────────────────────────────────
+  float x_fac    = cos(glm::radians(camera->yaw));
+  float y_fac    = sin(glm::radians(camera->yaw));
+  float x_fac_dx = x_fac * camera->speed * event.dt;
+  float y_fac_dy = y_fac * camera->speed * event.dt;
+
+  // Update facing direction for animation / other systems — NOT used for collision
+  bool xDominant = std::abs(x_fac) > std::abs(y_fac);
+  if      ( x_fac > 0 &&  xDominant) facingDirection = NORTH;
+  else if ( x_fac < 0 &&  xDominant) facingDirection = SOUTH;
+  else if ( y_fac > 0 && !xDominant) facingDirection = WEST;
+  else if ( y_fac < 0 && !xDominant) facingDirection = EAST;
+
+  bool KEY_W = event.getKeyPressed(GLFW_KEY_W);
+  bool KEY_S = event.getKeyPressed(GLFW_KEY_S);
+  bool KEY_A = event.getKeyPressed(GLFW_KEY_A);
+  bool KEY_D = event.getKeyPressed(GLFW_KEY_D);
+
+  if (KEY_W) { dx += x_fac_dx; dy += y_fac_dy; }
+  if (KEY_S) { dx -= x_fac_dx; dy -= y_fac_dy; }
+  if (KEY_A) { dx += -y_fac_dy; dy +=  x_fac_dx; }
+  if (KEY_D) { dx -= -y_fac_dy; dy -=  x_fac_dx; }
+
+  // ── axis-separated collision ─────────────────────────────────────────────
+  // Helper: does the AABB at `testPos` overlap any solid voxel?
+  auto overlaps = [&](glm::vec3 testPos) -> bool {
+    glm::vec3 tMax = testPos + glm::vec3(.25f, .25f,  .0f);
+    glm::vec3 tMin = testPos - glm::vec3(.25f, .25f, 1.8f);
+
+    int x0 = floor(tMin.x), x1 = floor(tMax.x);
+    int y0 = floor(tMin.y), y1 = floor(tMax.y);
+    int z0 = floor(tMin.z) + 1, z1 = floor(tMax.z);
+
+    for (int k = z0; k <= z1; k++)
+      for (int i = x0; i <= x1; i++)
+        for (int j = y0; j <= y1; j++) {
+          auto v = gameObjectPool.getVoxelGlobal({i, j, k});
+          if (v && v->blockType != AIR) return true;
+        }
+    return false;
+  };
+
+  glm::vec3 base = selfTransform.position;
+
+  if (overlaps(base + glm::vec3(dx, 0, 0)))
+    dx = 0;
+
+  if (overlaps(base + glm::vec3(0, dy, 0)))
+    dy = 0;
+
+  if (overlaps(base + glm::vec3(0, 0, dz)))
+    dz = 0;
+
+  if (playerState.onGround) [[likely]]
+    playerState.inJump = false;
+
+  if (event.getKeyPressed(GLFW_KEY_SPACE) && playerState.onGround) {
+    deltaJZ = 1.f;
+    playerState.inJump = true;
+  }
+
+  camera->cameraPos.x += dx;
+  camera->cameraPos.y += dy;
+  camera->cameraPos.z += dz;
+  camera->updateUBO(UBO, swapChainExtent, event);
 }
 
-const int Player::getHealthPoints()
-{
-    return healtPoints;
-}
+const int Player::getHealthPoints() { return healtPoints; }

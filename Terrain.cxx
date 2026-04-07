@@ -11,8 +11,20 @@ void Terrain::generateChunks()
     chunks.emplace(chunkKey(0, 0), c);
 
     c->generateMesh();
+    c->createBuffers();
 
     ready = true;
+}
+
+void Terrain::updateChunkMesh(int cmx, int cmy)
+{
+    auto it = chunks.find(chunkKey(cmx, cmy));
+    if(it == chunks.end())
+        return;
+
+    auto chunk = it->second;
+
+    chunk->updateChunkMesh();
 }
 
 void Terrain::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent)

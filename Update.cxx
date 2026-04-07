@@ -63,12 +63,11 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 {
     
     std::cout << "Coordinates: " << "(x,y,z) (x" << playerS1->camera->gePositionInWorldCoords().x << ", " << playerS1->camera->gePositionInWorldCoords().y << ", " << playerS1->camera->gePositionInWorldCoords().z << ")" << std::endl;
-    std::cout << "CMs: " << "(x,y) (x" << (int(playerS1->camera->gePositionInWorldCoords().x) / 16) << ", " << (int(playerS1->camera->gePositionInWorldCoords().y) / 16) << ")" << std::endl;
     
     Heart->setInstanceCount(playerS1->getHealthPoints());
+
     HitInfo hitInfo{};
     playerS1->camera->getHitInfo(hitInfo);
-
     if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
         if (hitInfo.hitVoxel)
         {
@@ -80,16 +79,16 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 
             hitInfo.hitVoxel->setType(AIR);
 
-            // terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, hitInfo.blockCoords.y >> 4);
+            terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, hitInfo.blockCoords.y >> 4);
 
-            // if ((hitInfo.blockCoords.x & 15) == 0)
-            //     terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) - 1, hitInfo.blockCoords.y >> 4);
-            // if ((hitInfo.blockCoords.x & 15) == 15)
-            //     terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) + 1, hitInfo.blockCoords.y >> 4);
-            // if ((hitInfo.blockCoords.y & 15) == 0)
-            //     terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) - 1);
-            // if ((hitInfo.blockCoords.y & 15) == 15)
-            //     terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) + 1);
+            if ((hitInfo.blockCoords.x & 15) == 0)
+                terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) - 1, hitInfo.blockCoords.y >> 4);
+            if ((hitInfo.blockCoords.x & 15) == 15)
+                terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) + 1, hitInfo.blockCoords.y >> 4);
+            if ((hitInfo.blockCoords.y & 15) == 0)
+                terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) - 1);
+            if ((hitInfo.blockCoords.y & 15) == 15)
+                terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) + 1);
         _no:;
         }
 
