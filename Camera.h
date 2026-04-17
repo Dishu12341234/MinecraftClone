@@ -32,6 +32,8 @@ private:
 
     Ray cameraRay;
 
+    bool locked = false;
+
     friend class Player;
 
 public:

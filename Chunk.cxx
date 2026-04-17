@@ -5,8 +5,8 @@
 
 Chunk::Chunk(int cmx, int cmy, VulkanContext &vkContext, GameObjectPool &gop) : vkContext{vkContext}, chunkMesh{vkContext}, gop{gop}
 {
-    chunkOffset[0] = cmx;
-    chunkOffset[1] = cmy;
+    chunkOffset[0] = cmx * 16;
+    chunkOffset[1] = cmy * 16;
 
     const float baseX = cmx;
     const float baseY = cmy;

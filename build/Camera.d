@@ -1,7 +1,8 @@
 build/Camera.o: Camera.cxx Camera.h GraphicsPipeline.h PassInfo.hpp \
  Structs.h Event.h GameObjectPool.h Voxel.h Ray.h RayMesher.h \
  RayGraphicsPipeline.h UI.h UIComponents.h UIRenderPipeline.h \
- HelloTriangleApplication.hpp Textures.hpp include/stb-master/stb_image.h
+ HelloTriangleApplication.hpp Textures.hpp include/stb-master/stb_image.h \
+ uiTexture.h Inventory.h
 Camera.h:
 GraphicsPipeline.h:
 PassInfo.hpp:
@@ -18,3 +19,5 @@ UIRenderPipeline.h:
 HelloTriangleApplication.hpp:
 Textures.hpp:
 include/stb-master/stb_image.h:
+uiTexture.h:
+Inventory.h:

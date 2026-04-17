@@ -133,6 +133,9 @@ void Player::handlePlayerMovement(UniformBufferObject &UBO,
   camera->cameraPos.x += dx;
   camera->cameraPos.y += dy;
   camera->cameraPos.z += dz;
+
+  camera->locked = playerState.inInventory;
+
   camera->updateUBO(UBO, swapChainExtent, event);
 }
 

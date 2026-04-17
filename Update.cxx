@@ -1,114 +1,124 @@
-#include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 
-#include "HelloTriangleApplication.hpp"
 #include "Camera.h"
 #include "Event.h"
-#include <memory>
+#include "HelloTriangleApplication.hpp"
+#include "Inventory.h"
 #include "Player.h"
 #include "Ray.h"
-#include "UI.h"
 #include "Terrain.h"
+#include "UI.h"
+#include <memory>
 #include <random>
 
-void HelloTriangleApplication::initGameObjects()
-{
-    static VulkanContext context{};
-    context.device = device;
-    context.physicalDevice = physicalDevice;
-    context.graphicsQueue = graphicsQueue;
-    context.instance = instance;
-    context.presentQueue = presentQueue;
-    context.commandPool = commandPool;
+void HelloTriangleApplication::initGameObjects() {
+  static VulkanContext context{};
+  context.device = device;
+  context.physicalDevice = physicalDevice;
+  context.graphicsQueue = graphicsQueue;
+  context.instance = instance;
+  context.presentQueue = presentQueue;
+  context.commandPool = commandPool;
 
-    playerS1 = std::make_unique<Player>(context, gameObjectPool);
+  playerS1 = std::make_unique<Player>(context, gameObjectPool);
 
-    terrain = std::make_unique<Terrain>(context, gameObjectPool);
-    ui = std::move(UI(context));
+  terrain = std::make_unique<Terrain>(context, gameObjectPool);
+  ui = std::move(UI(context));
 
-    srand(87844057);
+  srand(87844057);
 
-    float aspect = float(swapChainExtent.width) / float(swapChainExtent.height);
+  float aspect = float(swapChainExtent.width) / float(swapChainExtent.height);
 
-    // UI Components
-    
-    Inventory = std::make_unique<UIComponents>(context);
-    Crosshair = std::make_unique<UIComponents>(context);
-    Heart = std::make_unique<UIComponents>(context);
+  // UI Components
 
+  inventory = std::make_unique<Inventory>(context);
+  Crosshair = std::make_unique<UIComponents>(context);
+  Heart = std::make_unique<UIComponents>(context);
 
-    Inventory->initUIComponent(glm::vec2(0.f), glm::vec2(2.5f, 1.5f));
+  Crosshair->setTextureIDX(1);
+  Crosshair->initUIComponent(glm::vec2(0, 0), glm::vec2(.05f, .05f));
 
-    
-    Crosshair->setTextureIDX(1);
-    Crosshair->initUIComponent(glm::vec2(0, 0), glm::vec2(.05f, .05f));
+  Heart->setTextureIDX(2);
+  Heart->initUIComponent(glm::vec2(-1 * aspect + .04f, 1 - .04f),
+                         glm::vec2(.08f, .08f));
+  Heart->setInstanceCount(0);
 
-    
-    Heart->setTextureIDX(2);
-    Heart->initUIComponent(glm::vec2(-1 * aspect + .04f, 1 - .04f), glm::vec2(.08f, .08f));
-    Heart->setInstanceCount(0);
+  ui->attachComponent(inventory->getComponentPointer());
+  ui->attachComponent(Crosshair.get());
+  ui->attachComponent(Heart.get());
 
-    ui->attachComponent(Inventory.get());
-    ui->attachComponent(Crosshair.get());
-    ui->attachComponent(Heart.get());
-    
-    gameObjectPool.terrain = terrain.get();
-    terrain->generateChunks();
+  gameObjectPool.terrain = terrain.get();
+  terrain->generateChunks();
 }
 
 KeyTracker keys;
 
-void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
-{
-    
-    std::cout << "Coordinates: " << "(x,y,z) (x" << playerS1->camera->gePositionInWorldCoords().x << ", " << playerS1->camera->gePositionInWorldCoords().y << ", " << playerS1->camera->gePositionInWorldCoords().z << ")" << std::endl;
-    
-    Heart->setInstanceCount(playerS1->getHealthPoints());
+void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage) {
 
-    HitInfo hitInfo{};
-    playerS1->camera->getHitInfo(hitInfo);
-    if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
-        if (hitInfo.hitVoxel)
-        {
-            std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType() << std::endl;
-            std::cout << "Hit block coordinates: (x,y,z) (" << hitInfo.blockCoords.x << ", " << hitInfo.blockCoords.y << ", " << hitInfo.blockCoords.z << ")" << std::endl;
+  std::cout << "Coordinates: " << "(x,y,z) (x"
+            << playerS1->camera->gePositionInWorldCoords().x << ", "
+            << playerS1->camera->gePositionInWorldCoords().y << ", "
+            << playerS1->camera->gePositionInWorldCoords().z << ")"
+            << std::endl;
 
-            if (hitInfo.hitVoxel->getBlockType() == BEDROCK)
-                goto _no;
+  Heart->setInstanceCount(playerS1->getHealthPoints());
 
-            hitInfo.hitVoxel->setType(AIR);
+  HitInfo hitInfo{};
+  playerS1->camera->getHitInfo(hitInfo);
+  if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !playerS1->playerState.inInventory)
+    if (hitInfo.hitVoxel) {
+      std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType()
+                << std::endl;
+      std::cout << "Hit block coordinates: (x,y,z) (" << hitInfo.blockCoords.x
+                << ", " << hitInfo.blockCoords.y << ", "
+                << hitInfo.blockCoords.z << ")" << std::endl;
 
-            terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, hitInfo.blockCoords.y >> 4);
+      if (hitInfo.hitVoxel->getBlockType() == BEDROCK)
+        goto _no;
 
-            if ((hitInfo.blockCoords.x & 15) == 0)
-                terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) - 1, hitInfo.blockCoords.y >> 4);
-            if ((hitInfo.blockCoords.x & 15) == 15)
-                terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) + 1, hitInfo.blockCoords.y >> 4);
-            if ((hitInfo.blockCoords.y & 15) == 0)
-                terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) - 1);
-            if ((hitInfo.blockCoords.y & 15) == 15)
-                terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4, (hitInfo.blockCoords.y >> 4) + 1);
-        _no:;
-        }
+      hitInfo.hitVoxel->setType(AIR);
 
-    if (keys.justPressed(event.get(), GLFW_KEY_ESCAPE))
-    {
-        if (!playerS1->playerState.inInventory)
-            glfwSetWindowShouldClose(_window, GLFW_TRUE);
-        else
-            playerS1->playerState.inInventory = false;
+      terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4,
+                               hitInfo.blockCoords.y >> 4);
+
+      if ((hitInfo.blockCoords.x & 15) == 0)
+        terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) - 1,
+                                 hitInfo.blockCoords.y >> 4);
+      if ((hitInfo.blockCoords.x & 15) == 15)
+        terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) + 1,
+                                 hitInfo.blockCoords.y >> 4);
+      if ((hitInfo.blockCoords.y & 15) == 0)
+        terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4,
+                                 (hitInfo.blockCoords.y >> 4) - 1);
+      if ((hitInfo.blockCoords.y & 15) == 15)
+        terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4,
+                                 (hitInfo.blockCoords.y >> 4) + 1);
+    _no:;
     }
 
-    if (keys.justPressed(event.get(), GLFW_KEY_E))
-    {
-        playerS1->playerState.inInventory = !playerS1->playerState.inInventory;
-    }
+  if (keys.justPressed(event.get(), GLFW_KEY_ESCAPE)) {
+    if (!playerS1->playerState.inInventory)
+      glfwSetWindowShouldClose(_window, GLFW_TRUE);
+    else
+      playerS1->playerState.inInventory = false;
+  }
 
-    UniformBufferObject ubo{};
+  if (keys.justPressed(event.get(), GLFW_KEY_E)) {
+    playerS1->playerState.inInventory = !playerS1->playerState.inInventory;
+  }
 
-    playerS1->handlePlayerMovement(ubo, swapChainExtent, *event.get());
+  if (playerS1->playerState.inInventory) {
+    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+  } else {
+    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  }
 
-    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
-    keys.update(event.get(), {GLFW_KEY_E, GLFW_KEY_ESCAPE});
+  UniformBufferObject ubo{};
+
+  playerS1->handlePlayerMovement(ubo, swapChainExtent, *event.get());
+
+  memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+  keys.update(event.get(), {GLFW_KEY_E, GLFW_KEY_ESCAPE});
 }

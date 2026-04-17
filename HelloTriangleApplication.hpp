@@ -10,6 +10,8 @@
 #include "RayGraphicsPipeline.h"
 #include "UIRenderPipeline.h"
 #include "GameObjectPool.h"
+#include "uiTexture.h"
+#include "Inventory.h"
 #include "UI.h"
 
 class Event;
@@ -30,12 +32,12 @@ private:
 
     std::unique_ptr<Terrain> terrain;
     std::optional<UI> ui;
-    std::unique_ptr<UIComponents> Inventory;
+    std::unique_ptr<Inventory> inventory;
     std::unique_ptr<UIComponents> Crosshair;
     std::unique_ptr<UIComponents> Heart;
 
     std::array<std::string, NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES> uiTexturePaths;
-    std::vector<u_Texture> uiTextures;
+    std::vector<UITexture> uiTextures;
 
     VkInstance instance;
     GLFWwindow *_window;

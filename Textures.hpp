@@ -17,6 +17,8 @@ private:
     VkRenderPass renderPass;
     VkCommandPool commandPool;
 
+    friend class UITexture;
+
 public:
     uint32_t mipLevels;
     VkImage textureImage;
@@ -45,7 +47,7 @@ public:
 
     void createTextureView();
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
-    void createTextureSampler();
+    virtual void createTextureSampler();
 
     void destroy();
 };

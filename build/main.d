@@ -1,7 +1,7 @@
 build/main.o: main.cxx HelloTriangleApplication.hpp Textures.hpp \
  PassInfo.hpp include/stb-master/stb_image.h GraphicsPipeline.h Structs.h \
- RayGraphicsPipeline.h UIRenderPipeline.h GameObjectPool.h Voxel.h UI.h \
- UIComponents.h
+ RayGraphicsPipeline.h UIRenderPipeline.h GameObjectPool.h Voxel.h \
+ uiTexture.h Inventory.h UIComponents.h UI.h
 HelloTriangleApplication.hpp:
 Textures.hpp:
 PassInfo.hpp:
@@ -12,5 +12,7 @@ RayGraphicsPipeline.h:
 UIRenderPipeline.h:
 GameObjectPool.h:
 Voxel.h:
-UI.h:
+uiTexture.h:
+Inventory.h:
 UIComponents.h:
+UI.h:
