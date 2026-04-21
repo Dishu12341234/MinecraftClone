@@ -1,2 +1,5 @@
 CompileFlags:
-  Add: [-I/usr/include, -I/usr/include/vulkan]
+  Add: [-I/usr/include, -I/usr/include/vulkan, -std=c++23]
+
+Completion:
+  HeaderInsertion: Never

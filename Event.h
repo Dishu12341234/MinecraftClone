@@ -1,6 +1,6 @@
 #ifndef EVENT_H
 #define EVENT_H
-#include "GLFW/glfw3.h"
+#include "PassInfo.hpp"
 #include <array>
 #include <unordered_map>
 

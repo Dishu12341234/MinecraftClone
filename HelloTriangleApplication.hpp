@@ -1,4 +1,5 @@
 #pragma once
+#include "Structs.h"
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vector>
@@ -11,11 +12,10 @@
 #include "UIRenderPipeline.h"
 #include "GameObjectPool.h"
 #include "uiTexture.h"
-#include "Inventory.h"
 #include "UI.h"
 
 class Event;
-
+class Inventory;
 #define NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES 16
 
 class Ray;
@@ -41,6 +41,8 @@ private:
 
     VkInstance instance;
     GLFWwindow *_window;
+
+    ApplicationDimensions dimensions;
 
     GameObjectPool gameObjectPool;
     std::unique_ptr<Event> event;

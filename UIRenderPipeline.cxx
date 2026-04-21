@@ -135,7 +135,7 @@ void UIRenderPipeline::createGraphicsPipeline()
 
     VkPushConstantRange pushConstatn;
     pushConstatn.offset = 0;
-    pushConstatn.size = sizeof(PushConstantC1);
+    pushConstatn.size = sizeof(PushConstantC2);
     pushConstatn.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
     pipelineLayoutInfo.pPushConstantRanges = &pushConstatn;

@@ -27,9 +27,8 @@ private:
     void attachComponent(UIComponents *component);
 
     void render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
-              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 c1);
-    void renderAt(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
-              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC1 c1, uint32_t idx);
+              std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent, PushConstantC2 c2);
+    void renderAt(DrawInfo &drawInfo, PushConstantC2 c2, uint32_t idx);
     void cleanup();
     ~UI();
 };

@@ -15,7 +15,8 @@ layout(location = 1) out flat uint outTextureIndex;
 
 
 layout(push_constant) uniform PushConstants {
-    mat4 data;
+    mat4 model;
+    mat4 proj;
 } pc;
 
 
@@ -25,10 +26,10 @@ void main() {
     int yOffset = gl_InstanceIndex / 10;
 
     gl_PointSize = 4.f;
-    mat4 model = mat4(1.0);
-    model[3] = vec4(xOffset / 10.f, - yOffset / 10.f, 0.0, 1.0);
+    mat4 model = pc.model;
+    model[3] += vec4(xOffset / 10.f, - yOffset / 10.f, 0.0, 0.0);
     //            proj
-    gl_Position = pc.data * model * vec4(inPosition, 1.0);
+    gl_Position = pc.proj * model * vec4(inPosition, 1.0);
     uvOut = uvIn;
     outTextureIndex = inTextureIndex;
 }

@@ -1,8 +1,8 @@
-build/UIComponents.o: UIComponents.cxx UIComponents.h Structs.h \
- PassInfo.hpp UIRenderPipeline.h GraphicsPipeline.h utils.h
+build/UIComponents.o: UIComponents.cxx UIComponents.h PassInfo.hpp \
+ Structs.h UIRenderPipeline.h GraphicsPipeline.h utils.h
 UIComponents.h:
-Structs.h:
 PassInfo.hpp:
+Structs.h:
 UIRenderPipeline.h:
 GraphicsPipeline.h:
 utils.h:

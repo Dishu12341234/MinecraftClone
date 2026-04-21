@@ -1,7 +1,6 @@
 #include "Camera.h"
 #include "HelloTriangleApplication.hpp"
 #include "Ray.h"
-#include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/quaternion.hpp"
 #include <iostream>
 
@@ -76,7 +75,7 @@ void Camera::updateUBO(UniformBufferObject &UBO, VkExtent2D &swapChainExtent,
   forwardFlat = glm::normalize(glm::vec3(forwardCR.x, forwardCR.y, 0.0f));
   right = glm::normalize(glm::cross(worldUp, forwardFlat));
 
-  speed = .001f;
+  speed = .0054f;
 
   v_velocity = 30;
 
@@ -93,46 +92,37 @@ glm::vec3 Camera::gePositionInWorldCoords() { return cameraPos; }
 
 void Camera::cleanup() { cameraRay.cleanup(); }
 
-void Camera::draw(VkCommandBuffer commandBuffer,
-                  VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
-                  std::vector<VkDescriptorSet> &descriptorSets,
-                  uint32_t currentFrame, VkExtent2D &swapChainExtent) {
+void Camera::draw(DrawInfo &drawInfo) {
 
   cameraRay.transform.position = gePositionInWorldCoords();
   // cameraRay.transform.position.z -= .1f;
   cameraRay.direction = forwardCR;
-  cameraRay.draw(commandBuffer, pipelineLayout, graphicsPipeline,
-                 descriptorSets, currentFrame, swapChainExtent);
+  cameraRay.draw(drawInfo);
 }
 
-void Camera::drawUI(VkCommandBuffer commandBuffer,
-                    VkPipelineLayout pipelineLayout,
-                    VkPipeline graphicsPipeline,
-                    std::vector<VkDescriptorSet> &descriptorSets,
-                    uint32_t currentFrame, VkExtent2D &swapChainExtent,
-                    UI &ui) {
-  PushConstantC1 c1;
+[[deprecated("use the ...At function to indivisually draw elements")]] void
+Camera::drawUI(DrawInfo &drawInfo, UI &ui) {
+  // PushConstantC1 c1;
 
-  float aspect = (float)swapChainExtent.width / (float)swapChainExtent.height;
-  c1.data = glm::ortho(-aspect, aspect, -1.0f, 1.0f, 0.0f, 1.0f);
+  // float aspect = (float)swapChainExtent.width /
+  // (float)swapChainExtent.height; c1.data = glm::ortho(-aspect, aspect,
+  // -1.0f, 1.0f, 0.0f, 1.0f);
 
-  ui.render(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets,
-            currentFrame, swapChainExtent, c1);
+  // ui.render(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets,
+  //           currentFrame, swapChainExtent, c1);
 }
 
-void Camera::drawUIAt(VkCommandBuffer commandBuffer,
-                      VkPipelineLayout pipelineLayout,
-                      VkPipeline graphicsPipeline,
-                      std::vector<VkDescriptorSet> &descriptorSets,
-                      uint32_t currentFrame, VkExtent2D &swapChainExtent,
-                      UI &ui, uint32_t idx) {
-  PushConstantC1 c1;
+void Camera::drawUIAt(DrawInfo &drawInfo, UI &ui, uint32_t idx,
+                      glm::vec3 offset) {
+  PushConstantC2 c2;
 
-  float aspect = (float)swapChainExtent.width / (float)swapChainExtent.height;
-  c1.data = glm::ortho(-aspect, aspect, -1.0f, 1.0f, 0.0f, 1.0f);
+  float aspect = (float)drawInfo.swapChainExtent.width /
+                 (float)drawInfo.swapChainExtent.height;
+  c2.proj = glm::ortho(-aspect, aspect, -1.0f, 1.0f, 0.0f, 1.0f);
+  c2.model = glm::mat4(1.f);
+  c2.model = glm::translate(c2.model, offset);
 
-  ui.renderAt(commandBuffer, pipelineLayout, graphicsPipeline, descriptorSets,
-              currentFrame, swapChainExtent, c1, idx);
+  ui.renderAt(drawInfo, c2, idx);
 }
 
 Camera::~Camera() {}

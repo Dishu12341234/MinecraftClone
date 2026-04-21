@@ -1,18 +1,17 @@
-build/intiVK2.o: intiVK2.cxx HelloTriangleApplication.hpp Textures.hpp \
- PassInfo.hpp include/stb-master/stb_image.h GraphicsPipeline.h Structs.h \
- RayGraphicsPipeline.h UIRenderPipeline.h GameObjectPool.h Voxel.h \
- uiTexture.h Inventory.h UIComponents.h UI.h
+build/intiVK2.o: intiVK2.cxx HelloTriangleApplication.hpp Structs.h \
+ Textures.hpp PassInfo.hpp include/stb-master/stb_image.h \
+ GraphicsPipeline.h RayGraphicsPipeline.h UIRenderPipeline.h \
+ GameObjectPool.h Voxel.h uiTexture.h UI.h UIComponents.h
 HelloTriangleApplication.hpp:
+Structs.h:
 Textures.hpp:
 PassInfo.hpp:
 include/stb-master/stb_image.h:
 GraphicsPipeline.h:
-Structs.h:
 RayGraphicsPipeline.h:
 UIRenderPipeline.h:
 GameObjectPool.h:
 Voxel.h:
 uiTexture.h:
-Inventory.h:
-UIComponents.h:
 UI.h:
+UIComponents.h:

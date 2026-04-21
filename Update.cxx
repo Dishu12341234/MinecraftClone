@@ -33,7 +33,9 @@ void HelloTriangleApplication::initGameObjects() {
 
   // UI Components
 
-  inventory = std::make_unique<Inventory>(context);
+  inventory = std::make_unique<Inventory>(context, dimensions);
+  inventory->attachPlayerState(&playerS1->playerState);
+
   Crosshair = std::make_unique<UIComponents>(context);
   Heart = std::make_unique<UIComponents>(context);
 
@@ -45,7 +47,8 @@ void HelloTriangleApplication::initGameObjects() {
                          glm::vec2(.08f, .08f));
   Heart->setInstanceCount(0);
 
-  ui->attachComponent(inventory->getComponentPointer());
+  ui->attachComponent(inventory->getInventoryComponentPointer());
+  ui->attachComponent(inventory->getFilterComponentPointer());
   ui->attachComponent(Crosshair.get());
   ui->attachComponent(Heart.get());
 
@@ -67,7 +70,8 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage) {
 
   HitInfo hitInfo{};
   playerS1->camera->getHitInfo(hitInfo);
-  if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !playerS1->playerState.inInventory)
+  if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) &&
+      !playerS1->playerState.inInventory)
     if (hitInfo.hitVoxel) {
       std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType()
                 << std::endl;
@@ -118,7 +122,7 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage) {
   UniformBufferObject ubo{};
 
   playerS1->handlePlayerMovement(ubo, swapChainExtent, *event.get());
-
+  inventory->inventoryUpdates(*event);
   memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
   keys.update(event.get(), {GLFW_KEY_E, GLFW_KEY_ESCAPE});
 }

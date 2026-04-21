@@ -1,4 +1,5 @@
 #include "HelloTriangleApplication.hpp"
+#include "Inventory.h"
 #include <iostream>
 #include "Camera.h"
 #include "Ray.h"
@@ -110,14 +111,19 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+    DrawInfo drawInfoRay{commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent};
+    DrawInfo drawInfoUI{commandBuffer, uiRenderPipeline.pipelineLayout, uiRenderPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent};
+
+
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.graphicsPipeline);
     terrain->draw(commandBuffer, graphicsPipeline.pipelineLayout, graphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
 
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
-    playerS1->camera->draw(commandBuffer, rayGraphicsPipeline.pipelineLayout, rayGraphicsPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent);
+    // vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rayGraphicsPipeline.graphicsPipeline);
+    // playerS1->camera->draw(drawInfoRay);
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, uiRenderPipeline.graphicsPipeline);
-    playerS1->drawUIIfPossible(commandBuffer, uiRenderPipeline.pipelineLayout, uiRenderPipeline.graphicsPipeline, descriptorSets, currentFrame, swapChainExtent, ui.value());
+    inventory->drawUI(drawInfoUI, playerS1->camera, ui.value());
+    playerS1->drawUIIfPossible(drawInfoUI, ui.value());
 
     vkCmdEndRenderPass(commandBuffer);
 

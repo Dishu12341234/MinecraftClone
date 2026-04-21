@@ -1,5 +1,5 @@
 #pragma once
-#include <optional>
+#include <memory.h>
 #include "Camera.h"
 
 class Camera;
@@ -8,12 +8,12 @@ class Camera;
 class Player
 {
 private:
-    std::optional<Camera> camera;
+    std::shared_ptr<Camera> camera;
     friend class HelloTriangleApplication;
     bool jumpTriggered = false;
 
     PlayerState playerState;
-    uint healtPoints = 20; 
+    uint healtPoints = 20;
     // int LBOC = 0;//last block when the player was in contact with the ground
     // int LZOC = 0;//last z when the player was not in contact with the ground
 
@@ -38,9 +38,7 @@ public:
     }
 
     Player(VulkanContext &vkContext, GameObjectPool &gop);
-    void drawUIIfPossible(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
-                          VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets,
-                          uint32_t currentFrame, VkExtent2D &swapChainExtent, UI &ui);
+    void drawUIIfPossible(DrawInfo &drawInfo, UI &ui);
 
     void handlePlayerMovement(UniformBufferObject &UBO,
                               VkExtent2D &swapChainExtent,

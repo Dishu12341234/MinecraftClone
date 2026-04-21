@@ -10,6 +10,7 @@
 #include <set>
 #include <stdexcept>
 #include <vector>
+#include <numeric>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
@@ -116,6 +117,16 @@ void HelloTriangleApplication::initWindow() {
   glfwGetFramebufferSize(_window, &fbw, &fbh);
   std::cout << "Window: " << w << "x" << h << "\n";
   std::cout << "Framebuffer: " << fbw << "x" << fbh << "\n";
+
+  dimensions.fbw = fbw;
+  dimensions.fbh = fbh;
+  dimensions.ww = w;
+  dimensions.wh = h;
+
+  int g = std::gcd(dimensions.fbw, dimensions.fbh);
+
+  dimensions.cw = dimensions.fbw / g;
+  dimensions.ch = dimensions.fbh / g;
 }
 
 void HelloTriangleApplication::initVulkan() {
@@ -183,6 +194,7 @@ void HelloTriangleApplication::initVulkan() {
   uiTexturePaths[0] = "/home/divyansh/MinecraftClone/textures/inventory.png";
   uiTexturePaths[1] = "/home/divyansh/MinecraftClone/textures/crosshair.png";
   uiTexturePaths[2] = "/home/divyansh/MinecraftClone/textures/heart.png";
+  uiTexturePaths[3] = "/home/divyansh/MinecraftClone/textures/inventorySelectionMask.png";
   for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++) {
     texturePassInfo.texturePath = uiTexturePaths[i];
     uiTextures.at(i).passTextureCreateInfo(texturePassInfo);
@@ -257,6 +269,8 @@ void HelloTriangleApplication::createInstance() {
   createInfo.enabledExtensionCount =
       static_cast<uint32_t>(requiredExtensions.size());
   createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+
+
 
   VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
   if (enableValidationLayers) {
@@ -739,7 +753,7 @@ VkPresentModeKHR HelloTriangleApplication::chooseSwapPresentMode(
       }
     }
 
-    return VK_PRESENT_MODE_FIFO_RELAXED_KHR; // TODO;;
+    return VK_PRESENT_MODE_MAILBOX_KHR; // TODO;;
   }
 }
 

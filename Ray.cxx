@@ -19,9 +19,7 @@ Ray::Ray(VulkanContext &vkContext, GameObjectPool &gameObjectPool) : vkContext{v
     rayMesher.createIndexBuffer();
 }
 
-void Ray::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
-               VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets,
-               uint32_t currentFrame, VkExtent2D &swapChainExtent)
+void Ray::draw(DrawInfo &drawInfo)
 {
     PushConstantC1 c1{};
 
@@ -34,8 +32,8 @@ void Ray::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
 
     // c1.data = glm::translate(glm::mat4(1.f), transform.position);
 
-    rayMesher.draw(commandBuffer, pipelineLayout, graphicsPipeline,
-                   descriptorSets, currentFrame, swapChainExtent, c1);
+    rayMesher.draw(drawInfo.commandBuffer, drawInfo.pipelineLayout, drawInfo.graphicsPipeline,
+                   drawInfo.descriptorSets, drawInfo.currentFrame, drawInfo.swapChainExtent, c1);
 }
 
 void Ray::cleanup()

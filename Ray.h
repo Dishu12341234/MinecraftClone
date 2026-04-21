@@ -14,13 +14,12 @@ private:
     RayMesher rayMesher;
     glm::vec3 direction = glm::vec3(1.f, 0.f, 0.f);
 
-    
+
 
     friend class Camera;
 public:
     Ray(VulkanContext &vkContext, GameObjectPool &gameObjectPool);
-    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
-                 std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
+    void draw(DrawInfo &drawInfo);
 
     void cleanup();
     ~Ray();
