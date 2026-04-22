@@ -1,5 +1,5 @@
-#include "HelloTriangleApplication.hpp"
 #include "Event.h"
+#include "HelloTriangleApplication.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <cxxabi.h>
@@ -7,10 +7,10 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <numeric>
 #include <set>
 #include <stdexcept>
 #include <vector>
-#include <numeric>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
@@ -93,19 +93,16 @@ void HelloTriangleApplication::initWindow() {
 
   _window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 
-  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-  const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+  GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+  const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
   int monX, monY;
   glfwGetMonitorPos(monitor, &monX, &monY);
 
   std::cout << "monX: " << monX << " monY: " << monY << std::endl;
 
-  glfwSetWindowPos(
-      _window,
-      monX + (mode->width  - WIDTH)  / 2,
-      monY + (mode->height - HEIGHT) / 2
-  );
+  glfwSetWindowPos(_window, monX + (mode->width - WIDTH) / 2,
+                   monY + (mode->height - HEIGHT) / 2);
 
   this->event = std::make_unique<Event>(*_window);
 
@@ -183,18 +180,51 @@ void HelloTriangleApplication::initVulkan() {
   createFramebuffers();
   createCommandPool();
 
+  static VulkanContext context;
+
+  context.device = device;
+  context.physicalDevice = physicalDevice;
+  context.graphicsQueue = graphicsQueue;
+  context.instance = instance;
+  context.presentQueue = presentQueue;
+  context.commandPool = commandPool;
+
+
   texturePassInfo.graphicsQueue = graphicsQueue;
   texturePassInfo.renderPass = renderPass;
   texturePassInfo.commandPool = commandPool;
   texturePassInfo.height = HEIGHT;
   texturePassInfo.width = WIDTH;
   texturePassInfo.texturePath = TEXTURE_PATH;
+
+
+  this->blockTextureArray2D = std::make_unique<TextureArray2D>(context);
+  this->blockTextureArray2D->passInfo(texturePassInfo);
+
+  this->blockTextureArray2D->setTexturePaths(0, "/home/divyansh/MinecraftClone/textures/grass_top.png");
+  this->blockTextureArray2D->setTexturePaths(1, "/home/divyansh/MinecraftClone/textures/grass_side.png");
+  this->blockTextureArray2D->setTexturePaths(2, "/home/divyansh/MinecraftClone/textures/debug_blk.png");
+  this->blockTextureArray2D->setTexturePaths(3, "/home/divyansh/MinecraftClone/textures/wood.png");
+  this->blockTextureArray2D->setTexturePaths(4, "/home/divyansh/MinecraftClone/textures/leaf.png");
+  this->blockTextureArray2D->setTexturePaths(5, "/home/divyansh/MinecraftClone/textures/stone.png");
+  this->blockTextureArray2D->setTexturePaths(6, "/home/divyansh/MinecraftClone/textures/bedrock.png");
+
+  blockTextureArray2D->allocateStorageForTextures();
+  blockTextureArray2D->createBlkTextureStagingBuffer();
+  blockTextureArray2D->createBlkTextureArrayImage();
+  blockTextureArray2D->allocateBlkTextureArrayMemory();
+  blockTextureArray2D->transitionBlkTextureArrayImageLayout();  // UNDEFINED -> TRANSFER_DST
+  blockTextureArray2D->uploadBlkTexturesToArray();              // copy pixels
+  blockTextureArray2D->transitionBlkTextureArrayToShaderRead(); // TRANSFER_DST -> SHADER_READ
+  blockTextureArray2D->createBlkTextureArrayImageView();
+  blockTextureArray2D->createBlkArraySampler();
   texture.passTextureCreateInfo(texturePassInfo);
 
   uiTexturePaths[0] = "/home/divyansh/MinecraftClone/textures/inventory.png";
   uiTexturePaths[1] = "/home/divyansh/MinecraftClone/textures/crosshair.png";
   uiTexturePaths[2] = "/home/divyansh/MinecraftClone/textures/heart.png";
-  uiTexturePaths[3] = "/home/divyansh/MinecraftClone/textures/inventorySelectionMask.png";
+  uiTexturePaths[3] =
+      "/home/divyansh/MinecraftClone/textures/inventorySelectionMask.png";
   for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++) {
     texturePassInfo.texturePath = uiTexturePaths[i];
     uiTextures.at(i).passTextureCreateInfo(texturePassInfo);
@@ -269,8 +299,6 @@ void HelloTriangleApplication::createInstance() {
   createInfo.enabledExtensionCount =
       static_cast<uint32_t>(requiredExtensions.size());
   createInfo.ppEnabledExtensionNames = requiredExtensions.data();
-
-
 
   VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
   if (enableValidationLayers) {
@@ -384,7 +412,7 @@ int HelloTriangleApplication::rateDeviceSuitablity(VkPhysicalDevice device) {
 
   // Prefer discrete or integrated GPU
   if (props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-    score += 10000;
+    score += 20000;
   else if (props.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
     score += 5000;
 
@@ -892,7 +920,7 @@ void HelloTriangleApplication::createDescriptorPool() {
   poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
   poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+  poolSizes[1].descriptorCount = MAX_FRAMES_IN_FLIGHT * (2 + 16);
 
   poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   poolSizes[2].descriptorCount =
@@ -940,10 +968,11 @@ void HelloTriangleApplication::updateDescriptorSets(u_Texture &texture) {
     bufferInfo.offset = 0;
     bufferInfo.range = sizeof(UniformBufferObject);
 
+    // image info for UI textures
     VkDescriptorImageInfo imageInfo{};
     imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfo.imageView = texture.textureImageView;
-    imageInfo.sampler = texture.textureSampler;
+    imageInfo.imageView = blockTextureArray2D->blkTextureArrayImageView;
+    imageInfo.sampler = blockTextureArray2D->blkArraySampler;
 
     std::vector<VkDescriptorImageInfo> imageInfos(
         NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES);
@@ -995,16 +1024,15 @@ void HelloTriangleApplication::createDescriptorSetLayout() {
   uboLayoutBinding.binding = 0;
   uboLayoutBinding.descriptorCount = 1;
   uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  uboLayoutBinding.pImmutableSamplers = nullptr;
   uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  uboLayoutBinding.pImmutableSamplers = nullptr;
 
-  VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-  samplerLayoutBinding.binding = 1;
-  samplerLayoutBinding.descriptorCount = 1;
-  samplerLayoutBinding.descriptorType =
-      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  samplerLayoutBinding.pImmutableSamplers = nullptr;
-  samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  VkDescriptorSetLayoutBinding blkTexBinding{};
+  blkTexBinding.binding = 1;
+  blkTexBinding.descriptorCount = 1;
+  blkTexBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  blkTexBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  blkTexBinding.pImmutableSamplers = nullptr;
 
   VkDescriptorSetLayoutBinding uiTexturesBinding{};
   uiTexturesBinding.binding = 2;
@@ -1023,7 +1051,7 @@ void HelloTriangleApplication::createDescriptorSetLayout() {
   flagsInfo.pBindingFlags = &bindingFlags;
 
   std::array<VkDescriptorSetLayoutBinding, 3> bindings = {
-      uboLayoutBinding, samplerLayoutBinding, uiTexturesBinding};
+      uboLayoutBinding, blkTexBinding, uiTexturesBinding};
   VkDescriptorSetLayoutCreateInfo layoutInfo{};
   layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());

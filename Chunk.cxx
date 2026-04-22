@@ -20,7 +20,7 @@ Chunk::Chunk(int cmx, int cmy, VulkanContext &vkContext, GameObjectPool &gop)
       for (int y = 0; y < 16; ++y) {
         Voxel &v = column[y];
         if (z < 60)
-          v.setType(GRASS);
+          v.setType(BlockType(rand() % 6 + 1));
         if (z == 0)
           v.setType(BEDROCK);
         v.setPosition(glm::vec3(px + 0.5f, baseY + y + 0.5f, z + 0.5f));
@@ -36,7 +36,7 @@ void Chunk::generateMesh() {
 
   auto appendToBuffer = [&vertices, &indices, &c](glm::vec3 pos, glm::vec2 uv,
                                                   float brightness) {
-    vertices.emplace_back(Vertex{pos, glm::vec3(1.f), uv, 1.f});
+    vertices.emplace_back(Vertex{pos, glm::vec3(1.f), uv, brightness});
     indices.push_back(c);
     c++;
   };
@@ -61,17 +61,17 @@ void Chunk::generateMesh() {
     glm::vec2 v3{vPos.x + 0.5f, vPos.y - 0.5f};
 
     appendToBuffer(glm::vec3{v0, vz}, glm::vec2{voxel.faceTexture[TOP], 0},
-                   1.f);
+                   1.0f);
     appendToBuffer(glm::vec3{v1, vz}, glm::vec2{voxel.faceTexture[TOP], 1},
-                   1.f);
+                   1.0f);
     appendToBuffer(glm::vec3{v2, vz}, glm::vec2{voxel.faceTexture[TOP], 2},
-                   1.f);
+                   1.0f);
     appendToBuffer(glm::vec3{v2, vz}, glm::vec2{voxel.faceTexture[TOP], 2},
-                   1.f);
+                   1.0f);
     appendToBuffer(glm::vec3{v3, vz}, glm::vec2{voxel.faceTexture[TOP], 3},
-                   1.f);
+                   1.0f);
     appendToBuffer(glm::vec3{v0, vz}, glm::vec2{voxel.faceTexture[TOP], 0},
-                   1.f);
+                   1.0f);
   };
 
   auto cullBottomVoxels = [&appendToBuffer](Voxel &voxel, int &x, int &y,
