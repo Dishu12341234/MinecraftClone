@@ -21,9 +21,9 @@ layout(push_constant) uniform PushConstants {
 
 const vec2 uvTable[4] = vec2[4](
         vec2(0.0, 0.0),
-        vec2(0.0, 1.0),
-        vec2(1.0, 1.0),
-        vec2(1.0, 0.0)
+        vec2(0.0, 16.0),
+        vec2(16.0, 16.0),
+        vec2(16.0, 0.0)
     );
 
 void main() {

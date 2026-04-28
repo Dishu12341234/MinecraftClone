@@ -8,7 +8,7 @@ Terrain::Terrain(VulkanContext &vkContext, GameObjectPool &gop)
 
 void Terrain::generateChunks() {
 
-    int nChunks = 0;
+  int nChunks = 0;
 
   for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
     for (int y = -RENDER_DISTANCE; y <= RENDER_DISTANCE; y++) {
@@ -16,11 +16,21 @@ void Terrain::generateChunks() {
       Chunk *c = new Chunk(x, y, vkContext, gop);
       chunks.emplace(chunkKey(x, y), c);
 
+      c->makeVisible();
+
       c->generateMesh();
       c->createBuffers();
       nChunks++;
     }
   }
+
+  // Chunk *c = new Chunk(0, 0, vkContext, gop);
+  // chunks.emplace(chunkKey(0, 0), c);
+
+  // c->makeVisible();
+
+  // c->generateMesh();
+  // c->createBuffers();
 
   ready = true;
   fmt::println("total chunks created is: {}", nChunks);
@@ -64,5 +74,4 @@ void Terrain::cleanup() {
   }
 }
 
-Terrain::~Terrain() {
-}
+Terrain::~Terrain() {}

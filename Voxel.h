@@ -14,6 +14,8 @@ private:
 
     AxisAlignedBoundingBox aabb{};
 
+    bool visible = false;
+
     friend class Chunk;
     friend class Player;
     friend class Camera;

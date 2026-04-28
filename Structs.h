@@ -30,7 +30,6 @@ struct UniformBufferObject {
   glm::mat4 proj;
 };
 
-
 struct DrawInfo {
   VkCommandBuffer commandBuffer;
   VkPipelineLayout pipelineLayout;
@@ -58,13 +57,14 @@ struct Transform {
 };
 
 enum BlockType {
-  AIR = 0,
-  GRASS,
-  DIRT,
-  WOOD,
-  LEAF,
-  STONE,
-  BEDROCK,
+  AIR=0,
+  GRASS=1,
+  DIRT=2,
+  WOOD=3,
+  LEAF=4,
+  STONE=5,
+  BEDROCK=6,
+  END_BLOCK_TYPE
 };
 
 struct PlayerState {

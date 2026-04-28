@@ -17,13 +17,13 @@ struct HitInfo {
 
 class Camera {
 private:
+  GameObjectPool &gameObjectPool;
   VulkanContext vkContext;
   glm::vec3 cameraPos{5.f, 5.f, 64.f};
   float pitch{0};
   float yaw{0};
   float speed{0};
   float v_velocity{0};
-  GameObjectPool &gameObjectPool;
   glm::vec3 forwardCR;
   glm::vec3 forwardFlat;
   glm::vec3 right;

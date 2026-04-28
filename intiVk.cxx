@@ -71,12 +71,12 @@ VkSampleCountFlagBits HelloTriangleApplication::getMaxUsableSampleCount() {
   // {
   //     return VK_SAMPLE_COUNT_16_BIT;
   // }
-  if (counts & VK_SAMPLE_COUNT_8_BIT) {
-    return VK_SAMPLE_COUNT_8_BIT;
-  }
-  if (counts & VK_SAMPLE_COUNT_4_BIT) {
-    return VK_SAMPLE_COUNT_4_BIT;
-  }
+  // if (counts & VK_SAMPLE_COUNT_8_BIT) {
+  //   return VK_SAMPLE_COUNT_8_BIT;
+  // }
+  // if (counts & VK_SAMPLE_COUNT_4_BIT) {
+  //   return VK_SAMPLE_COUNT_4_BIT;
+  // }
   if (counts & VK_SAMPLE_COUNT_2_BIT) {
     return VK_SAMPLE_COUNT_2_BIT;
   }
@@ -200,6 +200,9 @@ void HelloTriangleApplication::initVulkan() {
 
   this->blockTextureArray2D = std::make_unique<TextureArray2D>(context);
   this->blockTextureArray2D->passInfo(texturePassInfo);
+
+  this->blockTextureArray2D->setTexturePaths(19, "/home/divyansh/MinecraftClone/textures/corrupt_blk.png");
+
 
   this->blockTextureArray2D->setTexturePaths(0, "/home/divyansh/MinecraftClone/textures/grass_top.png");
   this->blockTextureArray2D->setTexturePaths(1, "/home/divyansh/MinecraftClone/textures/grass_side.png");
