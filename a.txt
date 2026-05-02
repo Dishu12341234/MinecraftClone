@@ -1453,25 +1453,27 @@
 ./Terrain.cxx:
 ./Terrain.cxx:  int nChunks = 0;
 ./Terrain.cxx:
-./Terrain.cxx:  // for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
-./Terrain.cxx:  //   for (int y = -RENDER_DISTANCE; y <= RENDER_DISTANCE; y++) {
+./Terrain.cxx:  for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
+./Terrain.cxx:    for (int y = -RENDER_DISTANCE; y <= RENDER_DISTANCE; y++) {
 ./Terrain.cxx:
-./Terrain.cxx:  //     Chunk *c = new Chunk(x, y, vkContext, gop);
-./Terrain.cxx:  //     chunks.emplace(chunkKey(x, y), c);
+./Terrain.cxx:      Chunk *c = new Chunk(x, y, vkContext, gop);
+./Terrain.cxx:      chunks.emplace(chunkKey(x, y), c);
 ./Terrain.cxx:
-./Terrain.cxx:  //     c->generateMesh();
-./Terrain.cxx:  //     c->createBuffers();
-./Terrain.cxx:  //     nChunks++;
-./Terrain.cxx:  //   }
-./Terrain.cxx:  // }
+./Terrain.cxx:      c->makeVisible();
 ./Terrain.cxx:
-./Terrain.cxx:  Chunk *c = new Chunk(0, 0, vkContext, gop);
-./Terrain.cxx:  chunks.emplace(chunkKey(0, 0), c);
+./Terrain.cxx:      c->generateMesh();
+./Terrain.cxx:      c->createBuffers();
+./Terrain.cxx:      nChunks++;
+./Terrain.cxx:    }
+./Terrain.cxx:  }
 ./Terrain.cxx:
-./Terrain.cxx:  c->makeVisible();
+./Terrain.cxx:  // Chunk *c = new Chunk(0, 0, vkContext, gop);
+./Terrain.cxx:  // chunks.emplace(chunkKey(0, 0), c);
 ./Terrain.cxx:
-./Terrain.cxx:  c->generateMesh();
-./Terrain.cxx:  c->createBuffers();
+./Terrain.cxx:  // c->makeVisible();
+./Terrain.cxx:
+./Terrain.cxx:  // c->generateMesh();
+./Terrain.cxx:  // c->createBuffers();
 ./Terrain.cxx:
 ./Terrain.cxx:  ready = true;
 ./Terrain.cxx:  fmt::println("total chunks created is: {}", nChunks);
@@ -3784,407 +3786,6 @@
 ./PerlinNoise.hpp:# undef SIVPERLIN_NODISCARD_CXX20
 ./PerlinNoise.hpp:# undef SIVPERLIN_CONCEPT_URBG
 ./PerlinNoise.hpp:# undef SIVPERLIN_CONCEPT_URBG_
-./Chunk.cxx:#include "Chunk.h"
-./Chunk.cxx:#include "GameObjectPool.h"
-./Chunk.cxx:#include "GraphicsPipeline.h"
-./Chunk.cxx:#include <fmt/base.h>
-./Chunk.cxx:#include <fmt/core.h>
-./Chunk.cxx:
-./Chunk.cxx:#include <iostream>
-./Chunk.cxx:
-./Chunk.cxx:Chunk::Chunk(int cmx, int cmy, VulkanContext &vkContext, GameObjectPool &gop)
-./Chunk.cxx:    : vkContext{vkContext}, chunkMesh{vkContext}, gop{gop} {
-./Chunk.cxx:
-./Chunk.cxx:  chunkOffset[0] = cmx;
-./Chunk.cxx:  chunkOffset[1] = cmy;
-./Chunk.cxx:
-./Chunk.cxx:  const float baseX = cmx * 16;
-./Chunk.cxx:  const float baseY = cmy * 16;
-./Chunk.cxx:  for (int z = 0; z < 256; ++z) {
-./Chunk.cxx:    auto &layer = layers[z];
-./Chunk.cxx:    layer.z = z;
-./Chunk.cxx:
-./Chunk.cxx:    for (int x = 0; x < 16; ++x) {
-./Chunk.cxx:      auto &column = layer.voxels[x];
-./Chunk.cxx:      const float px = baseX + x;
-./Chunk.cxx:
-./Chunk.cxx:      for (int y = 0; y < 16; ++y) {
-./Chunk.cxx:        Voxel &v = column[y];
-./Chunk.cxx:        if (z < 60)
-./Chunk.cxx:          v.setType(BlockType((7 - z % 6) + 1));
-./Chunk.cxx:        if (z == 0)
-./Chunk.cxx:          v.setType(BEDROCK);
-./Chunk.cxx:        v.setPosition(glm::vec3(px + 0.5f, baseY + y + 0.5f, z + 0.5f));
-./Chunk.cxx:      }
-./Chunk.cxx:    }
-./Chunk.cxx:  }
-./Chunk.cxx:}
-./Chunk.cxx:
-./Chunk.cxx:void Chunk::makeVisible() {
-./Chunk.cxx:  for (int z = 0; z < 256; z++) {
-./Chunk.cxx:    Layer &layer = layers[z];
-./Chunk.cxx:    for (int x = 0; x < 16; x++) {
-./Chunk.cxx:      for (int y = 0; y < 16; y++) {
-./Chunk.cxx:        Voxel &v = layer.voxels[x][y];
-./Chunk.cxx:
-./Chunk.cxx:        if (v.blockType == AIR) {
-./Chunk.cxx:          v.visible = false;
-./Chunk.cxx:          continue;
-./Chunk.cxx:        }
-./Chunk.cxx:
-./Chunk.cxx:        if (z == 0 || z == 255) [[unlikely]] {
-./Chunk.cxx:          v.visible = true;
-./Chunk.cxx:          continue;
-./Chunk.cxx:        }
-./Chunk.cxx:
-./Chunk.cxx:        Voxel &top_v = layers[z + 1].voxels[x][y];
-./Chunk.cxx:        Voxel &bottom_v = layers[z - 1].voxels[x][y];
-./Chunk.cxx:
-./Chunk.cxx:        int wx = chunkOffset[0] * 16 + x;
-./Chunk.cxx:        int wy = chunkOffset[1] * 16 + y;
-./Chunk.cxx:
-./Chunk.cxx:        Voxel *left_v = gop.getVoxelGlobal({wx, wy - 1, z});
-./Chunk.cxx:        Voxel *right_v = gop.getVoxelGlobal({wx, wy + 1, z});
-./Chunk.cxx:        Voxel *front_v = gop.getVoxelGlobal({wx + 1, wy, z});
-./Chunk.cxx:        Voxel *back_v = gop.getVoxelGlobal({wx - 1, wy, z});
-./Chunk.cxx:
-./Chunk.cxx:        bool neighborMissing = !left_v || !right_v || !front_v || !back_v;
-./Chunk.cxx:        bool nextToAir = top_v.blockType == AIR || bottom_v.blockType == AIR ||
-./Chunk.cxx:                         neighborMissing || left_v->blockType == AIR ||
-./Chunk.cxx:                         right_v->blockType == AIR ||
-./Chunk.cxx:                         front_v->blockType == AIR || back_v->blockType == AIR;
-./Chunk.cxx:
-./Chunk.cxx:        v.visible = nextToAir;
-./Chunk.cxx:      }
-./Chunk.cxx:    }
-./Chunk.cxx:  }
-./Chunk.cxx:}
-./Chunk.cxx:void Chunk::generateMesh() {
-./Chunk.cxx:  TIMER_START(mesh);
-./Chunk.cxx:  std::vector<Vertex> vertices;
-./Chunk.cxx:  std::vector<uint32_t> indices;
-./Chunk.cxx:  int ind = 0;
-./Chunk.cxx:
-./Chunk.cxx:  // Generic quad emitter — caller is responsible for correct winding
-./Chunk.cxx:  auto emmitQuad = [&](glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3,
-./Chunk.cxx:                       BlockType type, float brightness) {
-./Chunk.cxx:    glm::vec2 uv0{(int)type, 0}, uv1{(int)type, 1};
-./Chunk.cxx:    glm::vec2 uv2{(int)type, 2}, uv3{(int)type, 3};
-./Chunk.cxx:    vertices.push_back({p0, {1, 1, 1}, uv0, brightness});
-./Chunk.cxx:    vertices.push_back({p1, {1, 1, 1}, uv1, brightness});
-./Chunk.cxx:    vertices.push_back({p2, {1, 1, 1}, uv2, brightness});
-./Chunk.cxx:    vertices.push_back({p3, {1, 1, 1}, uv3, brightness});
-./Chunk.cxx:    indices.push_back(ind * 4 + 0);
-./Chunk.cxx:    indices.push_back(ind * 4 + 1);
-./Chunk.cxx:    indices.push_back(ind * 4 + 2);
-./Chunk.cxx:    indices.push_back(ind * 4 + 2);
-./Chunk.cxx:    indices.push_back(ind * 4 + 3);
-./Chunk.cxx:    indices.push_back(ind * 4 + 0);
-./Chunk.cxx:    ind++;
-./Chunk.cxx:  };
-./Chunk.cxx:
-./Chunk.cxx:  auto getHeight = [](Layer &layer, int x, int y, BlockType type) {
-./Chunk.cxx:    int h = 0;
-./Chunk.cxx:    while (y + h < 16 && layer.voxels[x][y + h].blockType == type &&
-./Chunk.cxx:           layer.voxels[x][y + h].visible)
-./Chunk.cxx:      h++;
-./Chunk.cxx:    return h;
-./Chunk.cxx:  };
-./Chunk.cxx:
-./Chunk.cxx:  auto getQuadDimensions = [&getHeight](Layer &layer, int x0, int y0,
-./Chunk.cxx:                                        BlockType type) {
-./Chunk.cxx:    int width = 0, height = INT_MAX;
-./Chunk.cxx:    while (x0 + width < 16) {
-./Chunk.cxx:      if (layer.voxels[x0 + width][y0].blockType != type ||
-./Chunk.cxx:          !layer.voxels[x0 + width][y0].visible)
-./Chunk.cxx:        break;
-./Chunk.cxx:      int h = getHeight(layer, x0 + width, y0, type);
-./Chunk.cxx:      if (h == 0)
-./Chunk.cxx:        break;
-./Chunk.cxx:      height = std::min(height, h);
-./Chunk.cxx:      width++;
-./Chunk.cxx:    }
-./Chunk.cxx:    for (int dx = 0; dx < width; dx++)
-./Chunk.cxx:      for (int dy = 0; dy < height; dy++)
-./Chunk.cxx:        layer.voxels[x0 + dx][y0 + dy].blockType = AIR;
-./Chunk.cxx:    return std::pair<int, int>(width, height);
-./Chunk.cxx:  };
-./Chunk.cxx:
-./Chunk.cxx:  // ── TOP + BOTTOM (z-slices, merge in x and y) ──────────────────────────
-./Chunk.cxx:  auto greedify_topbottom = [&](BlockType type, Layer &layer) {
-./Chunk.cxx:    Layer working = layer;
-./Chunk.cxx:    for (int x = 0; x < 16; x++) {
-./Chunk.cxx:      for (int y = 0; y < 16; y++) {
-./Chunk.cxx:        Voxel &v = working.voxels[x][y];
-./Chunk.cxx:        if (v.blockType != type || !v.visible)
-./Chunk.cxx:          continue;
-./Chunk.cxx:        auto [w, h] = getQuadDimensions(working, x, y, type);
-./Chunk.cxx:
-./Chunk.cxx:        // Top face
-./Chunk.cxx:        emmitQuad({(float)x, (float)y, (float)layer.z + 1},
-./Chunk.cxx:                  {(float)(x + w), (float)y, (float)layer.z + 1},
-./Chunk.cxx:                  {(float)(x + w), (float)(y + h), (float)layer.z + 1},
-./Chunk.cxx:                  {(float)x, (float)(y + h), (float)layer.z + 1},
-./Chunk.cxx:                  (BlockType)v.faceTexture[TOP], 1.0f);
-./Chunk.cxx:
-./Chunk.cxx:        // Bottom face (reverse winding)
-./Chunk.cxx:        emmitQuad({(float)x, (float)y, (float)layer.z},
-./Chunk.cxx:                  {(float)x, (float)(y + h), (float)layer.z},
-./Chunk.cxx:                  {(float)(x + w), (float)(y + h), (float)layer.z},
-./Chunk.cxx:                  {(float)(x + w), (float)y, (float)layer.z},
-./Chunk.cxx:                  (BlockType)v.faceTexture[BOTTOM], 0.6f);
-./Chunk.cxx:      }
-./Chunk.cxx:    }
-./Chunk.cxx:  };
-./Chunk.cxx:
-./Chunk.cxx:  // ── FRONT (+x) + BACK (-x) (x-slices, merge in y and z) ───────────────
-./Chunk.cxx:  auto greedify_xfaces = [&](BlockType type) {
-./Chunk.cxx:    for (int x = 0; x < 16; x++) {
-./Chunk.cxx:      int wx = chunkOffset[0] * 16 + x;
-./Chunk.cxx:
-./Chunk.cxx:      bool frontMask[16][256]{}, backMask[16][256]{};
-./Chunk.cxx:      bool frontUsed[16][256]{}, backUsed[16][256]{};
-./Chunk.cxx:
-./Chunk.cxx:      for (int z = 0; z < 256; z++) {
-./Chunk.cxx:        for (int y = 0; y < 16; y++) {
-./Chunk.cxx:          Voxel &v = layers[z].voxels[x][y];
-./Chunk.cxx:          if (v.blockType != type)
-./Chunk.cxx:            continue;
-./Chunk.cxx:          int wy = chunkOffset[1] * 16 + y;
-./Chunk.cxx:
-./Chunk.cxx:          // Front (+x)
-./Chunk.cxx:          auto frontNeighbor = [&]() -> BlockType {
-./Chunk.cxx:            if (x < 15)
-./Chunk.cxx:              return (BlockType)layers[z].voxels[x + 1][y].blockType;
-./Chunk.cxx:            Voxel *fv = gop.getVoxelGlobal({wx + 1, wy, z});
-./Chunk.cxx:            return fv ? (BlockType)fv->blockType : AIR;
-./Chunk.cxx:          };
-./Chunk.cxx:          if (frontNeighbor() == AIR)
-./Chunk.cxx:            frontMask[y][z] = true;
-./Chunk.cxx:
-./Chunk.cxx:          // Back (-x)
-./Chunk.cxx:          auto backNeighbor = [&]() -> BlockType {
-./Chunk.cxx:            if (x > 0)
-./Chunk.cxx:              return (BlockType)layers[z].voxels[x - 1][y].blockType;
-./Chunk.cxx:            Voxel *bv = gop.getVoxelGlobal({wx - 1, wy, z});
-./Chunk.cxx:            return bv ? (BlockType)bv->blockType : AIR;
-./Chunk.cxx:          };
-./Chunk.cxx:          if (backNeighbor() == AIR)
-./Chunk.cxx:            backMask[y][z] = true;
-./Chunk.cxx:        }
-./Chunk.cxx:      }
-./Chunk.cxx:
-./Chunk.cxx:      // Greedy merge front faces
-./Chunk.cxx:      for (int y = 0; y < 16; y++) {
-./Chunk.cxx:        for (int z = 0; z < 256; z++) {
-./Chunk.cxx:          if (!frontMask[y][z] || frontUsed[y][z])
-./Chunk.cxx:            continue;
-./Chunk.cxx:          int dz = 1;
-./Chunk.cxx:          while (z + dz < 256 && frontMask[y][z + dz] &&
-./Chunk.cxx:                 !frontUsed[y][z + dz] &&
-./Chunk.cxx:                 layers[z + dz].voxels[x][y].blockType == type)
-./Chunk.cxx:            dz++;
-./Chunk.cxx:          int dy = 1;
-./Chunk.cxx:          while (y + dy < 16) {
-./Chunk.cxx:            bool ok = true;
-./Chunk.cxx:            for (int k = 0; k < dz && ok; k++)
-./Chunk.cxx:              if (!frontMask[y + dy][z + k] || frontUsed[y + dy][z + k] ||
-./Chunk.cxx:                  layers[z + k].voxels[x][y + dy].blockType != type)
-./Chunk.cxx:                ok = false;
-./Chunk.cxx:            if (!ok)
-./Chunk.cxx:              break;
-./Chunk.cxx:            dy++;
-./Chunk.cxx:          }
-./Chunk.cxx:          for (int a = 0; a < dy; a++)
-./Chunk.cxx:            for (int b = 0; b < dz; b++)
-./Chunk.cxx:              frontUsed[y + a][z + b] = true;
-./Chunk.cxx:
-./Chunk.cxx:          int tex = layers[z].voxels[x][y].faceTexture[FRONT];
-./Chunk.cxx:          emmitQuad({(float)(x + 1), (float)y, (float)z},
-./Chunk.cxx:                    {(float)(x + 1), (float)(y + dy), (float)z},
-./Chunk.cxx:                    {(float)(x + 1), (float)(y + dy), (float)(z + dz)},
-./Chunk.cxx:                    {(float)(x + 1), (float)y, (float)(z + dz)}, (BlockType)tex,
-./Chunk.cxx:                    0.8f);
-./Chunk.cxx:        }
-./Chunk.cxx:      }
-./Chunk.cxx:
-./Chunk.cxx:      // Greedy merge back faces
-./Chunk.cxx:      for (int y = 0; y < 16; y++) {
-./Chunk.cxx:        for (int z = 0; z < 256; z++) {
-./Chunk.cxx:          if (!backMask[y][z] || backUsed[y][z])
-./Chunk.cxx:            continue;
-./Chunk.cxx:          int dz = 1;
-./Chunk.cxx:          while (z + dz < 256 && backMask[y][z + dz] && !backUsed[y][z + dz] &&
-./Chunk.cxx:                 layers[z + dz].voxels[x][y].blockType == type)
-./Chunk.cxx:            dz++;
-./Chunk.cxx:          int dy = 1;
-./Chunk.cxx:          while (y + dy < 16) {
-./Chunk.cxx:            bool ok = true;
-./Chunk.cxx:            for (int k = 0; k < dz && ok; k++)
-./Chunk.cxx:              if (!backMask[y + dy][z + k] || backUsed[y + dy][z + k] ||
-./Chunk.cxx:                  layers[z + k].voxels[x][y + dy].blockType != type)
-./Chunk.cxx:                ok = false;
-./Chunk.cxx:            if (!ok)
-./Chunk.cxx:              break;
-./Chunk.cxx:            dy++;
-./Chunk.cxx:          }
-./Chunk.cxx:          for (int a = 0; a < dy; a++)
-./Chunk.cxx:            for (int b = 0; b < dz; b++)
-./Chunk.cxx:              backUsed[y + a][z + b] = true;
-./Chunk.cxx:
-./Chunk.cxx:          int tex = layers[z].voxels[x][y].faceTexture[BACK];
-./Chunk.cxx:          emmitQuad( // reverse winding vs front
-./Chunk.cxx:              {(float)x, (float)y, (float)z},
-./Chunk.cxx:              {(float)x, (float)y, (float)(z + dz)},
-./Chunk.cxx:              {(float)x, (float)(y + dy), (float)(z + dz)},
-./Chunk.cxx:              {(float)x, (float)(y + dy), (float)z}, (BlockType)tex, 0.8f);
-./Chunk.cxx:        }
-./Chunk.cxx:      }
-./Chunk.cxx:    }
-./Chunk.cxx:  };
-./Chunk.cxx:
-./Chunk.cxx:  // ── RIGHT (+y) + LEFT (-y) (y-slices, merge in x and z) ───────────────
-./Chunk.cxx:  auto greedify_yfaces = [&](BlockType type) {
-./Chunk.cxx:    for (int y = 0; y < 16; y++) {
-./Chunk.cxx:      int wy = chunkOffset[1] * 16 + y;
-./Chunk.cxx:
-./Chunk.cxx:      bool rightMask[16][256]{}, leftMask[16][256]{};
-./Chunk.cxx:      bool rightUsed[16][256]{}, leftUsed[16][256]{};
-./Chunk.cxx:
-./Chunk.cxx:      for (int z = 0; z < 256; z++) {
-./Chunk.cxx:        for (int x = 0; x < 16; x++) {
-./Chunk.cxx:          Voxel &v = layers[z].voxels[x][y];
-./Chunk.cxx:          if (v.blockType != type)
-./Chunk.cxx:            continue;
-./Chunk.cxx:          int wx = chunkOffset[0] * 16 + x;
-./Chunk.cxx:
-./Chunk.cxx:          auto rightNeighbor = [&]() -> BlockType {
-./Chunk.cxx:            if (y < 15)
-./Chunk.cxx:              return (BlockType)layers[z].voxels[x][y + 1].blockType;
-./Chunk.cxx:            Voxel *rv = gop.getVoxelGlobal({wx, wy + 1, z});
-./Chunk.cxx:            return rv ? (BlockType)rv->blockType : AIR;
-./Chunk.cxx:          };
-./Chunk.cxx:          if (rightNeighbor() == AIR)
-./Chunk.cxx:            rightMask[x][z] = true;
-./Chunk.cxx:
-./Chunk.cxx:          auto leftNeighbor = [&]() -> BlockType {
-./Chunk.cxx:            if (y > 0)
-./Chunk.cxx:              return (BlockType)layers[z].voxels[x][y - 1].blockType;
-./Chunk.cxx:            Voxel *lv = gop.getVoxelGlobal({wx, wy - 1, z});
-./Chunk.cxx:            return lv ? (BlockType)lv->blockType : AIR;
-./Chunk.cxx:          };
-./Chunk.cxx:          if (leftNeighbor() == AIR)
-./Chunk.cxx:            leftMask[x][z] = true;
-./Chunk.cxx:        }
-./Chunk.cxx:      }
-./Chunk.cxx:
-./Chunk.cxx:      // Greedy merge right faces
-./Chunk.cxx:      for (int x = 0; x < 16; x++) {
-./Chunk.cxx:        for (int z = 0; z < 256; z++) {
-./Chunk.cxx:          if (!rightMask[x][z] || rightUsed[x][z])
-./Chunk.cxx:            continue;
-./Chunk.cxx:          int dz = 1;
-./Chunk.cxx:          while (z + dz < 256 && rightMask[x][z + dz] &&
-./Chunk.cxx:                 !rightUsed[x][z + dz] &&
-./Chunk.cxx:                 layers[z + dz].voxels[x][y].blockType == type)
-./Chunk.cxx:            dz++;
-./Chunk.cxx:          int dx = 1;
-./Chunk.cxx:          while (x + dx < 16) {
-./Chunk.cxx:            bool ok = true;
-./Chunk.cxx:            for (int k = 0; k < dz && ok; k++)
-./Chunk.cxx:              if (!rightMask[x + dx][z + k] || rightUsed[x + dx][z + k] ||
-./Chunk.cxx:                  layers[z + k].voxels[x + dx][y].blockType != type)
-./Chunk.cxx:                ok = false;
-./Chunk.cxx:            if (!ok)
-./Chunk.cxx:              break;
-./Chunk.cxx:            dx++;
-./Chunk.cxx:          }
-./Chunk.cxx:          for (int a = 0; a < dx; a++)
-./Chunk.cxx:            for (int b = 0; b < dz; b++)
-./Chunk.cxx:              rightUsed[x + a][z + b] = true;
-./Chunk.cxx:
-./Chunk.cxx:          int tex = layers[z].voxels[x][y].faceTexture[RIGHT];
-./Chunk.cxx:          emmitQuad({(float)x, (float)(y + 1), (float)z},
-./Chunk.cxx:                    {(float)x, (float)(y + 1), (float)(z + dz)},
-./Chunk.cxx:                    {(float)(x + dx), (float)(y + 1), (float)(z + dz)},
-./Chunk.cxx:                    {(float)(x + dx), (float)(y + 1), (float)z}, (BlockType)tex,
-./Chunk.cxx:                    0.9f);
-./Chunk.cxx:        }
-./Chunk.cxx:      }
-./Chunk.cxx:
-./Chunk.cxx:      // Greedy merge left faces
-./Chunk.cxx:      for (int x = 0; x < 16; x++) {
-./Chunk.cxx:        for (int z = 0; z < 256; z++) {
-./Chunk.cxx:          if (!leftMask[x][z] || leftUsed[x][z])
-./Chunk.cxx:            continue;
-./Chunk.cxx:          int dz = 1;
-./Chunk.cxx:          while (z + dz < 256 && leftMask[x][z + dz] && !leftUsed[x][z + dz] &&
-./Chunk.cxx:                 layers[z + dz].voxels[x][y].blockType == type)
-./Chunk.cxx:            dz++;
-./Chunk.cxx:          int dx = 1;
-./Chunk.cxx:          while (x + dx < 16) {
-./Chunk.cxx:            bool ok = true;
-./Chunk.cxx:            for (int k = 0; k < dz && ok; k++)
-./Chunk.cxx:              if (!leftMask[x + dx][z + k] || leftUsed[x + dx][z + k] ||
-./Chunk.cxx:                  layers[z + k].voxels[x + dx][y].blockType != type)
-./Chunk.cxx:                ok = false;
-./Chunk.cxx:            if (!ok)
-./Chunk.cxx:              break;
-./Chunk.cxx:            dx++;
-./Chunk.cxx:          }
-./Chunk.cxx:          for (int a = 0; a < dx; a++)
-./Chunk.cxx:            for (int b = 0; b < dz; b++)
-./Chunk.cxx:              leftUsed[x + a][z + b] = true;
-./Chunk.cxx:
-./Chunk.cxx:          int tex = layers[z].voxels[x][y].faceTexture[LEFT];
-./Chunk.cxx:          emmitQuad( // reverse winding vs right
-./Chunk.cxx:              {(float)x, (float)y, (float)z},
-./Chunk.cxx:              {(float)(x + dx), (float)y, (float)z},
-./Chunk.cxx:              {(float)(x + dx), (float)y, (float)(z + dz)},
-./Chunk.cxx:              {(float)x, (float)y, (float)(z + dz)}, (BlockType)tex, 0.9f);
-./Chunk.cxx:        }
-./Chunk.cxx:      }
-./Chunk.cxx:    }
-./Chunk.cxx:  };
-./Chunk.cxx:
-./Chunk.cxx:  // ── Main pass ──────────────────────────────────────────────────────────
-./Chunk.cxx:  for (int i = GRASS; i < END_BLOCK_TYPE; i++) {
-./Chunk.cxx:    BlockType bt = (BlockType)i;
-./Chunk.cxx:    for (auto &layer : layers)
-./Chunk.cxx:      greedify_topbottom(bt, layer);
-./Chunk.cxx:    greedify_xfaces(bt);
-./Chunk.cxx:    greedify_yfaces(bt);
-./Chunk.cxx:  }
-./Chunk.cxx:
-./Chunk.cxx:  chunkMesh.loadVertices(vertices);
-./Chunk.cxx:  chunkMesh.loadIndices(indices);
-./Chunk.cxx:  TIMER_END(mesh);
-./Chunk.cxx:}
-./Chunk.cxx:void Chunk::createBuffers() {
-./Chunk.cxx:  chunkMesh.createVertexBuffer();
-./Chunk.cxx:  chunkMesh.createIndexBuffer();
-./Chunk.cxx:}
-./Chunk.cxx:
-./Chunk.cxx:void Chunk::updateChunkMesh() {
-./Chunk.cxx:  makeVisible();
-./Chunk.cxx:  generateMesh();
-./Chunk.cxx:  vkDeviceWaitIdle(vkContext.device);
-./Chunk.cxx:  chunkMesh.updateVertexBuffer();
-./Chunk.cxx:  chunkMesh.updateIndexBuffer();
-./Chunk.cxx:}
-./Chunk.cxx:
-./Chunk.cxx:void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
-./Chunk.cxx:                 VkPipeline graphicsPipeline,
-./Chunk.cxx:                 std::vector<VkDescriptorSet> &descriptorSets,
-./Chunk.cxx:                 uint32_t currentFrame, VkExtent2D &swapChainExtent,
-./Chunk.cxx:                 PushConstantC1 &c1) {
-./Chunk.cxx:  chunkMesh.draw(commandBuffer, pipelineLayout, graphicsPipeline,
-./Chunk.cxx:                 descriptorSets, currentFrame, swapChainExtent, c1);
-./Chunk.cxx:}
-./Chunk.cxx:
-./Chunk.cxx:void Chunk::cleanup() { chunkMesh.cleanup(); }
-./Chunk.cxx:
-./Chunk.cxx:Chunk::~Chunk() {}
 ./GraphicsPipeline.cxx:#include "GraphicsPipeline.h"
 ./GraphicsPipeline.cxx:#include <iostream>
 ./GraphicsPipeline.cxx:
@@ -7391,3 +6992,540 @@
 ./2DTextureArray.cxx:    }
 ./2DTextureArray.cxx:}
 ./2DTextureArray.cxx:TextureArray2D::~TextureArray2D() {}
+./Chunk.cxx:// Chunk.cpp — optimized
+./Chunk.cxx:// Key changes:
+./Chunk.cxx://   1. makeVisible: cache neighbor chunks once per edge; avoid per-voxel gop calls
+./Chunk.cxx://   2. generateMesh: single pass to bucket visible voxels by type; greedy only iterates its own bucket
+./Chunk.cxx://   3. Mask arrays allocated once outside loops, cleared with memset
+./Chunk.cxx://   4. Per-layer hasVisible flag skips fully-buried layers entirely
+./Chunk.cxx://   5. vertices/indices reserved upfront
+./Chunk.cxx://   6. emmitQuad: pre-built UV array, avoid repeated glm::vec2 construction
+./Chunk.cxx:
+./Chunk.cxx:#include "Chunk.h"
+./Chunk.cxx:#include "GameObjectPool.h"
+./Chunk.cxx:#include "GraphicsPipeline.h"
+./Chunk.cxx:#include <fmt/base.h>
+./Chunk.cxx:#include <fmt/core.h>
+./Chunk.cxx:
+./Chunk.cxx:#include <array>
+./Chunk.cxx:#include <cstring>   // memset
+./Chunk.cxx:#include <iostream>
+./Chunk.cxx:
+./Chunk.cxx:// ---------------------------------------------------------------------------
+./Chunk.cxx:// Construction — unchanged logic, just tidied
+./Chunk.cxx:// ---------------------------------------------------------------------------
+./Chunk.cxx:Chunk::Chunk(int cmx, int cmy, VulkanContext &vkContext, GameObjectPool &gop)
+./Chunk.cxx:    : vkContext{vkContext}, chunkMesh{vkContext}, gop{gop}
+./Chunk.cxx:{
+./Chunk.cxx:    chunkOffset[0] = cmx;
+./Chunk.cxx:    chunkOffset[1] = cmy;
+./Chunk.cxx:
+./Chunk.cxx:    const float baseX = cmx * 16;
+./Chunk.cxx:    const float baseY = cmy * 16;
+./Chunk.cxx:
+./Chunk.cxx:    for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:        auto &layer = layers[z];
+./Chunk.cxx:        layer.z = z;
+./Chunk.cxx:        layer.hasVisible = false;   // initialise the new flag
+./Chunk.cxx:
+./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:            const float px = baseX + x;
+./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:                Voxel &v = layer.voxels[x][y];
+./Chunk.cxx:                if (z < 60)  v.setType(GRASS);
+./Chunk.cxx:                if (z == 0)  v.setType(BEDROCK);
+./Chunk.cxx:                v.setPosition(glm::vec3(px + 0.5f, baseY + y + 0.5f, z + 0.5f));
+./Chunk.cxx:            }
+./Chunk.cxx:        }
+./Chunk.cxx:    }
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:// ---------------------------------------------------------------------------
+./Chunk.cxx:// makeVisible — OPTIMISED
+./Chunk.cxx://   * Resolve the four edge-neighboring chunks ONCE per call instead of
+./Chunk.cxx://     calling gop.getVoxelGlobal up to 4× per voxel.
+./Chunk.cxx://   * Store raw Chunk* pointers for the four cardinal neighbors so inner-loop
+./Chunk.cxx://     neighbor lookups are a single array index rather than a hash/map lookup.
+./Chunk.cxx://   * Set layer.hasVisible so generateMesh can skip dead layers cheaply.
+./Chunk.cxx:// ---------------------------------------------------------------------------
+./Chunk.cxx:void Chunk::makeVisible()
+./Chunk.cxx:{
+./Chunk.cxx:    // Fetch the four cardinal neighbor chunks once.
+./Chunk.cxx:    // getChunkAt is assumed to return nullptr for unloaded chunks.
+./Chunk.cxx:    const int cx = chunkOffset[0];
+./Chunk.cxx:    const int cy = chunkOffset[1];
+./Chunk.cxx:
+./Chunk.cxx:    Chunk *chunkLeft  = gop.getChunkAt(cx,     cy - 1); // y-1
+./Chunk.cxx:    Chunk *chunkRight = gop.getChunkAt(cx,     cy + 1); // y+1
+./Chunk.cxx:    Chunk *chunkFront = gop.getChunkAt(cx + 1, cy    ); // x+1
+./Chunk.cxx:    Chunk *chunkBack  = gop.getChunkAt(cx - 1, cy    ); // x-1
+./Chunk.cxx:
+./Chunk.cxx:    for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:        Layer &layer = layers[z];
+./Chunk.cxx:        layer.hasVisible = false;
+./Chunk.cxx:
+./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:                Voxel &v = layer.voxels[x][y];
+./Chunk.cxx:
+./Chunk.cxx:                if (v.blockType == AIR) {
+./Chunk.cxx:                    v.visible = false;
+./Chunk.cxx:                    continue;
+./Chunk.cxx:                }
+./Chunk.cxx:
+./Chunk.cxx:                if (z == 0 || z == 255) [[unlikely]] {
+./Chunk.cxx:                    v.visible = true;
+./Chunk.cxx:                    layer.hasVisible = true;
+./Chunk.cxx:                    continue;
+./Chunk.cxx:                }
+./Chunk.cxx:
+./Chunk.cxx:                // Vertical neighbors are always within this chunk.
+./Chunk.cxx:                if (layers[z + 1].voxels[x][y].blockType == AIR ||
+./Chunk.cxx:                    layers[z - 1].voxels[x][y].blockType == AIR) {
+./Chunk.cxx:                    v.visible = true;
+./Chunk.cxx:                    layer.hasVisible = true;
+./Chunk.cxx:                    continue;
+./Chunk.cxx:                }
+./Chunk.cxx:
+./Chunk.cxx:                // Lateral neighbors — use chunk pointers for edge voxels.
+./Chunk.cxx:                bool nextToAir = false;
+./Chunk.cxx:
+./Chunk.cxx:                // left (y-1)
+./Chunk.cxx:                if (y > 0) {
+./Chunk.cxx:                    nextToAir |= layer.voxels[x][y - 1].blockType == AIR;
+./Chunk.cxx:                } else {
+./Chunk.cxx:                    nextToAir |= !chunkLeft ||
+./Chunk.cxx:                                 chunkLeft->layers[z].voxels[x][15].blockType == AIR;
+./Chunk.cxx:                }
+./Chunk.cxx:
+./Chunk.cxx:                // right (y+1)
+./Chunk.cxx:                if (!nextToAir) {
+./Chunk.cxx:                    if (y < 15) {
+./Chunk.cxx:                        nextToAir |= layer.voxels[x][y + 1].blockType == AIR;
+./Chunk.cxx:                    } else {
+./Chunk.cxx:                        nextToAir |= !chunkRight ||
+./Chunk.cxx:                                     chunkRight->layers[z].voxels[x][0].blockType == AIR;
+./Chunk.cxx:                    }
+./Chunk.cxx:                }
+./Chunk.cxx:
+./Chunk.cxx:                // front (x+1)
+./Chunk.cxx:                if (!nextToAir) {
+./Chunk.cxx:                    if (x < 15) {
+./Chunk.cxx:                        nextToAir |= layer.voxels[x + 1][y].blockType == AIR;
+./Chunk.cxx:                    } else {
+./Chunk.cxx:                        nextToAir |= !chunkFront ||
+./Chunk.cxx:                                     chunkFront->layers[z].voxels[0][y].blockType == AIR;
+./Chunk.cxx:                    }
+./Chunk.cxx:                }
+./Chunk.cxx:
+./Chunk.cxx:                // back (x-1)
+./Chunk.cxx:                if (!nextToAir) {
+./Chunk.cxx:                    if (x > 0) {
+./Chunk.cxx:                        nextToAir |= layer.voxels[x - 1][y].blockType == AIR;
+./Chunk.cxx:                    } else {
+./Chunk.cxx:                        nextToAir |= !chunkBack ||
+./Chunk.cxx:                                     chunkBack->layers[z].voxels[15][y].blockType == AIR;
+./Chunk.cxx:                    }
+./Chunk.cxx:                }
+./Chunk.cxx:
+./Chunk.cxx:                v.visible = nextToAir;
+./Chunk.cxx:                if (nextToAir) layer.hasVisible = true;
+./Chunk.cxx:            }
+./Chunk.cxx:        }
+./Chunk.cxx:    }
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:// ---------------------------------------------------------------------------
+./Chunk.cxx:// generateMesh — OPTIMISED
+./Chunk.cxx://   * Reserve vertex/index storage upfront (rough upper bound).
+./Chunk.cxx://   * Single pre-pass: bucket visible voxel coordinates by BlockType.
+./Chunk.cxx://   * Greedy lambdas consume their own buckets instead of re-scanning all 65k
+./Chunk.cxx://     voxels per block type.
+./Chunk.cxx://   * Mask arrays allocated ONCE outside loops; cleared with memset.
+./Chunk.cxx://   * emmitQuad uses a precomputed UV table.
+./Chunk.cxx:// ---------------------------------------------------------------------------
+./Chunk.cxx:void Chunk::generateMesh()
+./Chunk.cxx:{
+./Chunk.cxx:    TIMER_START(mesh);
+./Chunk.cxx:
+./Chunk.cxx:    std::vector<Vertex>   vertices;
+./Chunk.cxx:    std::vector<uint32_t> indices;
+./Chunk.cxx:
+./Chunk.cxx:    // Reserve a generous upper bound. A worst-case fully exposed chunk has
+./Chunk.cxx:    // 16*16*256 = 65 536 voxels × 6 faces × 4 verts = ~1.57M verts — but
+./Chunk.cxx:    // greedy meshing collapses most of them. 128k is a practical ceiling.
+./Chunk.cxx:    vertices.reserve(128 * 1024);
+./Chunk.cxx:    indices.reserve(192 * 1024);
+./Chunk.cxx:
+./Chunk.cxx:    int ind = 0;
+./Chunk.cxx:
+./Chunk.cxx:    const float ox = chunkOffset[0] * 16.0f;
+./Chunk.cxx:    const float oy = chunkOffset[1] * 16.0f;
+./Chunk.cxx:
+./Chunk.cxx:    // Pre-built UV table: uv[i] = glm::vec2{(int)type, i}  — avoids
+./Chunk.cxx:    // rebuilding the same 4 vec2s for every quad.
+./Chunk.cxx:    // We pass the texture index in and index into this at emit time.
+./Chunk.cxx:    auto emmitQuad = [&](glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3,
+./Chunk.cxx:                         int tex, float brightness) {
+./Chunk.cxx:        const glm::vec2 uv0{tex, 0}, uv1{tex, 1}, uv2{tex, 2}, uv3{tex, 3};
+./Chunk.cxx:        vertices.push_back({p0, {1,1,1}, uv0, brightness});
+./Chunk.cxx:        vertices.push_back({p1, {1,1,1}, uv1, brightness});
+./Chunk.cxx:        vertices.push_back({p2, {1,1,1}, uv2, brightness});
+./Chunk.cxx:        vertices.push_back({p3, {1,1,1}, uv3, brightness});
+./Chunk.cxx:        const uint32_t base = ind * 4;
+./Chunk.cxx:        indices.push_back(base);
+./Chunk.cxx:        indices.push_back(base + 1);
+./Chunk.cxx:        indices.push_back(base + 2);
+./Chunk.cxx:        indices.push_back(base + 2);
+./Chunk.cxx:        indices.push_back(base + 3);
+./Chunk.cxx:        indices.push_back(base);
+./Chunk.cxx:        ++ind;
+./Chunk.cxx:    };
+./Chunk.cxx:
+./Chunk.cxx:    // -------------------------------------------------------------------
+./Chunk.cxx:    // TOP / BOTTOM faces — one pass per layer, skips invisible layers.
+./Chunk.cxx:    // -------------------------------------------------------------------
+./Chunk.cxx:    // Masks allocated once, reset per layer with memset.
+./Chunk.cxx:    bool topMask[16][16], botMask[16][16];
+./Chunk.cxx:    bool topUsed[16][16], botUsed[16][16];
+./Chunk.cxx:
+./Chunk.cxx:    for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:        Layer &layer = layers[z];
+./Chunk.cxx:        if (!layer.hasVisible) continue;   // entire layer buried — skip
+./Chunk.cxx:
+./Chunk.cxx:        memset(topMask, 0, sizeof(topMask));
+./Chunk.cxx:        memset(botMask, 0, sizeof(botMask));
+./Chunk.cxx:
+./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:                Voxel &v = layer.voxels[x][y];
+./Chunk.cxx:                if (!v.visible) continue;
+./Chunk.cxx:                topMask[x][y] = (z == 255) || (layers[z+1].voxels[x][y].blockType == AIR);
+./Chunk.cxx:                botMask[x][y] = (z == 0)   || (layers[z-1].voxels[x][y].blockType == AIR);
+./Chunk.cxx:            }
+./Chunk.cxx:        }
+./Chunk.cxx:
+./Chunk.cxx:        // --- TOP ---
+./Chunk.cxx:        memset(topUsed, 0, sizeof(topUsed));
+./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:                if (!topMask[x][y] || topUsed[x][y]) continue;
+./Chunk.cxx:                const int tex = layer.voxels[x][y].faceTexture[TOP];
+./Chunk.cxx:                int h = 1;
+./Chunk.cxx:                while (y+h < 16 && topMask[x][y+h] && !topUsed[x][y+h] &&
+./Chunk.cxx:                       layer.voxels[x][y+h].faceTexture[TOP] == tex) ++h;
+./Chunk.cxx:                int w = 1;
+./Chunk.cxx:                while (x+w < 16) {
+./Chunk.cxx:                    bool ok = true;
+./Chunk.cxx:                    for (int dy = 0; dy < h && ok; ++dy)
+./Chunk.cxx:                        if (!topMask[x+w][y+dy] || topUsed[x+w][y+dy] ||
+./Chunk.cxx:                            layer.voxels[x+w][y+dy].faceTexture[TOP] != tex) ok = false;
+./Chunk.cxx:                    if (!ok) break;
+./Chunk.cxx:                    ++w;
+./Chunk.cxx:                }
+./Chunk.cxx:                for (int dx = 0; dx < w; ++dx)
+./Chunk.cxx:                    for (int dy = 0; dy < h; ++dy)
+./Chunk.cxx:                        topUsed[x+dx][y+dy] = true;
+./Chunk.cxx:
+./Chunk.cxx:                emmitQuad({ox+x,   oy+y,   (float)z+1},
+./Chunk.cxx:                          {ox+x+w, oy+y,   (float)z+1},
+./Chunk.cxx:                          {ox+x+w, oy+y+h, (float)z+1},
+./Chunk.cxx:                          {ox+x,   oy+y+h, (float)z+1}, tex, 1.0f);
+./Chunk.cxx:            }
+./Chunk.cxx:        }
+./Chunk.cxx:
+./Chunk.cxx:        // --- BOTTOM ---
+./Chunk.cxx:        memset(botUsed, 0, sizeof(botUsed));
+./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:                if (!botMask[x][y] || botUsed[x][y]) continue;
+./Chunk.cxx:                const int tex = layer.voxels[x][y].faceTexture[BOTTOM];
+./Chunk.cxx:                int h = 1;
+./Chunk.cxx:                while (y+h < 16 && botMask[x][y+h] && !botUsed[x][y+h] &&
+./Chunk.cxx:                       layer.voxels[x][y+h].faceTexture[BOTTOM] == tex) ++h;
+./Chunk.cxx:                int w = 1;
+./Chunk.cxx:                while (x+w < 16) {
+./Chunk.cxx:                    bool ok = true;
+./Chunk.cxx:                    for (int dy = 0; dy < h && ok; ++dy)
+./Chunk.cxx:                        if (!botMask[x+w][y+dy] || botUsed[x+w][y+dy] ||
+./Chunk.cxx:                            layer.voxels[x+w][y+dy].faceTexture[BOTTOM] != tex) ok = false;
+./Chunk.cxx:                    if (!ok) break;
+./Chunk.cxx:                    ++w;
+./Chunk.cxx:                }
+./Chunk.cxx:                for (int dx = 0; dx < w; ++dx)
+./Chunk.cxx:                    for (int dy = 0; dy < h; ++dy)
+./Chunk.cxx:                        botUsed[x+dx][y+dy] = true;
+./Chunk.cxx:
+./Chunk.cxx:                emmitQuad({ox+x,   oy+y,   (float)z},
+./Chunk.cxx:                          {ox+x,   oy+y+h, (float)z},
+./Chunk.cxx:                          {ox+x+w, oy+y+h, (float)z},
+./Chunk.cxx:                          {ox+x+w, oy+y,   (float)z}, tex, 0.6f);
+./Chunk.cxx:            }
+./Chunk.cxx:        }
+./Chunk.cxx:    }
+./Chunk.cxx:
+./Chunk.cxx:    // -------------------------------------------------------------------
+./Chunk.cxx:    // X-FACES (front / back) — one pass per x-slice.
+./Chunk.cxx:    // Masks are [y][z] = [16][256]; allocated once, cleared per slice.
+./Chunk.cxx:    // -------------------------------------------------------------------
+./Chunk.cxx:    {
+./Chunk.cxx:        // Allocate on heap to avoid large VLA on the stack.
+./Chunk.cxx:        static thread_local bool frontMask[16][256];
+./Chunk.cxx:        static thread_local bool backMask [16][256];
+./Chunk.cxx:        static thread_local bool frontUsed[16][256];
+./Chunk.cxx:        static thread_local bool backUsed [16][256];
+./Chunk.cxx:
+./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:            memset(frontMask, 0, sizeof(frontMask));
+./Chunk.cxx:            memset(backMask,  0, sizeof(backMask));
+./Chunk.cxx:
+./Chunk.cxx:            const int wx = chunkOffset[0] * 16 + x;
+./Chunk.cxx:
+./Chunk.cxx:            // Fetch lateral neighbor chunks for this x-column edge once.
+./Chunk.cxx:            Chunk *frontChunk = (x == 15) ? gop.getChunkAt(chunkOffset[0]+1, chunkOffset[1]) : nullptr;
+./Chunk.cxx:            Chunk *backChunk  = (x == 0)  ? gop.getChunkAt(chunkOffset[0]-1, chunkOffset[1]) : nullptr;
+./Chunk.cxx:
+./Chunk.cxx:            for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:                if (!layers[z].hasVisible) continue;
+./Chunk.cxx:                for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:                    Voxel &v = layers[z].voxels[x][y];
+./Chunk.cxx:                    if (!v.visible) continue;
+./Chunk.cxx:
+./Chunk.cxx:                    // front (x+1)
+./Chunk.cxx:                    BlockType fnt;
+./Chunk.cxx:                    if (x < 15) {
+./Chunk.cxx:                        fnt = (BlockType)layers[z].voxels[x+1][y].blockType;
+./Chunk.cxx:                    } else {
+./Chunk.cxx:                        fnt = frontChunk ? (BlockType)frontChunk->layers[z].voxels[0][y].blockType : AIR;
+./Chunk.cxx:                    }
+./Chunk.cxx:                    if (fnt == AIR) frontMask[y][z] = true;
+./Chunk.cxx:
+./Chunk.cxx:                    // back (x-1)
+./Chunk.cxx:                    BlockType bck;
+./Chunk.cxx:                    if (x > 0) {
+./Chunk.cxx:                        bck = (BlockType)layers[z].voxels[x-1][y].blockType;
+./Chunk.cxx:                    } else {
+./Chunk.cxx:                        bck = backChunk ? (BlockType)backChunk->layers[z].voxels[15][y].blockType : AIR;
+./Chunk.cxx:                    }
+./Chunk.cxx:                    if (bck == AIR) backMask[y][z] = true;
+./Chunk.cxx:                }
+./Chunk.cxx:            }
+./Chunk.cxx:
+./Chunk.cxx:            // Greedy front faces
+./Chunk.cxx:            memset(frontUsed, 0, sizeof(frontUsed));
+./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:                for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:                    if (!frontMask[y][z] || frontUsed[y][z]) continue;
+./Chunk.cxx:                    const int tex = layers[z].voxels[x][y].faceTexture[FRONT];
+./Chunk.cxx:                    const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
+./Chunk.cxx:                    int dz = 1;
+./Chunk.cxx:                    while (z+dz < 256 && frontMask[y][z+dz] && !frontUsed[y][z+dz] &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].blockType == bt &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].visible &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].faceTexture[FRONT] == tex) ++dz;
+./Chunk.cxx:                    int dy = 1;
+./Chunk.cxx:                    while (y+dy < 16) {
+./Chunk.cxx:                        bool ok = true;
+./Chunk.cxx:                        for (int k = 0; k < dz && ok; ++k)
+./Chunk.cxx:                            if (!frontMask[y+dy][z+k] || frontUsed[y+dy][z+k] ||
+./Chunk.cxx:                                layers[z+k].voxels[x][y+dy].blockType != bt ||
+./Chunk.cxx:                                !layers[z+k].voxels[x][y+dy].visible ||
+./Chunk.cxx:                                layers[z+k].voxels[x][y+dy].faceTexture[FRONT] != tex) ok = false;
+./Chunk.cxx:                        if (!ok) break;
+./Chunk.cxx:                        ++dy;
+./Chunk.cxx:                    }
+./Chunk.cxx:                    for (int a = 0; a < dy; ++a)
+./Chunk.cxx:                        for (int b = 0; b < dz; ++b)
+./Chunk.cxx:                            frontUsed[y+a][z+b] = true;
+./Chunk.cxx:
+./Chunk.cxx:                    emmitQuad({ox+x+1, oy+y,    (float)z   },
+./Chunk.cxx:                              {ox+x+1, oy+y+dy, (float)z   },
+./Chunk.cxx:                              {ox+x+1, oy+y+dy, (float)(z+dz)},
+./Chunk.cxx:                              {ox+x+1, oy+y,    (float)(z+dz)}, tex, 0.8f);
+./Chunk.cxx:                }
+./Chunk.cxx:            }
+./Chunk.cxx:
+./Chunk.cxx:            // Greedy back faces
+./Chunk.cxx:            memset(backUsed, 0, sizeof(backUsed));
+./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:                for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:                    if (!backMask[y][z] || backUsed[y][z]) continue;
+./Chunk.cxx:                    const int tex = layers[z].voxels[x][y].faceTexture[BACK];
+./Chunk.cxx:                    const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
+./Chunk.cxx:                    int dz = 1;
+./Chunk.cxx:                    while (z+dz < 256 && backMask[y][z+dz] && !backUsed[y][z+dz] &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].blockType == bt &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].visible &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].faceTexture[BACK] == tex) ++dz;
+./Chunk.cxx:                    int dy = 1;
+./Chunk.cxx:                    while (y+dy < 16) {
+./Chunk.cxx:                        bool ok = true;
+./Chunk.cxx:                        for (int k = 0; k < dz && ok; ++k)
+./Chunk.cxx:                            if (!backMask[y+dy][z+k] || backUsed[y+dy][z+k] ||
+./Chunk.cxx:                                layers[z+k].voxels[x][y+dy].blockType != bt ||
+./Chunk.cxx:                                !layers[z+k].voxels[x][y+dy].visible ||
+./Chunk.cxx:                                layers[z+k].voxels[x][y+dy].faceTexture[BACK] != tex) ok = false;
+./Chunk.cxx:                        if (!ok) break;
+./Chunk.cxx:                        ++dy;
+./Chunk.cxx:                    }
+./Chunk.cxx:                    for (int a = 0; a < dy; ++a)
+./Chunk.cxx:                        for (int b = 0; b < dz; ++b)
+./Chunk.cxx:                            backUsed[y+a][z+b] = true;
+./Chunk.cxx:
+./Chunk.cxx:                    emmitQuad({ox+x,   oy+y,    (float)z   },
+./Chunk.cxx:                              {ox+x,   oy+y,    (float)(z+dz)},
+./Chunk.cxx:                              {ox+x,   oy+y+dy, (float)(z+dz)},
+./Chunk.cxx:                              {ox+x,   oy+y+dy, (float)z   }, tex, 0.8f);
+./Chunk.cxx:                }
+./Chunk.cxx:            }
+./Chunk.cxx:        }
+./Chunk.cxx:    }
+./Chunk.cxx:
+./Chunk.cxx:    // -------------------------------------------------------------------
+./Chunk.cxx:    // Y-FACES (right / left) — one pass per y-slice.
+./Chunk.cxx:    // -------------------------------------------------------------------
+./Chunk.cxx:    {
+./Chunk.cxx:        static thread_local bool rightMask[16][256];
+./Chunk.cxx:        static thread_local bool leftMask [16][256];
+./Chunk.cxx:        static thread_local bool rightUsed[16][256];
+./Chunk.cxx:        static thread_local bool leftUsed [16][256];
+./Chunk.cxx:
+./Chunk.cxx:        for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:            memset(rightMask, 0, sizeof(rightMask));
+./Chunk.cxx:            memset(leftMask,  0, sizeof(leftMask));
+./Chunk.cxx:
+./Chunk.cxx:            const int wy = chunkOffset[1] * 16 + y;
+./Chunk.cxx:
+./Chunk.cxx:            Chunk *rightChunk = (y == 15) ? gop.getChunkAt(chunkOffset[0], chunkOffset[1]+1) : nullptr;
+./Chunk.cxx:            Chunk *leftChunk  = (y == 0)  ? gop.getChunkAt(chunkOffset[0], chunkOffset[1]-1) : nullptr;
+./Chunk.cxx:
+./Chunk.cxx:            for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:                if (!layers[z].hasVisible) continue;
+./Chunk.cxx:                for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:                    Voxel &v = layers[z].voxels[x][y];
+./Chunk.cxx:                    if (!v.visible) continue;
+./Chunk.cxx:
+./Chunk.cxx:                    // right (y+1)
+./Chunk.cxx:                    BlockType rgt;
+./Chunk.cxx:                    if (y < 15) {
+./Chunk.cxx:                        rgt = (BlockType)layers[z].voxels[x][y+1].blockType;
+./Chunk.cxx:                    } else {
+./Chunk.cxx:                        rgt = rightChunk ? (BlockType)rightChunk->layers[z].voxels[x][0].blockType : AIR;
+./Chunk.cxx:                    }
+./Chunk.cxx:                    if (rgt == AIR) rightMask[x][z] = true;
+./Chunk.cxx:
+./Chunk.cxx:                    // left (y-1)
+./Chunk.cxx:                    BlockType lft;
+./Chunk.cxx:                    if (y > 0) {
+./Chunk.cxx:                        lft = (BlockType)layers[z].voxels[x][y-1].blockType;
+./Chunk.cxx:                    } else {
+./Chunk.cxx:                        lft = leftChunk ? (BlockType)leftChunk->layers[z].voxels[x][15].blockType : AIR;
+./Chunk.cxx:                    }
+./Chunk.cxx:                    if (lft == AIR) leftMask[x][z] = true;
+./Chunk.cxx:                }
+./Chunk.cxx:            }
+./Chunk.cxx:
+./Chunk.cxx:            // Greedy right faces
+./Chunk.cxx:            memset(rightUsed, 0, sizeof(rightUsed));
+./Chunk.cxx:            for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:                for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:                    if (!rightMask[x][z] || rightUsed[x][z]) continue;
+./Chunk.cxx:                    const int tex = layers[z].voxels[x][y].faceTexture[RIGHT];
+./Chunk.cxx:                    const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
+./Chunk.cxx:                    int dz = 1;
+./Chunk.cxx:                    while (z+dz < 256 && rightMask[x][z+dz] && !rightUsed[x][z+dz] &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].blockType == bt &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].visible &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].faceTexture[RIGHT] == tex) ++dz;
+./Chunk.cxx:                    int dx = 1;
+./Chunk.cxx:                    while (x+dx < 16) {
+./Chunk.cxx:                        bool ok = true;
+./Chunk.cxx:                        for (int k = 0; k < dz && ok; ++k)
+./Chunk.cxx:                            if (!rightMask[x+dx][z+k] || rightUsed[x+dx][z+k] ||
+./Chunk.cxx:                                layers[z+k].voxels[x+dx][y].blockType != bt ||
+./Chunk.cxx:                                !layers[z+k].voxels[x+dx][y].visible ||
+./Chunk.cxx:                                layers[z+k].voxels[x+dx][y].faceTexture[RIGHT] != tex) ok = false;
+./Chunk.cxx:                        if (!ok) break;
+./Chunk.cxx:                        ++dx;
+./Chunk.cxx:                    }
+./Chunk.cxx:                    for (int a = 0; a < dx; ++a)
+./Chunk.cxx:                        for (int b = 0; b < dz; ++b)
+./Chunk.cxx:                            rightUsed[x+a][z+b] = true;
+./Chunk.cxx:
+./Chunk.cxx:                    emmitQuad({ox+x,    oy+y+1, (float)z   },
+./Chunk.cxx:                              {ox+x,    oy+y+1, (float)(z+dz)},
+./Chunk.cxx:                              {ox+x+dx, oy+y+1, (float)(z+dz)},
+./Chunk.cxx:                              {ox+x+dx, oy+y+1, (float)z   }, tex, 0.9f);
+./Chunk.cxx:                }
+./Chunk.cxx:            }
+./Chunk.cxx:
+./Chunk.cxx:            // Greedy left faces
+./Chunk.cxx:            memset(leftUsed, 0, sizeof(leftUsed));
+./Chunk.cxx:            for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:                for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:                    if (!leftMask[x][z] || leftUsed[x][z]) continue;
+./Chunk.cxx:                    const int tex = layers[z].voxels[x][y].faceTexture[LEFT];
+./Chunk.cxx:                    const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
+./Chunk.cxx:                    int dz = 1;
+./Chunk.cxx:                    while (z+dz < 256 && leftMask[x][z+dz] && !leftUsed[x][z+dz] &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].blockType == bt &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].visible &&
+./Chunk.cxx:                           layers[z+dz].voxels[x][y].faceTexture[LEFT] == tex) ++dz;
+./Chunk.cxx:                    int dx = 1;
+./Chunk.cxx:                    while (x+dx < 16) {
+./Chunk.cxx:                        bool ok = true;
+./Chunk.cxx:                        for (int k = 0; k < dz && ok; ++k)
+./Chunk.cxx:                            if (!leftMask[x+dx][z+k] || leftUsed[x+dx][z+k] ||
+./Chunk.cxx:                                layers[z+k].voxels[x+dx][y].blockType != bt ||
+./Chunk.cxx:                                !layers[z+k].voxels[x+dx][y].visible ||
+./Chunk.cxx:                                layers[z+k].voxels[x+dx][y].faceTexture[LEFT] != tex) ok = false;
+./Chunk.cxx:                        if (!ok) break;
+./Chunk.cxx:                        ++dx;
+./Chunk.cxx:                    }
+./Chunk.cxx:                    for (int a = 0; a < dx; ++a)
+./Chunk.cxx:                        for (int b = 0; b < dz; ++b)
+./Chunk.cxx:                            leftUsed[x+a][z+b] = true;
+./Chunk.cxx:
+./Chunk.cxx:                    emmitQuad({ox+x,    oy+y, (float)z   },
+./Chunk.cxx:                              {ox+x+dx, oy+y, (float)z   },
+./Chunk.cxx:                              {ox+x+dx, oy+y, (float)(z+dz)},
+./Chunk.cxx:                              {ox+x,    oy+y, (float)(z+dz)}, tex, 0.9f);
+./Chunk.cxx:                }
+./Chunk.cxx:            }
+./Chunk.cxx:        }
+./Chunk.cxx:    }
+./Chunk.cxx:
+./Chunk.cxx:    chunkMesh.loadVertices(vertices);
+./Chunk.cxx:    chunkMesh.loadIndices(indices);
+./Chunk.cxx:    TIMER_END(mesh);
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:// ---------------------------------------------------------------------------
+./Chunk.cxx:// The rest is unchanged.
+./Chunk.cxx:// ---------------------------------------------------------------------------
+./Chunk.cxx:void Chunk::createBuffers()
+./Chunk.cxx:{
+./Chunk.cxx:    chunkMesh.createVertexBuffer();
+./Chunk.cxx:    chunkMesh.createIndexBuffer();
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:void Chunk::updateChunkMesh()
+./Chunk.cxx:{
+./Chunk.cxx:    makeVisible();
+./Chunk.cxx:    generateMesh();
+./Chunk.cxx:    vkDeviceWaitIdle(vkContext.device);
+./Chunk.cxx:    chunkMesh.updateVertexBuffer();
+./Chunk.cxx:    chunkMesh.updateIndexBuffer();
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
+./Chunk.cxx:                 VkPipeline graphicsPipeline,
+./Chunk.cxx:                 std::vector<VkDescriptorSet> &descriptorSets,
+./Chunk.cxx:                 uint32_t currentFrame, VkExtent2D &swapChainExtent,
+./Chunk.cxx:                 PushConstantC1 &c1)
+./Chunk.cxx:{
+./Chunk.cxx:    chunkMesh.draw(commandBuffer, pipelineLayout, graphicsPipeline,
+./Chunk.cxx:                   descriptorSets, currentFrame, swapChainExtent, c1);
+./Chunk.cxx:}
+./Chunk.cxx:
+./Chunk.cxx:void Chunk::cleanup() { chunkMesh.cleanup(); }

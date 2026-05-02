@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <cstring>
+#include <fmt/core.h>
 #include <iostream>
 
 #include "Camera.h"
@@ -123,6 +124,16 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage) {
 
   playerS1->handlePlayerMovement(ubo, swapChainExtent, *event.get());
   inventory->inventoryUpdates(*event);
+
+  int baseChunksX = int(floor(playerS1->selfTransform.position.x)) >> 4;
+  int baseChunksY = int(floor(playerS1->selfTransform.position.y)) >> 4;
+
+  for (int x = -RENDER_DISTANCE; x < RENDER_DISTANCE; x++) {
+    for (int y = -RENDER_DISTANCE; y < RENDER_DISTANCE; y++) {
+      terrain->generateNewChunks(baseChunksX + x, baseChunksY + y);
+    }
+  }
+
   memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
   keys.update(event.get(), {GLFW_KEY_E, GLFW_KEY_ESCAPE});
 }

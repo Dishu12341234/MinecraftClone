@@ -26,6 +26,7 @@ struct Layer {
   int z;
   std::unordered_set<int> blocksTypes{0};
   Voxel voxels[16][16];
+  bool hasVisible = true;
 };
 
 class GameObjectPool;
@@ -63,5 +64,5 @@ public:
             VkExtent2D &swapChainExtent, PushConstantC1 &c1);
 
   void cleanup();
-  ~Chunk();
+  ~Chunk() = default;
 };

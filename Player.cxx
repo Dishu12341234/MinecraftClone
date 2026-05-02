@@ -1,7 +1,9 @@
 #include "Player.h"
 #include "Camera.h"
 #include "Structs.h"
+#include "Terrain.h"
 #include <cmath>
+#include <fmt/core.h>
 #include <iostream>
 
 Player::Player(VulkanContext &vkContext, GameObjectPool &gop)

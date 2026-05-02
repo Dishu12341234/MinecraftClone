@@ -15,6 +15,8 @@ private:
     VulkanContext vkContext;
 
     friend class HelloTriangleApplication;
+    friend class Chunk;
+
     Terrain *terrain;
 
 public:
@@ -23,7 +25,6 @@ public:
     void cleanUpResources();
 
     Voxel *getVoxelGlobal(BlockCoordinates globalCoords);
-
     ~GameObjectPool();
 };
 

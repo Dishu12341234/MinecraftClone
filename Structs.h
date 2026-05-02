@@ -10,13 +10,13 @@
 #include <glm/gtx/hash.hpp>
 
 namespace BlockFaces {
-inline int grassFaceTexture[6] = {0, 1, 1, 1, 1, 1};
-inline int dirtFaceTexture[6] = {1, 1, 1, 1, 1, 1};
-inline int woodFaceTexture[6] = {3, 3, 3, 3, 3, 3};
-inline int leavesFaceTexture[6] = {4, 4, 4, 4, 4, 4};
-inline int stoneFaceTexture[6] = {5, 5, 5, 5, 5, 5};
-inline int bedrockFaceTexture[6] = {6, 6, 6, 6, 6, 6};
-inline int corruptFaceTexture[6] = {19, 19, 19, 19, 19, 19};
+inline char grassFaceTexture[6] = {0, 1, 1, 1, 1, 1};
+inline char dirtFaceTexture[6] = {1, 1, 1, 1, 1, 1};
+inline char woodFaceTexture[6] = {3, 3, 3, 3, 3, 3};
+inline char leavesFaceTexture[6] = {4, 4, 4, 4, 4, 4};
+inline char stoneFaceTexture[6] = {5, 5, 5, 5, 5, 5};
+inline char bedrockFaceTexture[6] = {6, 6, 6, 6, 6, 6};
+inline char corruptFaceTexture[6] = {19, 19, 19, 19, 19, 19};
 }; // namespace BlockFaces
 
 enum FaceDirection { TOP = 0, BOTTOM, LEFT, RIGHT, FRONT, BACK };
@@ -57,13 +57,13 @@ struct Transform {
 };
 
 enum BlockType {
-  AIR=0,
-  GRASS=1,
-  DIRT=2,
-  WOOD=3,
-  LEAF=4,
-  STONE=5,
-  BEDROCK=6,
+  AIR = 0,
+  GRASS = 1,
+  DIRT = 2,
+  WOOD = 3,
+  LEAF = 4,
+  STONE = 5,
+  BEDROCK = 6,
   END_BLOCK_TYPE
 };
 

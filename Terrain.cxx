@@ -1,4 +1,5 @@
 #include "Terrain.h"
+#include "Chunk.h"
 #include <fmt/base.h>
 #include <fmt/core.h>
 #include <ranges>
@@ -72,6 +73,21 @@ void Terrain::cleanup() {
     it->second->cleanup();
     delete it->second;
   }
+}
+
+void Terrain::generateNewChunks(int chunkX, int chunkY) {
+
+  auto it = chunks.find(chunkKey(chunkX, chunkY));
+
+  if (it != chunks.end())
+    return;
+
+  Chunk *c = new Chunk(chunkX, chunkY, vkContext, gop);
+  chunks.emplace(chunkKey(chunkX, chunkY), c);
+
+  c->makeVisible();
+  c->generateMesh();
+  c->createBuffers();
 }
 
 Terrain::~Terrain() {}

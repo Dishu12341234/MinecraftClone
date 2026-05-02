@@ -1,32 +1,28 @@
 #pragma once
 #include "PassInfo.hpp"
 #include "Structs.h"
+#include <glm/ext/vector_float3.hpp>
 
-
-
-class Voxel
-{
+class Voxel {
 private:
-    Transform transform;
-    int blockType = AIR;
-    //top , bottom, left, right, front, back
-    const int* faceTexture = BlockFaces::corruptFaceTexture; // default to a bright pink texture to easily spot untextured blocks
+  char blockType = AIR;
+  // top , bottom, left, right, front, back
+  const char *faceTexture =
+      BlockFaces::corruptFaceTexture; // default to a bright pink texture to
+                                      // easily spot untextured blocks
 
-    AxisAlignedBoundingBox aabb{};
+  bool visible = false;
 
-    bool visible = false;
+  friend class Chunk;
+  friend class Player;
+  friend class Camera;
 
-    friend class Chunk;
-    friend class Player;
-    friend class Camera;
 public:
-    Voxel(BlockType blockType = AIR);
+  Voxel(BlockType blockType = AIR);
 
-    void setType(BlockType blockType);
-    void setPosition(glm::vec3 position);
-    void setRotation(glm::vec3 rotation);
-    void setScale(glm::vec3 scale);
-    BlockType getBlockType();
+  void setType(BlockType blockType);
+  void setScale(glm::vec3 scale);
+  BlockType getBlockType();
 
-    ~Voxel();
+  ~Voxel();
 };
