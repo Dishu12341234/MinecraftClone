@@ -130,10 +130,11 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage) {
 
   for (int x = -RENDER_DISTANCE; x < RENDER_DISTANCE; x++) {
     for (int y = -RENDER_DISTANCE; y < RENDER_DISTANCE; y++) {
-      terrain->generateNewChunks(baseChunksX + x, baseChunksY + y);
+      terrain->apppendNewChunkAsyncronously(baseChunksX + x, baseChunksY + y);
     }
   }
 
+  terrain->sweepHandleTerrain(baseChunksX, baseChunksY);
   memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
   keys.update(event.get(), {GLFW_KEY_E, GLFW_KEY_ESCAPE});
 }

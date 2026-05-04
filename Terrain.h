@@ -1,16 +1,36 @@
 #pragma once
 #include "Chunk.h"
 #include "GameObjectPool.h"
-#define RENDER_DISTANCE 3
+#include <atomic>
+#include <cstdint>
+#include <mutex>
+#include <set>
+#include <thread>
+#include <vector>
+#define RENDER_DISTANCE 10
 
 #include <unordered_map>
+
+struct chunkSubmitCreateInfo {
+  int x{};
+  int y{};
+};
 
 class Terrain {
 private:
   VulkanContext &vkContext;
   std::unordered_map<uint64_t, Chunk *> chunks;
   GameObjectPool &gop;
+
+  std::atomic<bool> running{true};
   bool ready{false};
+
+  std::vector<chunkSubmitCreateInfo> chunksSubmitVector;
+  std::set<uint64_t> chunksLoaded;
+  std::atomic<uint64_t> nChunksLoaded{0};
+  std::thread chunkBuilderThread;
+  std::recursive_mutex chunkMutex;
+
   friend class HelloTriangleApplication;
 
 public:
@@ -22,9 +42,14 @@ public:
   Chunk *getChunkByKey(uint64_t key);
 
   void generateChunks();
+
   void updateChunkMesh(int cmx, int cmy);
 
+  void apppendNewChunkAsyncronously(int cx, int cy);
+
   void generateNewChunks(int chunkX, int chunkY);
+
+  void sweepHandleTerrain(int, int);
 
   void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
             VkPipeline graphicsPipeline,

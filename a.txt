@@ -190,73 +190,6 @@
 ./Camera.h:};
 ./Camera.h:
 ./Camera.h:#endif
-./Chunk.h:#pragma once
-./Chunk.h:
-./Chunk.h:#include <unordered_set>
-./Chunk.h:
-./Chunk.h:#include "Mesh.h"
-./Chunk.h:#include "PassInfo.hpp"
-./Chunk.h:#include "Structs.h"
-./Chunk.h:#include "Voxel.h"
-./Chunk.h:
-./Chunk.h:#include <chrono>
-./Chunk.h:#include <array>
-./Chunk.h:
-./Chunk.h:#define TIMER_START(name)                                                      \
-./Chunk.h:  auto name##_start = std::chrono::high_resolution_clock::now();
-./Chunk.h:
-./Chunk.h:#define TIMER_END(name)                                                        \
-./Chunk.h:  {                                                                            \
-./Chunk.h:    auto name##_end = std::chrono::high_resolution_clock::now();               \
-./Chunk.h:    auto name##_dur = std::chrono::duration_cast<std::chrono::milliseconds>(   \
-./Chunk.h:                          name##_end - name##_start)                           \
-./Chunk.h:                          .count();                                            \
-./Chunk.h:    std::cout << #name << " took " << name##_dur << " ms\n";                   \
-./Chunk.h:  }
-./Chunk.h:
-./Chunk.h:struct Layer {
-./Chunk.h:  int z;
-./Chunk.h:  std::unordered_set<int> blocksTypes{0};
-./Chunk.h:  Voxel voxels[16][16];
-./Chunk.h:};
-./Chunk.h:
-./Chunk.h:class GameObjectPool;
-./Chunk.h:
-./Chunk.h:class Chunk {
-./Chunk.h:private:
-./Chunk.h:  VulkanContext &vkContext;
-./Chunk.h:
-./Chunk.h:  std::array<Layer, 256> layers;
-./Chunk.h:
-./Chunk.h:  int chunkOffset[2] = {0, 0}; // x,y
-./Chunk.h:
-./Chunk.h:  Mesh chunkMesh;
-./Chunk.h:  GameObjectPool &gop;
-./Chunk.h:
-./Chunk.h:
-./Chunk.h:
-./Chunk.h:  friend class GameObjectPool;
-./Chunk.h:  friend class Terrain;
-./Chunk.h:
-./Chunk.h:
-./Chunk.h:public:
-./Chunk.h:  Chunk(int cmx, int cmy, VulkanContext &vkContext, GameObjectPool &gop);
-./Chunk.h:
-./Chunk.h:  void makeVisible();
-./Chunk.h:  void generateMesh();
-./Chunk.h:  void createBuffers();
-./Chunk.h:
-./Chunk.h:  void updateChunkMesh();
-./Chunk.h:
-./Chunk.h:
-./Chunk.h:  void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
-./Chunk.h:            VkPipeline graphicsPipeline,
-./Chunk.h:            std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame,
-./Chunk.h:            VkExtent2D &swapChainExtent, PushConstantC1 &c1);
-./Chunk.h:
-./Chunk.h:  void cleanup();
-./Chunk.h:  ~Chunk();
-./Chunk.h:};
 ./Event.cxx:#include "Event.h"
 ./Event.cxx:#include <iostream>
 ./Event.cxx:#include <chrono>
@@ -408,159 +341,6 @@
 ./Event.h:
 ./Event.h:
 ./Event.h:#endif
-./GameObjectPool.cxx:#include "GameObjectPool.h"
-./GameObjectPool.cxx:#include "Terrain.h"
-./GameObjectPool.cxx:
-./GameObjectPool.cxx:GameObjectPool::GameObjectPool()
-./GameObjectPool.cxx:{
-./GameObjectPool.cxx:}
-./GameObjectPool.cxx:
-./GameObjectPool.cxx:void GameObjectPool::init(VulkanContext context)
-./GameObjectPool.cxx:{
-./GameObjectPool.cxx:    this->vkContext = context;
-./GameObjectPool.cxx:}
-./GameObjectPool.cxx:
-./GameObjectPool.cxx:void GameObjectPool::cleanUpResources()
-./GameObjectPool.cxx:{
-./GameObjectPool.cxx:}
-./GameObjectPool.cxx:
-./GameObjectPool.cxx:Voxel *GameObjectPool::getVoxelGlobal(BlockCoordinates globalCoords)
-./GameObjectPool.cxx:{
-./GameObjectPool.cxx:    if (globalCoords.z < 0 || globalCoords.z >= 256)
-./GameObjectPool.cxx:        return nullptr;
-./GameObjectPool.cxx:
-./GameObjectPool.cxx:    int cox = globalCoords.x >> 4;
-./GameObjectPool.cxx:    int coy = globalCoords.y >> 4;
-./GameObjectPool.cxx:
-./GameObjectPool.cxx:    Chunk *chunk = terrain->getChunkByKey(Terrain::chunkKey(cox, coy));
-./GameObjectPool.cxx:    if (!chunk)
-./GameObjectPool.cxx:        return nullptr;
-./GameObjectPool.cxx:
-./GameObjectPool.cxx:    int localX = globalCoords.x & 15;
-./GameObjectPool.cxx:    int localY = globalCoords.y & 15;
-./GameObjectPool.cxx:
-./GameObjectPool.cxx:    return &chunk->layers[globalCoords.z].voxels[localX][localY];
-./GameObjectPool.cxx:}
-./GameObjectPool.cxx:
-./GameObjectPool.cxx:GameObjectPool::~GameObjectPool()
-./GameObjectPool.cxx:{
-./GameObjectPool.cxx:}
-./GameObjectPool.h:#ifndef GAME_OBJECT_POOL
-./GameObjectPool.h:#define GAME_OBJECT_POOL
-./GameObjectPool.h:#include <vector>
-./GameObjectPool.h:#include <string.h>
-./GameObjectPool.h:#include <memory>
-./GameObjectPool.h:
-./GameObjectPool.h:#include "GraphicsPipeline.h"
-./GameObjectPool.h:#include "Voxel.h"
-./GameObjectPool.h:
-./GameObjectPool.h:class Terrain;
-./GameObjectPool.h:
-./GameObjectPool.h:class GameObjectPool
-./GameObjectPool.h:{
-./GameObjectPool.h:private:
-./GameObjectPool.h:    VulkanContext vkContext;
-./GameObjectPool.h:
-./GameObjectPool.h:    friend class HelloTriangleApplication;
-./GameObjectPool.h:    Terrain *terrain;
-./GameObjectPool.h:
-./GameObjectPool.h:public:
-./GameObjectPool.h:    GameObjectPool();
-./GameObjectPool.h:    void init(VulkanContext context);
-./GameObjectPool.h:    void cleanUpResources();
-./GameObjectPool.h:
-./GameObjectPool.h:    Voxel *getVoxelGlobal(BlockCoordinates globalCoords);
-./GameObjectPool.h:
-./GameObjectPool.h:    ~GameObjectPool();
-./GameObjectPool.h:};
-./GameObjectPool.h:
-./GameObjectPool.h:#endif
-./GraphicsPipeline.h:#ifndef H_GPIPE
-./GraphicsPipeline.h:#define H_GPIPE
-./GraphicsPipeline.h:#include <array>
-./GraphicsPipeline.h:#include "PassInfo.hpp"
-./GraphicsPipeline.h:#include "Structs.h"
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:#include <vector>
-./GraphicsPipeline.h:#include <fstream>
-./GraphicsPipeline.h:#include <functional>
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:struct Vertex {
-./GraphicsPipeline.h:    glm::vec3 pos;
-./GraphicsPipeline.h:    glm::vec3 color;
-./GraphicsPipeline.h:    glm::vec2 texCoord;
-./GraphicsPipeline.h:    float brightness;
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:    //Telling vulkan how to setup binding
-./GraphicsPipeline.h:    //Struct 1/2
-./GraphicsPipeline.h:    static VkVertexInputBindingDescription getBindingDescription();
-./GraphicsPipeline.h:    //Struct 2/2
-./GraphicsPipeline.h:    static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions();
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:    bool operator==(const Vertex& other) const {
-./GraphicsPipeline.h:    return pos == other.pos && color == other.color && texCoord == other.texCoord;
-./GraphicsPipeline.h:}
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:};
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:namespace std {
-./GraphicsPipeline.h:    template<>
-./GraphicsPipeline.h:    struct hash<Vertex> {
-./GraphicsPipeline.h:        size_t operator()(Vertex const& vertex) const {
-./GraphicsPipeline.h:            size_t seed = 0;
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:            auto hashCombine = [&seed](auto const& v) {
-./GraphicsPipeline.h:                seed ^= std::hash<float>()(v)
-./GraphicsPipeline.h:                      + 0x9e3779b97f4a7c15
-./GraphicsPipeline.h:                      + (seed << 6)
-./GraphicsPipeline.h:                      + (seed >> 2);
-./GraphicsPipeline.h:            };
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:            hashCombine(vertex.pos.x);
-./GraphicsPipeline.h:            hashCombine(vertex.pos.y);
-./GraphicsPipeline.h:            hashCombine(vertex.pos.z);
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:            hashCombine(vertex.color.r);
-./GraphicsPipeline.h:            hashCombine(vertex.color.g);
-./GraphicsPipeline.h:            hashCombine(vertex.color.b);
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:            hashCombine(vertex.texCoord.x);
-./GraphicsPipeline.h:            hashCombine(vertex.texCoord.y);
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:            return seed;
-./GraphicsPipeline.h:        }
-./GraphicsPipeline.h:    };
-./GraphicsPipeline.h:}
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:class u_GraphicsPipeline
-./GraphicsPipeline.h:{
-./GraphicsPipeline.h:private:
-./GraphicsPipeline.h:    VkDevice device;
-./GraphicsPipeline.h:    int height, width;
-./GraphicsPipeline.h:    VkExtent2D swapChainExtent;
-./GraphicsPipeline.h:    VkRenderPass renderPass;
-./GraphicsPipeline.h:    VkDescriptorSetLayout* descriptorSetLayout;
-./GraphicsPipeline.h:    VkSampleCountFlagBits msaaSamples;
-./GraphicsPipeline.h:    
-./GraphicsPipeline.h:    friend class RayGraphicsPipeline;
-./GraphicsPipeline.h:    friend class UIRenderPipeline;
-./GraphicsPipeline.h:    public:
-./GraphicsPipeline.h:    VkPipelineLayout pipelineLayout;
-./GraphicsPipeline.h:    VkPipeline graphicsPipeline;//shared
-./GraphicsPipeline.h:    
-./GraphicsPipeline.h:    u_GraphicsPipeline();
-./GraphicsPipeline.h:    ~u_GraphicsPipeline();
-./GraphicsPipeline.h:    void destroyPipelineLayout();
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:    void u_PassGraphicsPipelineCreateInfo(u_GraphicsPipelineCreateInfo pCreateInfo);
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:    static std::vector<char> readFile(const std::string &filename);
-./GraphicsPipeline.h:
-./GraphicsPipeline.h:    virtual void createGraphicsPipeline();
-./GraphicsPipeline.h:    VkShaderModule createShaderModule(const std::vector<char> &code);
-./GraphicsPipeline.h:};
-./GraphicsPipeline.h:#endif
 ./Mesh.cxx:#include "Mesh.h"
 ./Mesh.cxx:#include "utils.h"
 ./Mesh.cxx:#include <iostream>
@@ -1316,240 +1096,6 @@
 ./RayMesher.h:    void cleanup();
 ./RayMesher.h:    ~RayMesher();
 ./RayMesher.h:};
-./Structs.h:#pragma once
-./Structs.h:
-./Structs.h:#define GLFW_INCLUDE_VULKAN
-./Structs.h:#include <GLFW/glfw3.h>
-./Structs.h:#define GLM_FORCE_RADIANS
-./Structs.h:#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-./Structs.h:#define GLM_ENABLE_EXPERIMENTAL
-./Structs.h:#include <glm/glm.hpp>
-./Structs.h:#include <glm/gtc/matrix_transform.hpp>
-./Structs.h:#include <glm/gtx/hash.hpp>
-./Structs.h:
-./Structs.h:namespace BlockFaces {
-./Structs.h:inline int grassFaceTexture[6] = {0, 1, 1, 1, 1, 1};
-./Structs.h:inline int dirtFaceTexture[6] = {1, 1, 1, 1, 1, 1};
-./Structs.h:inline int woodFaceTexture[6] = {3, 3, 3, 3, 3, 3};
-./Structs.h:inline int leavesFaceTexture[6] = {4, 4, 4, 4, 4, 4};
-./Structs.h:inline int stoneFaceTexture[6] = {5, 5, 5, 5, 5, 5};
-./Structs.h:inline int bedrockFaceTexture[6] = {6, 6, 6, 6, 6, 6};
-./Structs.h:inline int corruptFaceTexture[6] = {19, 19, 19, 19, 19, 19};
-./Structs.h:}; // namespace BlockFaces
-./Structs.h:
-./Structs.h:enum FaceDirection { TOP = 0, BOTTOM, LEFT, RIGHT, FRONT, BACK };
-./Structs.h:
-./Structs.h:enum CardinalFacing { EAST = 0, WEST, NORTH, SOUTH };
-./Structs.h:
-./Structs.h:// UBO
-./Structs.h:struct UniformBufferObject {
-./Structs.h:  glm::mat4 model;
-./Structs.h:  glm::mat4 view;
-./Structs.h:  glm::mat4 proj;
-./Structs.h:};
-./Structs.h:
-./Structs.h:struct DrawInfo {
-./Structs.h:  VkCommandBuffer commandBuffer;
-./Structs.h:  VkPipelineLayout pipelineLayout;
-./Structs.h:  VkPipeline graphicsPipeline;
-./Structs.h:  std::vector<VkDescriptorSet> &descriptorSets;
-./Structs.h:  uint32_t currentFrame;
-./Structs.h:  VkExtent2D &swapChainExtent;
-./Structs.h:};
-./Structs.h:
-./Structs.h:// PCS
-./Structs.h:struct PushConstantC1 {
-./Structs.h:  glm::mat4 data;
-./Structs.h:};
-./Structs.h:
-./Structs.h:struct PushConstantC2 {
-./Structs.h:  glm::mat4 model;
-./Structs.h:  glm::mat4 proj;
-./Structs.h:};
-./Structs.h:
-./Structs.h:struct Transform {
-./Structs.h:  glm::vec3 position;
-./Structs.h:  glm::vec3 rotation;
-./Structs.h:  glm::vec3 scale;
-./Structs.h:  glm::quat rotationQuat; // Added for ray orientation
-./Structs.h:};
-./Structs.h:
-./Structs.h:enum BlockType {
-./Structs.h:  AIR=0,
-./Structs.h:  GRASS=1,
-./Structs.h:  DIRT=2,
-./Structs.h:  WOOD=3,
-./Structs.h:  LEAF=4,
-./Structs.h:  STONE=5,
-./Structs.h:  BEDROCK=6,
-./Structs.h:  END_BLOCK_TYPE
-./Structs.h:};
-./Structs.h:
-./Structs.h:struct PlayerState {
-./Structs.h:  bool onGround{false};
-./Structs.h:  bool frontBlock{false};
-./Structs.h:  bool backBlock{false};
-./Structs.h:  bool leftBlock{false};
-./Structs.h:  bool rightBlock{false};
-./Structs.h:  bool topBlock{false};
-./Structs.h:  bool inGUI{false};
-./Structs.h:  bool inInventory{false};
-./Structs.h:  bool inJump{false};
-./Structs.h:};
-./Structs.h:
-./Structs.h:struct FaceDef {
-./Structs.h:  glm::vec3 corners[4]; // vertex positions relative to block origin
-./Structs.h:  int tileOffset;
-./Structs.h:  float light;
-./Structs.h:  int dx, dy, dz; // direction toward the neighbour
-./Structs.h:};
-./Structs.h:
-./Structs.h:struct BlockCoordinates {
-./Structs.h:  int x{0}, y{0}, z{0};
-./Structs.h:  bool operator==(const BlockCoordinates &other) const {
-./Structs.h:    return x == other.x && y == other.y && z == other.z;
-./Structs.h:  }
-./Structs.h:};
-./Structs.h:
-./Structs.h:struct Faces {
-./Structs.h:  bool top;
-./Structs.h:  bool bottom;
-./Structs.h:  bool right;
-./Structs.h:  bool left;
-./Structs.h:  bool front;
-./Structs.h:  bool back;
-./Structs.h:};
-./Structs.h:
-./Structs.h:struct AxisAlignedBoundingBox {
-./Structs.h:  glm::vec3 min;
-./Structs.h:  glm::vec3 max;
-./Structs.h:};
-./Structs.h:
-./Structs.h:struct UnloadedVoxelPayload {
-./Structs.h:  BlockCoordinates blockCoordinates_Global;
-./Structs.h:  BlockType blockType;
-./Structs.h:  uint64_t chunkKey;
-./Structs.h:};
-./Structs.h:
-./Structs.h:struct ApplicationDimensions {
-./Structs.h:  int fbw = 0; // frame buffer width
-./Structs.h:  int fbh = 0; // frame buffer height
-./Structs.h:
-./Structs.h:  int ww = 0; // window width
-./Structs.h:  int wh = 0; // window height
-./Structs.h:
-./Structs.h:  int cw = 0; // Canonical width
-./Structs.h:  int ch = 0; // Canonical Height
-./Structs.h:};
-./Terrain.cxx:#include "Terrain.h"
-./Terrain.cxx:#include <fmt/base.h>
-./Terrain.cxx:#include <fmt/core.h>
-./Terrain.cxx:#include <ranges>
-./Terrain.cxx:
-./Terrain.cxx:Terrain::Terrain(VulkanContext &vkContext, GameObjectPool &gop)
-./Terrain.cxx:    : vkContext{vkContext}, gop{gop} {}
-./Terrain.cxx:
-./Terrain.cxx:void Terrain::generateChunks() {
-./Terrain.cxx:
-./Terrain.cxx:  int nChunks = 0;
-./Terrain.cxx:
-./Terrain.cxx:  for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
-./Terrain.cxx:    for (int y = -RENDER_DISTANCE; y <= RENDER_DISTANCE; y++) {
-./Terrain.cxx:
-./Terrain.cxx:      Chunk *c = new Chunk(x, y, vkContext, gop);
-./Terrain.cxx:      chunks.emplace(chunkKey(x, y), c);
-./Terrain.cxx:
-./Terrain.cxx:      c->makeVisible();
-./Terrain.cxx:
-./Terrain.cxx:      c->generateMesh();
-./Terrain.cxx:      c->createBuffers();
-./Terrain.cxx:      nChunks++;
-./Terrain.cxx:    }
-./Terrain.cxx:  }
-./Terrain.cxx:
-./Terrain.cxx:  // Chunk *c = new Chunk(0, 0, vkContext, gop);
-./Terrain.cxx:  // chunks.emplace(chunkKey(0, 0), c);
-./Terrain.cxx:
-./Terrain.cxx:  // c->makeVisible();
-./Terrain.cxx:
-./Terrain.cxx:  // c->generateMesh();
-./Terrain.cxx:  // c->createBuffers();
-./Terrain.cxx:
-./Terrain.cxx:  ready = true;
-./Terrain.cxx:  fmt::println("total chunks created is: {}", nChunks);
-./Terrain.cxx:}
-./Terrain.cxx:
-./Terrain.cxx:void Terrain::updateChunkMesh(int cmx, int cmy) {
-./Terrain.cxx:  auto it = chunks.find(chunkKey(cmx, cmy));
-./Terrain.cxx:  if (it == chunks.end())
-./Terrain.cxx:    return;
-./Terrain.cxx:
-./Terrain.cxx:  auto chunk = it->second;
-./Terrain.cxx:
-./Terrain.cxx:  chunk->updateChunkMesh();
-./Terrain.cxx:}
-./Terrain.cxx:
-./Terrain.cxx:void Terrain::draw(VkCommandBuffer commandBuffer,
-./Terrain.cxx:                   VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
-./Terrain.cxx:                   std::vector<VkDescriptorSet> &descriptorSets,
-./Terrain.cxx:                   uint32_t currentFrame, VkExtent2D &swapChainExtent) {
-./Terrain.cxx:  PushConstantC1 c1;
-./Terrain.cxx:  c1.data = glm::mat4(1.f);
-./Terrain.cxx:  for (auto it = chunks.begin(); it != chunks.end(); it++) {
-./Terrain.cxx:    it->second->draw(commandBuffer, pipelineLayout, graphicsPipeline,
-./Terrain.cxx:                     descriptorSets, currentFrame, swapChainExtent, c1);
-./Terrain.cxx:  }
-./Terrain.cxx:}
-./Terrain.cxx:
-./Terrain.cxx:Chunk *Terrain::getChunkByKey(uint64_t key) {
-./Terrain.cxx:  auto it = chunks.find(key);
-./Terrain.cxx:
-./Terrain.cxx:  if (it != chunks.end())
-./Terrain.cxx:    return it->second;
-./Terrain.cxx:
-./Terrain.cxx:  return nullptr;
-./Terrain.cxx:}
-./Terrain.cxx:
-./Terrain.cxx:void Terrain::cleanup() {
-./Terrain.cxx:  for (auto it = chunks.begin(); it != chunks.end(); it++) {
-./Terrain.cxx:    it->second->cleanup();
-./Terrain.cxx:    delete it->second;
-./Terrain.cxx:  }
-./Terrain.cxx:}
-./Terrain.cxx:
-./Terrain.cxx:Terrain::~Terrain() {}
-./Terrain.h:#pragma once
-./Terrain.h:#include "Chunk.h"
-./Terrain.h:#include "GameObjectPool.h"
-./Terrain.h:#define RENDER_DISTANCE 3
-./Terrain.h:
-./Terrain.h:#include <unordered_map>
-./Terrain.h:
-./Terrain.h:class Terrain
-./Terrain.h:{
-./Terrain.h:private:
-./Terrain.h:    VulkanContext &vkContext;
-./Terrain.h:    std::unordered_map<uint64_t, Chunk *> chunks;
-./Terrain.h:    GameObjectPool &gop;
-./Terrain.h:    bool ready{false};
-./Terrain.h:    friend class HelloTriangleApplication;
-./Terrain.h:
-./Terrain.h:public:
-./Terrain.h:    Terrain(VulkanContext &vkContext, GameObjectPool &gop);
-./Terrain.h:    static inline uint64_t chunkKey(int x, int y)
-./Terrain.h:    {
-./Terrain.h:        return (static_cast<uint64_t>(static_cast<uint32_t>(x)) << 32) | static_cast<uint64_t>(static_cast<uint32_t>(y));
-./Terrain.h:    }
-./Terrain.h:    Chunk *getChunkByKey(uint64_t key);
-./Terrain.h:
-./Terrain.h:    void generateChunks();
-./Terrain.h:    void updateChunkMesh(int cmx, int cmy);
-./Terrain.h:
-./Terrain.h:    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline, std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame, VkExtent2D &swapChainExtent);
-./Terrain.h:
-./Terrain.h:    void cleanup();
-./Terrain.h:    ~Terrain();
-./Terrain.h:};
 ./Textures.hpp:#ifndef TEXTURES_HPP
 ./Textures.hpp:#define TEXTURES_HPP
 ./Textures.hpp:
@@ -2150,106 +1696,6 @@
 ./UIRenderPipeline.h:    void createGraphicsPipeline() override;
 ./UIRenderPipeline.h:    ~UIRenderPipeline();
 ./UIRenderPipeline.h:};
-./Voxel.cxx:#include "Voxel.h"
-./Voxel.cxx:
-./Voxel.cxx:Voxel::Voxel(BlockType blockType)
-./Voxel.cxx:{
-./Voxel.cxx:    this->blockType = blockType;
-./Voxel.cxx:}
-./Voxel.cxx:
-./Voxel.cxx:void Voxel::setType(BlockType blockType)
-./Voxel.cxx:{
-./Voxel.cxx:    this->blockType = blockType;
-./Voxel.cxx:    switch (blockType)
-./Voxel.cxx:    {
-./Voxel.cxx:    case AIR:
-./Voxel.cxx:        faceTexture = BlockFaces::corruptFaceTexture;
-./Voxel.cxx:        break;
-./Voxel.cxx:    case GRASS:
-./Voxel.cxx:        faceTexture = BlockFaces::grassFaceTexture;
-./Voxel.cxx:        break;
-./Voxel.cxx:    case DIRT:
-./Voxel.cxx:        faceTexture = BlockFaces::dirtFaceTexture;
-./Voxel.cxx:        break;
-./Voxel.cxx:    case WOOD:
-./Voxel.cxx:        faceTexture = BlockFaces::woodFaceTexture;
-./Voxel.cxx:        break;
-./Voxel.cxx:    case LEAF:
-./Voxel.cxx:        faceTexture = BlockFaces::leavesFaceTexture;
-./Voxel.cxx:        break;
-./Voxel.cxx:    case STONE:
-./Voxel.cxx:        faceTexture = BlockFaces::stoneFaceTexture;
-./Voxel.cxx:        break;
-./Voxel.cxx:    case BEDROCK:
-./Voxel.cxx:        faceTexture = BlockFaces::bedrockFaceTexture;
-./Voxel.cxx:        break;
-./Voxel.cxx:    
-./Voxel.cxx:    default:
-./Voxel.cxx:        faceTexture = BlockFaces::corruptFaceTexture;
-./Voxel.cxx:        break;
-./Voxel.cxx:    }
-./Voxel.cxx:}
-./Voxel.cxx:
-./Voxel.cxx:void Voxel::setPosition(glm::vec3 position)
-./Voxel.cxx:{
-./Voxel.cxx:    this->transform.position = position;
-./Voxel.cxx:    aabb.max = position + glm::vec3(.5f);
-./Voxel.cxx:    aabb.min = position - glm::vec3(.5f);
-./Voxel.cxx:
-./Voxel.cxx:}
-./Voxel.cxx:
-./Voxel.cxx:void Voxel::setRotation(glm::vec3 rotation)
-./Voxel.cxx:{
-./Voxel.cxx:    this->transform.rotation = rotation;
-./Voxel.cxx:}
-./Voxel.cxx:
-./Voxel.cxx:void Voxel::setScale(glm::vec3 scale)
-./Voxel.cxx:{
-./Voxel.cxx:    this->transform.scale = scale;
-./Voxel.cxx:}
-./Voxel.cxx:
-./Voxel.cxx:BlockType Voxel::getBlockType()
-./Voxel.cxx:{
-./Voxel.cxx:    return BlockType(blockType);
-./Voxel.cxx:}
-./Voxel.cxx:
-./Voxel.cxx:
-./Voxel.cxx:
-./Voxel.cxx:Voxel::~Voxel()
-./Voxel.cxx:{
-./Voxel.cxx:}
-./Voxel.h:#pragma once
-./Voxel.h:#include "PassInfo.hpp"
-./Voxel.h:#include "Structs.h"
-./Voxel.h:
-./Voxel.h:
-./Voxel.h:
-./Voxel.h:class Voxel
-./Voxel.h:{
-./Voxel.h:private:
-./Voxel.h:    Transform transform;
-./Voxel.h:    int blockType = AIR;
-./Voxel.h:    //top , bottom, left, right, front, back
-./Voxel.h:    const int* faceTexture = BlockFaces::corruptFaceTexture; // default to a bright pink texture to easily spot untextured blocks
-./Voxel.h:
-./Voxel.h:    AxisAlignedBoundingBox aabb{};
-./Voxel.h:
-./Voxel.h:    bool visible = false;
-./Voxel.h:
-./Voxel.h:    friend class Chunk;
-./Voxel.h:    friend class Player;
-./Voxel.h:    friend class Camera;
-./Voxel.h:public:
-./Voxel.h:    Voxel(BlockType blockType = AIR);
-./Voxel.h:
-./Voxel.h:    void setType(BlockType blockType);
-./Voxel.h:    void setPosition(glm::vec3 position);
-./Voxel.h:    void setRotation(glm::vec3 rotation);
-./Voxel.h:    void setScale(glm::vec3 scale);
-./Voxel.h:    BlockType getBlockType();
-./Voxel.h:
-./Voxel.h:    ~Voxel();
-./Voxel.h:};
 ./intiVK2.cxx:#include "HelloTriangleApplication.hpp"
 ./intiVK2.cxx:#include <iostream>
 ./intiVK2.cxx:#include <stdexcept>
@@ -2870,163 +2316,6 @@
 ./Inventory.h:
 ./Inventory.h:  ~Inventory();
 ./Inventory.h:};
-./Player.cxx:#include "Player.h"
-./Player.cxx:#include "Camera.h"
-./Player.cxx:#include "Structs.h"
-./Player.cxx:#include <cmath>
-./Player.cxx:#include <iostream>
-./Player.cxx:
-./Player.cxx:Player::Player(VulkanContext &vkContext, GameObjectPool &gop)
-./Player.cxx:    : gameObjectPool{gop} {
-./Player.cxx:  camera = std::make_shared<Camera>(vkContext, gop);
-./Player.cxx:}
-./Player.cxx:
-./Player.cxx:Player::~Player() {}
-./Player.cxx:
-./Player.cxx:void Player::drawUIIfPossible(DrawInfo &drawInfo, UI &ui) {
-./Player.cxx:  // if (playerState.inInventory) {
-./Player.cxx:  //   camera->drawUIAt(drawInfo, ui, 0);
-./Player.cxx:  //   camera->drawUIAt(drawInfo, ui, 1);
-./Player.cxx:  // }
-./Player.cxx:
-./Player.cxx:  camera->drawUIAt(drawInfo, ui, 2);
-./Player.cxx:  camera->drawUIAt(drawInfo, ui, 3);
-./Player.cxx:}
-./Player.cxx:
-./Player.cxx:void Player::handlePlayerMovement(UniformBufferObject &UBO,
-./Player.cxx:                                  VkExtent2D &swapChainExtent, Event &event) {
-./Player.cxx:  static float deltaJZ = 0;
-./Player.cxx:
-./Player.cxx:  double dx = 0, dy = 0, dz = 0;
-./Player.cxx:
-./Player.cxx:  selfTransform.position = camera->cameraPos;
-./Player.cxx:  selfTransform.position.z += .2f;
-./Player.cxx:
-./Player.cxx:  aabb.max = selfTransform.position + glm::vec3(.25f, .25f, .0f);
-./Player.cxx:  aabb.min = selfTransform.position - glm::vec3(.25f, .25f, 1.8f);
-./Player.cxx:
-./Player.cxx:  AxisAlignedBoundingBox groundAABB{};
-./Player.cxx:  groundAABB.max = selfTransform.position + glm::vec3(.1f, .1f, .0f);
-./Player.cxx:  groundAABB.min = selfTransform.position - glm::vec3(.1f, .1f, 1.8f);
-./Player.cxx:
-./Player.cxx:  // ── ground check ────────────────────────────────────────────────────────
-./Player.cxx:  playerState.onGround = false;
-./Player.cxx:  {
-./Player.cxx:    int feet = floor(groundAABB.min.z);
-./Player.cxx:    int head = floor(groundAABB.max.z);
-./Player.cxx:    int minX = floor(groundAABB.min.x);
-./Player.cxx:    int maxX = floor(groundAABB.max.x);
-./Player.cxx:    int minY = floor(groundAABB.min.y);
-./Player.cxx:    int maxY = floor(groundAABB.max.y);
-./Player.cxx:
-./Player.cxx:    for (int k = feet; k <= head && !playerState.onGround; k++)
-./Player.cxx:      for (int i = minX; i <= maxX && !playerState.onGround; i++)
-./Player.cxx:        for (int j = minY; j <= maxY; j++) {
-./Player.cxx:          auto v = gameObjectPool.getVoxelGlobal({i, j, k});
-./Player.cxx:          if (v && v->blockType != AIR) {
-./Player.cxx:            playerState.onGround = true;
-./Player.cxx:            break;
-./Player.cxx:          }
-./Player.cxx:        }
-./Player.cxx:  }
-./Player.cxx:
-./Player.cxx:  // ── gravity / jump ───────────────────────────────────────────────────────
-./Player.cxx:  if (!playerState.onGround && !playerState.inJump)
-./Player.cxx:    dz -= .01f * event.dt;
-./Player.cxx:  else if (playerState.inJump) {
-./Player.cxx:    deltaJZ -= .003f * event.dt;
-./Player.cxx:    dz += .01f * event.dt * deltaJZ;
-./Player.cxx:  }
-./Player.cxx:
-./Player.cxx:  // ── desired XY movement ──────────────────────────────────────────────────
-./Player.cxx:  float x_fac = cos(glm::radians(camera->yaw));
-./Player.cxx:  float y_fac = sin(glm::radians(camera->yaw));
-./Player.cxx:  float x_fac_dx = x_fac * camera->speed * event.dt;
-./Player.cxx:  float y_fac_dy = y_fac * camera->speed * event.dt;
-./Player.cxx:
-./Player.cxx:  // Update facing direction for animation / other systems — NOT used for
-./Player.cxx:  // collision
-./Player.cxx:  bool xDominant = std::abs(x_fac) > std::abs(y_fac);
-./Player.cxx:  if (x_fac > 0 && xDominant)
-./Player.cxx:    facingDirection = NORTH;
-./Player.cxx:  else if (x_fac < 0 && xDominant)
-./Player.cxx:    facingDirection = SOUTH;
-./Player.cxx:  else if (y_fac > 0 && !xDominant)
-./Player.cxx:    facingDirection = WEST;
-./Player.cxx:  else if (y_fac < 0 && !xDominant)
-./Player.cxx:    facingDirection = EAST;
-./Player.cxx:
-./Player.cxx:  bool KEY_W = event.getKeyPressed(GLFW_KEY_W);
-./Player.cxx:  bool KEY_S = event.getKeyPressed(GLFW_KEY_S);
-./Player.cxx:  bool KEY_A = event.getKeyPressed(GLFW_KEY_A);
-./Player.cxx:  bool KEY_D = event.getKeyPressed(GLFW_KEY_D);
-./Player.cxx:
-./Player.cxx:  if (KEY_W) {
-./Player.cxx:    dx += x_fac_dx;
-./Player.cxx:    dy += y_fac_dy;
-./Player.cxx:  }
-./Player.cxx:  if (KEY_S) {
-./Player.cxx:    dx -= x_fac_dx;
-./Player.cxx:    dy -= y_fac_dy;
-./Player.cxx:  }
-./Player.cxx:  if (KEY_A) {
-./Player.cxx:    dx += -y_fac_dy;
-./Player.cxx:    dy += x_fac_dx;
-./Player.cxx:  }
-./Player.cxx:  if (KEY_D) {
-./Player.cxx:    dx -= -y_fac_dy;
-./Player.cxx:    dy -= x_fac_dx;
-./Player.cxx:  }
-./Player.cxx:
-./Player.cxx:  // ── axis-separated collision ─────────────────────────────────────────────
-./Player.cxx:  // Helper: does the AABB at `testPos` overlap any solid voxel?
-./Player.cxx:  auto overlaps = [&](glm::vec3 testPos) -> bool {
-./Player.cxx:    glm::vec3 tMax = testPos + glm::vec3(.25f, .25f, .0f);
-./Player.cxx:    glm::vec3 tMin = testPos - glm::vec3(.25f, .25f, 1.8f);
-./Player.cxx:
-./Player.cxx:    int x0 = floor(tMin.x), x1 = floor(tMax.x);
-./Player.cxx:    int y0 = floor(tMin.y), y1 = floor(tMax.y);
-./Player.cxx:    int z0 = floor(tMin.z) + 1, z1 = floor(tMax.z);
-./Player.cxx:
-./Player.cxx:    for (int k = z0; k <= z1; k++)
-./Player.cxx:      for (int i = x0; i <= x1; i++)
-./Player.cxx:        for (int j = y0; j <= y1; j++) {
-./Player.cxx:          auto v = gameObjectPool.getVoxelGlobal({i, j, k});
-./Player.cxx:          if (v && v->blockType != AIR)
-./Player.cxx:            return true;
-./Player.cxx:        }
-./Player.cxx:    return false;
-./Player.cxx:  };
-./Player.cxx:
-./Player.cxx:  glm::vec3 base = selfTransform.position;
-./Player.cxx:
-./Player.cxx:  if (overlaps(base + glm::vec3(dx, 0, 0)))
-./Player.cxx:    dx = 0;
-./Player.cxx:
-./Player.cxx:  if (overlaps(base + glm::vec3(0, dy, 0)))
-./Player.cxx:    dy = 0;
-./Player.cxx:
-./Player.cxx:  if (overlaps(base + glm::vec3(0, 0, dz)))
-./Player.cxx:    dz = 0;
-./Player.cxx:
-./Player.cxx:  if (playerState.onGround) [[likely]]
-./Player.cxx:    playerState.inJump = false;
-./Player.cxx:
-./Player.cxx:  if (event.getKeyPressed(GLFW_KEY_SPACE) && playerState.onGround) {
-./Player.cxx:    deltaJZ = 1.f;
-./Player.cxx:    playerState.inJump = true;
-./Player.cxx:  }
-./Player.cxx:
-./Player.cxx:  camera->cameraPos.x += dx;
-./Player.cxx:  camera->cameraPos.y += dy;
-./Player.cxx:  camera->cameraPos.z += dz;
-./Player.cxx:
-./Player.cxx:  camera->locked = playerState.inInventory;
-./Player.cxx:
-./Player.cxx:  camera->updateUBO(UBO, swapChainExtent, event);
-./Player.cxx:}
-./Player.cxx:
-./Player.cxx:const int Player::getHealthPoints() { return healtPoints; }
 ./Player.h:#pragma once
 ./Player.h:#include <memory.h>
 ./Player.h:#include "Camera.h"
@@ -3786,286 +3075,6 @@
 ./PerlinNoise.hpp:# undef SIVPERLIN_NODISCARD_CXX20
 ./PerlinNoise.hpp:# undef SIVPERLIN_CONCEPT_URBG
 ./PerlinNoise.hpp:# undef SIVPERLIN_CONCEPT_URBG_
-./GraphicsPipeline.cxx:#include "GraphicsPipeline.h"
-./GraphicsPipeline.cxx:#include <iostream>
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:u_GraphicsPipeline::u_GraphicsPipeline()
-./GraphicsPipeline.cxx:{
-./GraphicsPipeline.cxx:}
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:u_GraphicsPipeline::~u_GraphicsPipeline()
-./GraphicsPipeline.cxx:{
-./GraphicsPipeline.cxx:}
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:void u_GraphicsPipeline::destroyPipelineLayout()
-./GraphicsPipeline.cxx:{
-./GraphicsPipeline.cxx:    vkDestroyPipeline(device, graphicsPipeline, nullptr);
-./GraphicsPipeline.cxx:    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-./GraphicsPipeline.cxx:}
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:void u_GraphicsPipeline::createGraphicsPipeline()
-./GraphicsPipeline.cxx:{
-./GraphicsPipeline.cxx:    std::cout << "Creating Graphics Pipeline..." << std::endl;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    auto vertShaderCode = readFile("/home/divyansh/MinecraftClone/shaders/simple_shader_v.spv");
-./GraphicsPipeline.cxx:    auto fragShaderCode = readFile("/home/divyansh/MinecraftClone/shaders/simple_shader_f.spv");
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
-./GraphicsPipeline.cxx:    VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    // shaderStageCreation
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-./GraphicsPipeline.cxx:    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-./GraphicsPipeline.cxx:    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT; // telling vulkan 'which stage must this shader go'
-./GraphicsPipeline.cxx:    vertShaderStageInfo.module = vertShaderModule;
-./GraphicsPipeline.cxx:    vertShaderStageInfo.pName = "main";
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-./GraphicsPipeline.cxx:    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-./GraphicsPipeline.cxx:    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-./GraphicsPipeline.cxx:    fragShaderStageInfo.module = fragShaderModule;
-./GraphicsPipeline.cxx:    fragShaderStageInfo.pName = "main";
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    auto bindingDescription = Vertex::getBindingDescription();
-./GraphicsPipeline.cxx:    auto attributeDescriptions = Vertex::getAttributeDescriptions();
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-./GraphicsPipeline.cxx:    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-./GraphicsPipeline.cxx:    vertexInputInfo.vertexBindingDescriptionCount = 1;
-./GraphicsPipeline.cxx:    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-./GraphicsPipeline.cxx:    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-./GraphicsPipeline.cxx:    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    // input assembly
-./GraphicsPipeline.cxx:    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-./GraphicsPipeline.cxx:    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-./GraphicsPipeline.cxx:    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-./GraphicsPipeline.cxx:    inputAssembly.primitiveRestartEnable = VK_FALSE;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    // viewport and scissors
-./GraphicsPipeline.cxx:    VkViewport viewport{};
-./GraphicsPipeline.cxx:    viewport.x = .0f;
-./GraphicsPipeline.cxx:    viewport.y = .0f;
-./GraphicsPipeline.cxx:    viewport.width = (float)swapChainExtent.width;
-./GraphicsPipeline.cxx:    viewport.height = (float)swapChainExtent.height; // this swapchain is used as a framebuffer hensforth using it as the size for our viewport
-./GraphicsPipeline.cxx:    viewport.minDepth = .0f;
-./GraphicsPipeline.cxx:    viewport.maxDepth = 1.0f;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkRect2D scissor{};
-./GraphicsPipeline.cxx:    scissor.offset = {0, 0};
-./GraphicsPipeline.cxx:    scissor.extent = swapChainExtent;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    // //dyanmic scissor and viewport
-./GraphicsPipeline.cxx:    // std::vector<VkDynamicState> dynamicStates =
-./GraphicsPipeline.cxx:    // {
-./GraphicsPipeline.cxx:    //     VK_DYNAMIC_STATE_VIEWPORT,
-./GraphicsPipeline.cxx:    //     VK_DYNAMIC_STATE_SCISSOR
-./GraphicsPipeline.cxx:    // };
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    // VkPipelineDynamicStateCreateInfo dynamicState{};
-./GraphicsPipeline.cxx:    // dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-./GraphicsPipeline.cxx:    // dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-./GraphicsPipeline.cxx:    // dynamicState.pDynamicStates = dynamicStates.data();
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkPipelineViewportStateCreateInfo viewportState{};
-./GraphicsPipeline.cxx:    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-./GraphicsPipeline.cxx:    viewportState.viewportCount = 1;
-./GraphicsPipeline.cxx:    viewportState.pViewports = &viewport;
-./GraphicsPipeline.cxx:    viewportState.scissorCount = 1;
-./GraphicsPipeline.cxx:    viewportState.pScissors = &scissor;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    // Rasterizer
-./GraphicsPipeline.cxx:    VkPipelineRasterizationStateCreateInfo rasterizer{};
-./GraphicsPipeline.cxx:    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-./GraphicsPipeline.cxx:    rasterizer.depthClampEnable = VK_FALSE;
-./GraphicsPipeline.cxx:    rasterizer.rasterizerDiscardEnable = VK_FALSE;
-./GraphicsPipeline.cxx:    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    rasterizer.lineWidth = 1.0f;
-./GraphicsPipeline.cxx:    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-./GraphicsPipeline.cxx:    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    rasterizer.depthBiasEnable = VK_FALSE;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    // MSSA(disabled for now)
-./GraphicsPipeline.cxx:    VkPipelineMultisampleStateCreateInfo multisampling{};
-./GraphicsPipeline.cxx:    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-./GraphicsPipeline.cxx:    multisampling.sampleShadingEnable = VK_FALSE;
-./GraphicsPipeline.cxx:    multisampling.rasterizationSamples = msaaSamples;
-./GraphicsPipeline.cxx:    multisampling.minSampleShading = .2f;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkPipelineDepthStencilStateCreateInfo depthStencil{};
-./GraphicsPipeline.cxx:    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-./GraphicsPipeline.cxx:    depthStencil.depthTestEnable = VK_TRUE;
-./GraphicsPipeline.cxx:    depthStencil.depthWriteEnable = VK_TRUE;
-./GraphicsPipeline.cxx:    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-./GraphicsPipeline.cxx:    depthStencil.depthBoundsTestEnable = VK_FALSE;
-./GraphicsPipeline.cxx:    depthStencil.minDepthBounds = 0.0f; // Optional
-./GraphicsPipeline.cxx:    depthStencil.maxDepthBounds = 1.0f; // Optional
-./GraphicsPipeline.cxx:    depthStencil.stencilTestEnable = VK_FALSE;
-./GraphicsPipeline.cxx:    depthStencil.front = {}; // Optional
-./GraphicsPipeline.cxx:    depthStencil.back = {};  // Optional
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    /// color blending
-./GraphicsPipeline.cxx:    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-./GraphicsPipeline.cxx:    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-./GraphicsPipeline.cxx:    colorBlendAttachment.blendEnable = VK_FALSE;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkPipelineColorBlendStateCreateInfo colorBlending{};
-./GraphicsPipeline.cxx:    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-./GraphicsPipeline.cxx:    colorBlending.logicOpEnable = VK_FALSE;
-./GraphicsPipeline.cxx:    colorBlending.attachmentCount = 1;
-./GraphicsPipeline.cxx:    colorBlending.pAttachments = &colorBlendAttachment;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    // Pipeline Layout
-./GraphicsPipeline.cxx:    //(passing data to uniform objects in shaders)
-./GraphicsPipeline.cxx:    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-./GraphicsPipeline.cxx:    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-./GraphicsPipeline.cxx:    pipelineLayoutInfo.setLayoutCount = 1;
-./GraphicsPipeline.cxx:    pipelineLayoutInfo.pSetLayouts = descriptorSetLayout;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkPushConstantRange pushConstatn;
-./GraphicsPipeline.cxx:    pushConstatn.offset = 0;
-./GraphicsPipeline.cxx:    pushConstatn.size = sizeof(PushConstantC1);
-./GraphicsPipeline.cxx:    pushConstatn.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    pipelineLayoutInfo.pPushConstantRanges = &pushConstatn;
-./GraphicsPipeline.cxx:    pipelineLayoutInfo.pushConstantRangeCount = 1;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-./GraphicsPipeline.cxx:    {
-./GraphicsPipeline.cxx:        throw std::runtime_error("failed to create pipeline layout!");
-./GraphicsPipeline.cxx:    }
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    // creating graphics pipeline
-./GraphicsPipeline.cxx:    VkGraphicsPipelineCreateInfo pipelineInfo{};
-./GraphicsPipeline.cxx:    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-./GraphicsPipeline.cxx:    pipelineInfo.stageCount = 2; // the shader stage count
-./GraphicsPipeline.cxx:    pipelineInfo.pStages = shaderStages;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    pipelineInfo.pVertexInputState = &vertexInputInfo;
-./GraphicsPipeline.cxx:    pipelineInfo.pInputAssemblyState = &inputAssembly;
-./GraphicsPipeline.cxx:    pipelineInfo.pViewportState = &viewportState;
-./GraphicsPipeline.cxx:    pipelineInfo.pRasterizationState = &rasterizer;
-./GraphicsPipeline.cxx:    pipelineInfo.pMultisampleState = &multisampling;
-./GraphicsPipeline.cxx:    pipelineInfo.pDepthStencilState = &depthStencil; // disabled
-./GraphicsPipeline.cxx:    pipelineInfo.pColorBlendState = &colorBlending;
-./GraphicsPipeline.cxx:    // pipelineInfo.pDynamicState = &dynamic_state;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    pipelineInfo.layout = pipelineLayout;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    pipelineInfo.renderPass = renderPass; // passs the render pass
-./GraphicsPipeline.cxx:    pipelineInfo.subpass = 0;
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
-./GraphicsPipeline.cxx:    {
-./GraphicsPipeline.cxx:        throw std::runtime_error("failed to create graphics pipeline!");
-./GraphicsPipeline.cxx:    }
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    vkDestroyShaderModule(device, fragShaderModule, nullptr);
-./GraphicsPipeline.cxx:    vkDestroyShaderModule(device, vertShaderModule, nullptr);
-./GraphicsPipeline.cxx:    // vulkan copies it internally so it can be destroid safely
-./GraphicsPipeline.cxx:}
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:void u_GraphicsPipeline::u_PassGraphicsPipelineCreateInfo(u_GraphicsPipelineCreateInfo pCreateInfo)
-./GraphicsPipeline.cxx:{
-./GraphicsPipeline.cxx:    device = pCreateInfo.device;
-./GraphicsPipeline.cxx:    height = pCreateInfo.height;
-./GraphicsPipeline.cxx:    width = pCreateInfo.width;
-./GraphicsPipeline.cxx:    swapChainExtent = pCreateInfo.swapChainExtent;
-./GraphicsPipeline.cxx:    renderPass = pCreateInfo.renderPass;
-./GraphicsPipeline.cxx:    descriptorSetLayout = pCreateInfo.descriptorSetLayout;
-./GraphicsPipeline.cxx:    msaaSamples = pCreateInfo.msaaSamples;
-./GraphicsPipeline.cxx:}
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:std::vector<char> u_GraphicsPipeline::readFile(const std::string &filename)
-./GraphicsPipeline.cxx:{
-./GraphicsPipeline.cxx:    std::ifstream file(filename, std::ios::ate | std::ios::binary);
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    if (!file.is_open())
-./GraphicsPipeline.cxx:    {
-./GraphicsPipeline.cxx:        std::cout << "File: " << filename << std::endl;
-./GraphicsPipeline.cxx:        throw std::runtime_error("Failed to open file");
-./GraphicsPipeline.cxx:    }
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    size_t fileSize = (size_t)file.tellg();
-./GraphicsPipeline.cxx:    std::vector<char> buffer(fileSize);
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    file.seekg(0);
-./GraphicsPipeline.cxx:    file.read(buffer.data(), fileSize);
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    file.close();
-./GraphicsPipeline.cxx:    return buffer;
-./GraphicsPipeline.cxx:}
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:VkShaderModule u_GraphicsPipeline::createShaderModule(const std::vector<char> &code)
-./GraphicsPipeline.cxx:{
-./GraphicsPipeline.cxx:    VkShaderModuleCreateInfo createInfo{};
-./GraphicsPipeline.cxx:    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-./GraphicsPipeline.cxx:    createInfo.codeSize = code.size();
-./GraphicsPipeline.cxx:    createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    VkShaderModule shaderModule;
-./GraphicsPipeline.cxx:    if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
-./GraphicsPipeline.cxx:    {
-./GraphicsPipeline.cxx:        throw std::runtime_error("Failed to create shader module");
-./GraphicsPipeline.cxx:    }
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    return shaderModule;
-./GraphicsPipeline.cxx:}
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:// Telling vulkan how to pass data to the vertex shader once it's been uploaded into the GPU
-./GraphicsPipeline.cxx:VkVertexInputBindingDescription Vertex::getBindingDescription()
-./GraphicsPipeline.cxx:{
-./GraphicsPipeline.cxx:    VkVertexInputBindingDescription bindingDescription{};
-./GraphicsPipeline.cxx:    // A vertex binding describes at which rate to load data from memory throughout the verticies.
-./GraphicsPipeline.cxx:    // It specifies the number of bytes between data entries and whether to move to the next data entery after each vertex or after each instance.
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    bindingDescription.binding = 0; // binding index to zero
-./GraphicsPipeline.cxx:    bindingDescription.stride = sizeof(Vertex);
-./GraphicsPipeline.cxx:    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX; // advance to the next input per vertex
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    return bindingDescription;
-./GraphicsPipeline.cxx:}
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:// this structure describies how to handle vertex input
-./GraphicsPipeline.cxx:// each attribute required its own description
-./GraphicsPipeline.cxx:std::array<VkVertexInputAttributeDescription, 4> Vertex::getAttributeDescriptions()
-./GraphicsPipeline.cxx:{
-./GraphicsPipeline.cxx:    std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
-./GraphicsPipeline.cxx:    attributeDescriptions[0].binding = 0;                         // same as getBindingDescription
-./GraphicsPipeline.cxx:    attributeDescriptions[0].location = 0;                        // directly co-relates to 'layout(location = 0)'
-./GraphicsPipeline.cxx:    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
-./GraphicsPipeline.cxx:    attributeDescriptions[0].offset = offsetof(Vertex, pos);
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    attributeDescriptions[1].binding = 0;
-./GraphicsPipeline.cxx:    attributeDescriptions[1].location = 1;
-./GraphicsPipeline.cxx:    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
-./GraphicsPipeline.cxx:    attributeDescriptions[1].offset = offsetof(Vertex, color);
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    attributeDescriptions[2].binding = 0;
-./GraphicsPipeline.cxx:    attributeDescriptions[2].location = 2;
-./GraphicsPipeline.cxx:    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-./GraphicsPipeline.cxx:    attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    attributeDescriptions[3].location = 3;
-./GraphicsPipeline.cxx:    attributeDescriptions[3].format = VK_FORMAT_R32_SFLOAT;
-./GraphicsPipeline.cxx:    attributeDescriptions[3].offset = offsetof(Vertex, brightness);
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    // Formats
-./GraphicsPipeline.cxx:    //  float -> VK_FORMAT_R32_SFLOAT
-./GraphicsPipeline.cxx:    //  vec2  -> VK_FORMAT_R32G32_SFLOAT
-./GraphicsPipeline.cxx:    //  vec3  -> VK_FORMAT_R32G32B32_SFLOAT
-./GraphicsPipeline.cxx:    //  vec4  -> VK_FORMAT_R32G32B32A32_SFLOAT
-./GraphicsPipeline.cxx:    // ivec2  -> VK_FORMAT_R32G32_SINT
-./GraphicsPipeline.cxx:    // uvec4  -> VK_FORMAT_R32G32B32A32_UINT
-./GraphicsPipeline.cxx:    // double -> VK_FORMAT_R64_SFLOAT
-./GraphicsPipeline.cxx:
-./GraphicsPipeline.cxx:    return attributeDescriptions;
-./GraphicsPipeline.cxx:}
 ./HelloTriangleApplication.cxx:#include "HelloTriangleApplication.hpp"
 ./HelloTriangleApplication.cxx:#include "Inventory.h"
 ./HelloTriangleApplication.cxx:#include <iostream>
@@ -5293,134 +4302,6 @@
 ./Textures.cxx:    textureImageMemory = VK_NULL_HANDLE;
 ./Textures.cxx:  }
 ./Textures.cxx:}
-./Update.cxx:#include <cstdlib>
-./Update.cxx:#include <cstring>
-./Update.cxx:#include <iostream>
-./Update.cxx:
-./Update.cxx:#include "Camera.h"
-./Update.cxx:#include "Event.h"
-./Update.cxx:#include "HelloTriangleApplication.hpp"
-./Update.cxx:#include "Inventory.h"
-./Update.cxx:#include "Player.h"
-./Update.cxx:#include "Ray.h"
-./Update.cxx:#include "Terrain.h"
-./Update.cxx:#include "UI.h"
-./Update.cxx:#include <memory>
-./Update.cxx:#include <random>
-./Update.cxx:
-./Update.cxx:void HelloTriangleApplication::initGameObjects() {
-./Update.cxx:  static VulkanContext context{};
-./Update.cxx:  context.device = device;
-./Update.cxx:  context.physicalDevice = physicalDevice;
-./Update.cxx:  context.graphicsQueue = graphicsQueue;
-./Update.cxx:  context.instance = instance;
-./Update.cxx:  context.presentQueue = presentQueue;
-./Update.cxx:  context.commandPool = commandPool;
-./Update.cxx:
-./Update.cxx:  playerS1 = std::make_unique<Player>(context, gameObjectPool);
-./Update.cxx:
-./Update.cxx:  terrain = std::make_unique<Terrain>(context, gameObjectPool);
-./Update.cxx:  ui = std::move(UI(context));
-./Update.cxx:
-./Update.cxx:  srand(87844057);
-./Update.cxx:
-./Update.cxx:  float aspect = float(swapChainExtent.width) / float(swapChainExtent.height);
-./Update.cxx:
-./Update.cxx:  // UI Components
-./Update.cxx:
-./Update.cxx:  inventory = std::make_unique<Inventory>(context, dimensions);
-./Update.cxx:  inventory->attachPlayerState(&playerS1->playerState);
-./Update.cxx:
-./Update.cxx:  Crosshair = std::make_unique<UIComponents>(context);
-./Update.cxx:  Heart = std::make_unique<UIComponents>(context);
-./Update.cxx:
-./Update.cxx:  Crosshair->setTextureIDX(1);
-./Update.cxx:  Crosshair->initUIComponent(glm::vec2(0, 0), glm::vec2(.05f, .05f));
-./Update.cxx:
-./Update.cxx:  Heart->setTextureIDX(2);
-./Update.cxx:  Heart->initUIComponent(glm::vec2(-1 * aspect + .04f, 1 - .04f),
-./Update.cxx:                         glm::vec2(.08f, .08f));
-./Update.cxx:  Heart->setInstanceCount(0);
-./Update.cxx:
-./Update.cxx:  ui->attachComponent(inventory->getInventoryComponentPointer());
-./Update.cxx:  ui->attachComponent(inventory->getFilterComponentPointer());
-./Update.cxx:  ui->attachComponent(Crosshair.get());
-./Update.cxx:  ui->attachComponent(Heart.get());
-./Update.cxx:
-./Update.cxx:  gameObjectPool.terrain = terrain.get();
-./Update.cxx:  terrain->generateChunks();
-./Update.cxx:}
-./Update.cxx:
-./Update.cxx:KeyTracker keys;
-./Update.cxx:
-./Update.cxx:void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage) {
-./Update.cxx:
-./Update.cxx:  std::cout << "Coordinates: " << "(x,y,z) (x"
-./Update.cxx:            << playerS1->camera->gePositionInWorldCoords().x << ", "
-./Update.cxx:            << playerS1->camera->gePositionInWorldCoords().y << ", "
-./Update.cxx:            << playerS1->camera->gePositionInWorldCoords().z << ")"
-./Update.cxx:            << std::endl;
-./Update.cxx:
-./Update.cxx:  Heart->setInstanceCount(playerS1->getHealthPoints());
-./Update.cxx:
-./Update.cxx:  HitInfo hitInfo{};
-./Update.cxx:  playerS1->camera->getHitInfo(hitInfo);
-./Update.cxx:  if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) &&
-./Update.cxx:      !playerS1->playerState.inInventory)
-./Update.cxx:    if (hitInfo.hitVoxel) {
-./Update.cxx:      std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType()
-./Update.cxx:                << std::endl;
-./Update.cxx:      std::cout << "Hit block coordinates: (x,y,z) (" << hitInfo.blockCoords.x
-./Update.cxx:                << ", " << hitInfo.blockCoords.y << ", "
-./Update.cxx:                << hitInfo.blockCoords.z << ")" << std::endl;
-./Update.cxx:
-./Update.cxx:      if (hitInfo.hitVoxel->getBlockType() == BEDROCK)
-./Update.cxx:        goto _no;
-./Update.cxx:
-./Update.cxx:      hitInfo.hitVoxel->setType(AIR);
-./Update.cxx:
-./Update.cxx:      terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4,
-./Update.cxx:                               hitInfo.blockCoords.y >> 4);
-./Update.cxx:
-./Update.cxx:      if ((hitInfo.blockCoords.x & 15) == 0)
-./Update.cxx:        terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) - 1,
-./Update.cxx:                                 hitInfo.blockCoords.y >> 4);
-./Update.cxx:      if ((hitInfo.blockCoords.x & 15) == 15)
-./Update.cxx:        terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) + 1,
-./Update.cxx:                                 hitInfo.blockCoords.y >> 4);
-./Update.cxx:      if ((hitInfo.blockCoords.y & 15) == 0)
-./Update.cxx:        terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4,
-./Update.cxx:                                 (hitInfo.blockCoords.y >> 4) - 1);
-./Update.cxx:      if ((hitInfo.blockCoords.y & 15) == 15)
-./Update.cxx:        terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4,
-./Update.cxx:                                 (hitInfo.blockCoords.y >> 4) + 1);
-./Update.cxx:    _no:;
-./Update.cxx:    }
-./Update.cxx:
-./Update.cxx:  if (keys.justPressed(event.get(), GLFW_KEY_ESCAPE)) {
-./Update.cxx:    if (!playerS1->playerState.inInventory)
-./Update.cxx:      glfwSetWindowShouldClose(_window, GLFW_TRUE);
-./Update.cxx:    else
-./Update.cxx:      playerS1->playerState.inInventory = false;
-./Update.cxx:  }
-./Update.cxx:
-./Update.cxx:  if (keys.justPressed(event.get(), GLFW_KEY_E)) {
-./Update.cxx:    playerS1->playerState.inInventory = !playerS1->playerState.inInventory;
-./Update.cxx:  }
-./Update.cxx:
-./Update.cxx:  if (playerS1->playerState.inInventory) {
-./Update.cxx:    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-./Update.cxx:  } else {
-./Update.cxx:    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-./Update.cxx:  }
-./Update.cxx:
-./Update.cxx:  UniformBufferObject ubo{};
-./Update.cxx:
-./Update.cxx:  playerS1->handlePlayerMovement(ubo, swapChainExtent, *event.get());
-./Update.cxx:  inventory->inventoryUpdates(*event);
-./Update.cxx:  memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
-./Update.cxx:  keys.update(event.get(), {GLFW_KEY_E, GLFW_KEY_ESCAPE});
-./Update.cxx:}
 ./intiVk.cxx:#include "Event.h"
 ./intiVk.cxx:#include "HelloTriangleApplication.hpp"
 ./intiVk.cxx:#include <algorithm>
@@ -6992,10 +5873,878 @@
 ./2DTextureArray.cxx:    }
 ./2DTextureArray.cxx:}
 ./2DTextureArray.cxx:TextureArray2D::~TextureArray2D() {}
+./GameObjectPool.cxx:#include "GameObjectPool.h"
+./GameObjectPool.cxx:#include "Terrain.h"
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:GameObjectPool::GameObjectPool()
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:}
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:void GameObjectPool::init(VulkanContext context)
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:    this->vkContext = context;
+./GameObjectPool.cxx:}
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:void GameObjectPool::cleanUpResources()
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:}
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:Voxel *GameObjectPool::getVoxelGlobal(BlockCoordinates globalCoords)
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:    if (globalCoords.z < 0 || globalCoords.z >= 256)
+./GameObjectPool.cxx:        return nullptr;
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:    int cox = globalCoords.x >> 4;
+./GameObjectPool.cxx:    int coy = globalCoords.y >> 4;
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:    Chunk *chunk = terrain->getChunkByKey(Terrain::chunkKey(cox, coy));
+./GameObjectPool.cxx:    if (!chunk)
+./GameObjectPool.cxx:        return nullptr;
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:    int localX = globalCoords.x & 15;
+./GameObjectPool.cxx:    int localY = globalCoords.y & 15;
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:    return &chunk->layers[globalCoords.z].voxels[localX][localY];
+./GameObjectPool.cxx:}
+./GameObjectPool.cxx:
+./GameObjectPool.cxx:GameObjectPool::~GameObjectPool()
+./GameObjectPool.cxx:{
+./GameObjectPool.cxx:}
+./GameObjectPool.h:#ifndef GAME_OBJECT_POOL
+./GameObjectPool.h:#define GAME_OBJECT_POOL
+./GameObjectPool.h:#include <vector>
+./GameObjectPool.h:#include <string.h>
+./GameObjectPool.h:#include <memory>
+./GameObjectPool.h:
+./GameObjectPool.h:#include "GraphicsPipeline.h"
+./GameObjectPool.h:#include "Voxel.h"
+./GameObjectPool.h:
+./GameObjectPool.h:class Terrain;
+./GameObjectPool.h:
+./GameObjectPool.h:class GameObjectPool
+./GameObjectPool.h:{
+./GameObjectPool.h:private:
+./GameObjectPool.h:    VulkanContext vkContext;
+./GameObjectPool.h:
+./GameObjectPool.h:    friend class HelloTriangleApplication;
+./GameObjectPool.h:    friend class Chunk;
+./GameObjectPool.h:
+./GameObjectPool.h:    Terrain *terrain;
+./GameObjectPool.h:
+./GameObjectPool.h:public:
+./GameObjectPool.h:    GameObjectPool();
+./GameObjectPool.h:    void init(VulkanContext context);
+./GameObjectPool.h:    void cleanUpResources();
+./GameObjectPool.h:
+./GameObjectPool.h:    Voxel *getVoxelGlobal(BlockCoordinates globalCoords);
+./GameObjectPool.h:    ~GameObjectPool();
+./GameObjectPool.h:};
+./GameObjectPool.h:
+./GameObjectPool.h:#endif
+./Chunk.h:#pragma once
+./Chunk.h:
+./Chunk.h:#include <unordered_set>
+./Chunk.h:
+./Chunk.h:#include "Mesh.h"
+./Chunk.h:#include "PassInfo.hpp"
+./Chunk.h:#include "Structs.h"
+./Chunk.h:#include "Voxel.h"
+./Chunk.h:
+./Chunk.h:#include <chrono>
+./Chunk.h:#include <array>
+./Chunk.h:
+./Chunk.h:#define TIMER_START(name)                                                      \
+./Chunk.h:  auto name##_start = std::chrono::high_resolution_clock::now();
+./Chunk.h:
+./Chunk.h:#define TIMER_END(name)                                                        \
+./Chunk.h:  {                                                                            \
+./Chunk.h:    auto name##_end = std::chrono::high_resolution_clock::now();               \
+./Chunk.h:    auto name##_dur = std::chrono::duration_cast<std::chrono::milliseconds>(   \
+./Chunk.h:                          name##_end - name##_start)                           \
+./Chunk.h:                          .count();                                            \
+./Chunk.h:    std::cout << #name << " took " << name##_dur << " ms\n";                   \
+./Chunk.h:  }
+./Chunk.h:
+./Chunk.h:struct Layer {
+./Chunk.h:  int z;
+./Chunk.h:  std::unordered_set<int> blocksTypes{0};
+./Chunk.h:  Voxel voxels[16][16];
+./Chunk.h:  bool hasVisible = true;
+./Chunk.h:};
+./Chunk.h:
+./Chunk.h:class GameObjectPool;
+./Chunk.h:
+./Chunk.h:class Chunk {
+./Chunk.h:private:
+./Chunk.h:  VulkanContext &vkContext;
+./Chunk.h:
+./Chunk.h:  std::array<Layer, 256> layers;
+./Chunk.h:
+./Chunk.h:  int chunkOffset[2] = {0, 0}; // x,y
+./Chunk.h:
+./Chunk.h:  Mesh chunkMesh;
+./Chunk.h:  GameObjectPool &gop;
+./Chunk.h:
+./Chunk.h:
+./Chunk.h:
+./Chunk.h:  friend class GameObjectPool;
+./Chunk.h:  friend class Terrain;
+./Chunk.h:
+./Chunk.h:
+./Chunk.h:public:
+./Chunk.h:  Chunk(int cmx, int cmy, VulkanContext &vkContext, GameObjectPool &gop);
+./Chunk.h:
+./Chunk.h:  void makeVisible();
+./Chunk.h:  void generateMesh();
+./Chunk.h:  void createBuffers();
+./Chunk.h:
+./Chunk.h:  void updateChunkMesh();
+./Chunk.h:
+./Chunk.h:
+./Chunk.h:  void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
+./Chunk.h:            VkPipeline graphicsPipeline,
+./Chunk.h:            std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame,
+./Chunk.h:            VkExtent2D &swapChainExtent, PushConstantC1 &c1);
+./Chunk.h:
+./Chunk.h:  void cleanup();
+./Chunk.h:  ~Chunk() = default;
+./Chunk.h:};
+./GraphicsPipeline.h:#ifndef H_GPIPE
+./GraphicsPipeline.h:#define H_GPIPE
+./GraphicsPipeline.h:#include "PassInfo.hpp"
+./GraphicsPipeline.h:#include "Structs.h"
+./GraphicsPipeline.h:#include <array>
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:#include <fstream>
+./GraphicsPipeline.h:#include <functional>
+./GraphicsPipeline.h:#include <vector>
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:struct Vertex {
+./GraphicsPipeline.h:  glm::vec3 pos;
+./GraphicsPipeline.h:  glm::vec3 size;
+./GraphicsPipeline.h:  glm::vec2 texCoord;
+./GraphicsPipeline.h:  float brightness;
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:  // Telling vulkan how to setup binding
+./GraphicsPipeline.h:  // Struct 1/2
+./GraphicsPipeline.h:  static VkVertexInputBindingDescription getBindingDescription();
+./GraphicsPipeline.h:  // Struct 2/2
+./GraphicsPipeline.h:  static std::array<VkVertexInputAttributeDescription, 4>
+./GraphicsPipeline.h:  getAttributeDescriptions();
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:  bool operator==(const Vertex &other) const {
+./GraphicsPipeline.h:    return pos == other.pos && size == other.size && texCoord == other.texCoord;
+./GraphicsPipeline.h:  }
+./GraphicsPipeline.h:};
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:namespace std {
+./GraphicsPipeline.h:template <> struct hash<Vertex> {
+./GraphicsPipeline.h:  size_t operator()(Vertex const &vertex) const {
+./GraphicsPipeline.h:    size_t seed = 0;
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:    auto hashCombine = [&seed](auto const &v) {
+./GraphicsPipeline.h:      seed ^= std::hash<float>()(v) + 0x9e3779b97f4a7c15 + (seed << 6) +
+./GraphicsPipeline.h:              (seed >> 2);
+./GraphicsPipeline.h:    };
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:    hashCombine(vertex.pos.x);
+./GraphicsPipeline.h:    hashCombine(vertex.pos.y);
+./GraphicsPipeline.h:    hashCombine(vertex.pos.z);
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:    hashCombine(vertex.size.r);
+./GraphicsPipeline.h:    hashCombine(vertex.size.g);
+./GraphicsPipeline.h:    hashCombine(vertex.size.b);
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:    hashCombine(vertex.texCoord.x);
+./GraphicsPipeline.h:    hashCombine(vertex.texCoord.y);
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:    return seed;
+./GraphicsPipeline.h:  }
+./GraphicsPipeline.h:};
+./GraphicsPipeline.h:} // namespace std
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:class u_GraphicsPipeline {
+./GraphicsPipeline.h:private:
+./GraphicsPipeline.h:  VkDevice device;
+./GraphicsPipeline.h:  int height, width;
+./GraphicsPipeline.h:  VkExtent2D swapChainExtent;
+./GraphicsPipeline.h:  VkRenderPass renderPass;
+./GraphicsPipeline.h:  VkDescriptorSetLayout *descriptorSetLayout;
+./GraphicsPipeline.h:  VkSampleCountFlagBits msaaSamples;
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:  friend class RayGraphicsPipeline;
+./GraphicsPipeline.h:  friend class UIRenderPipeline;
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:public:
+./GraphicsPipeline.h:  VkPipelineLayout pipelineLayout;
+./GraphicsPipeline.h:  VkPipeline graphicsPipeline; // shared
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:  u_GraphicsPipeline();
+./GraphicsPipeline.h:  ~u_GraphicsPipeline();
+./GraphicsPipeline.h:  void destroyPipelineLayout();
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:  void
+./GraphicsPipeline.h:  u_PassGraphicsPipelineCreateInfo(u_GraphicsPipelineCreateInfo pCreateInfo);
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:  static std::vector<char> readFile(const std::string &filename);
+./GraphicsPipeline.h:
+./GraphicsPipeline.h:  virtual void createGraphicsPipeline();
+./GraphicsPipeline.h:  VkShaderModule createShaderModule(const std::vector<char> &code);
+./GraphicsPipeline.h:};
+./GraphicsPipeline.h:#endif
+./Structs.h:#pragma once
+./Structs.h:
+./Structs.h:#define GLFW_INCLUDE_VULKAN
+./Structs.h:#include <GLFW/glfw3.h>
+./Structs.h:#define GLM_FORCE_RADIANS
+./Structs.h:#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+./Structs.h:#define GLM_ENABLE_EXPERIMENTAL
+./Structs.h:#include <glm/glm.hpp>
+./Structs.h:#include <glm/gtc/matrix_transform.hpp>
+./Structs.h:#include <glm/gtx/hash.hpp>
+./Structs.h:
+./Structs.h:namespace BlockFaces {
+./Structs.h:inline char grassFaceTexture[6] = {0, 1, 1, 1, 1, 1};
+./Structs.h:inline char dirtFaceTexture[6] = {1, 1, 1, 1, 1, 1};
+./Structs.h:inline char woodFaceTexture[6] = {3, 3, 3, 3, 3, 3};
+./Structs.h:inline char leavesFaceTexture[6] = {4, 4, 4, 4, 4, 4};
+./Structs.h:inline char stoneFaceTexture[6] = {5, 5, 5, 5, 5, 5};
+./Structs.h:inline char bedrockFaceTexture[6] = {6, 6, 6, 6, 6, 6};
+./Structs.h:inline char corruptFaceTexture[6] = {19, 19, 19, 19, 19, 19};
+./Structs.h:}; // namespace BlockFaces
+./Structs.h:
+./Structs.h:enum FaceDirection { TOP = 0, BOTTOM, LEFT, RIGHT, FRONT, BACK };
+./Structs.h:
+./Structs.h:enum CardinalFacing { EAST = 0, WEST, NORTH, SOUTH };
+./Structs.h:
+./Structs.h:// UBO
+./Structs.h:struct UniformBufferObject {
+./Structs.h:  glm::mat4 model;
+./Structs.h:  glm::mat4 view;
+./Structs.h:  glm::mat4 proj;
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct DrawInfo {
+./Structs.h:  VkCommandBuffer commandBuffer;
+./Structs.h:  VkPipelineLayout pipelineLayout;
+./Structs.h:  VkPipeline graphicsPipeline;
+./Structs.h:  std::vector<VkDescriptorSet> &descriptorSets;
+./Structs.h:  uint32_t currentFrame;
+./Structs.h:  VkExtent2D &swapChainExtent;
+./Structs.h:};
+./Structs.h:
+./Structs.h:// PCS
+./Structs.h:struct PushConstantC1 {
+./Structs.h:  glm::mat4 data;
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct PushConstantC2 {
+./Structs.h:  glm::mat4 model;
+./Structs.h:  glm::mat4 proj;
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct Transform {
+./Structs.h:  glm::vec3 position;
+./Structs.h:  glm::vec3 rotation;
+./Structs.h:  glm::vec3 scale;
+./Structs.h:  glm::quat rotationQuat; // Added for ray orientation
+./Structs.h:};
+./Structs.h:
+./Structs.h:enum BlockType {
+./Structs.h:  AIR = 0,
+./Structs.h:  GRASS = 1,
+./Structs.h:  DIRT = 2,
+./Structs.h:  WOOD = 3,
+./Structs.h:  LEAF = 4,
+./Structs.h:  STONE = 5,
+./Structs.h:  BEDROCK = 6,
+./Structs.h:  END_BLOCK_TYPE
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct PlayerState {
+./Structs.h:  bool onGround{false};
+./Structs.h:  bool frontBlock{false};
+./Structs.h:  bool backBlock{false};
+./Structs.h:  bool leftBlock{false};
+./Structs.h:  bool rightBlock{false};
+./Structs.h:  bool topBlock{false};
+./Structs.h:  bool inGUI{false};
+./Structs.h:  bool inInventory{false};
+./Structs.h:  bool inJump{false};
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct FaceDef {
+./Structs.h:  glm::vec3 corners[4]; // vertex positions relative to block origin
+./Structs.h:  int tileOffset;
+./Structs.h:  float light;
+./Structs.h:  int dx, dy, dz; // direction toward the neighbour
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct BlockCoordinates {
+./Structs.h:  int x{0}, y{0}, z{0};
+./Structs.h:  bool operator==(const BlockCoordinates &other) const {
+./Structs.h:    return x == other.x && y == other.y && z == other.z;
+./Structs.h:  }
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct Faces {
+./Structs.h:  bool top;
+./Structs.h:  bool bottom;
+./Structs.h:  bool right;
+./Structs.h:  bool left;
+./Structs.h:  bool front;
+./Structs.h:  bool back;
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct AxisAlignedBoundingBox {
+./Structs.h:  glm::vec3 min;
+./Structs.h:  glm::vec3 max;
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct UnloadedVoxelPayload {
+./Structs.h:  BlockCoordinates blockCoordinates_Global;
+./Structs.h:  BlockType blockType;
+./Structs.h:  uint64_t chunkKey;
+./Structs.h:};
+./Structs.h:
+./Structs.h:struct ApplicationDimensions {
+./Structs.h:  int fbw = 0; // frame buffer width
+./Structs.h:  int fbh = 0; // frame buffer height
+./Structs.h:
+./Structs.h:  int ww = 0; // window width
+./Structs.h:  int wh = 0; // window height
+./Structs.h:
+./Structs.h:  int cw = 0; // Canonical width
+./Structs.h:  int ch = 0; // Canonical Height
+./Structs.h:};
+./Voxel.cxx:#include "Voxel.h"
+./Voxel.cxx:#include <glm/ext/vector_float3.hpp>
+./Voxel.cxx:
+./Voxel.cxx:Voxel::Voxel(BlockType blockType) { this->blockType = blockType; }
+./Voxel.cxx:
+./Voxel.cxx:void Voxel::setType(BlockType blockType) {
+./Voxel.cxx:  this->blockType = blockType;
+./Voxel.cxx:  switch (blockType) {
+./Voxel.cxx:  case AIR:
+./Voxel.cxx:    faceTexture = BlockFaces::corruptFaceTexture;
+./Voxel.cxx:    break;
+./Voxel.cxx:  case GRASS:
+./Voxel.cxx:    faceTexture = BlockFaces::grassFaceTexture;
+./Voxel.cxx:    break;
+./Voxel.cxx:  case DIRT:
+./Voxel.cxx:    faceTexture = BlockFaces::dirtFaceTexture;
+./Voxel.cxx:    break;
+./Voxel.cxx:  case WOOD:
+./Voxel.cxx:    faceTexture = BlockFaces::woodFaceTexture;
+./Voxel.cxx:    break;
+./Voxel.cxx:  case LEAF:
+./Voxel.cxx:    faceTexture = BlockFaces::leavesFaceTexture;
+./Voxel.cxx:    break;
+./Voxel.cxx:  case STONE:
+./Voxel.cxx:    faceTexture = BlockFaces::stoneFaceTexture;
+./Voxel.cxx:    break;
+./Voxel.cxx:  case BEDROCK:
+./Voxel.cxx:    faceTexture = BlockFaces::bedrockFaceTexture;
+./Voxel.cxx:    break;
+./Voxel.cxx:
+./Voxel.cxx:  default:
+./Voxel.cxx:    faceTexture = BlockFaces::corruptFaceTexture;
+./Voxel.cxx:    break;
+./Voxel.cxx:  }
+./Voxel.cxx:}
+./Voxel.cxx:
+./Voxel.cxx:BlockType Voxel::getBlockType() { return BlockType(blockType); }
+./Voxel.cxx:
+./Voxel.cxx:Voxel::~Voxel() {}
+./Voxel.h:#pragma once
+./Voxel.h:#include "PassInfo.hpp"
+./Voxel.h:#include "Structs.h"
+./Voxel.h:#include <glm/ext/vector_float3.hpp>
+./Voxel.h:
+./Voxel.h:class Voxel {
+./Voxel.h:private:
+./Voxel.h:  char blockType = AIR;
+./Voxel.h:  // top , bottom, left, right, front, back
+./Voxel.h:  const char *faceTexture =
+./Voxel.h:      BlockFaces::corruptFaceTexture; // default to a bright pink texture to
+./Voxel.h:                                      // easily spot untextured blocks
+./Voxel.h:
+./Voxel.h:  bool visible = false;
+./Voxel.h:
+./Voxel.h:  friend class Chunk;
+./Voxel.h:  friend class Player;
+./Voxel.h:  friend class Camera;
+./Voxel.h:
+./Voxel.h:public:
+./Voxel.h:  Voxel(BlockType blockType = AIR);
+./Voxel.h:
+./Voxel.h:  void setType(BlockType blockType);
+./Voxel.h:  void setScale(glm::vec3 scale);
+./Voxel.h:  BlockType getBlockType();
+./Voxel.h:
+./Voxel.h:  ~Voxel();
+./Voxel.h:};
+./Player.cxx:#include "Player.h"
+./Player.cxx:#include "Camera.h"
+./Player.cxx:#include "Structs.h"
+./Player.cxx:#include "Terrain.h"
+./Player.cxx:#include <cmath>
+./Player.cxx:#include <fmt/core.h>
+./Player.cxx:#include <iostream>
+./Player.cxx:
+./Player.cxx:Player::Player(VulkanContext &vkContext, GameObjectPool &gop)
+./Player.cxx:    : gameObjectPool{gop} {
+./Player.cxx:  camera = std::make_shared<Camera>(vkContext, gop);
+./Player.cxx:}
+./Player.cxx:
+./Player.cxx:Player::~Player() {}
+./Player.cxx:
+./Player.cxx:void Player::drawUIIfPossible(DrawInfo &drawInfo, UI &ui) {
+./Player.cxx:  // if (playerState.inInventory) {
+./Player.cxx:  //   camera->drawUIAt(drawInfo, ui, 0);
+./Player.cxx:  //   camera->drawUIAt(drawInfo, ui, 1);
+./Player.cxx:  // }
+./Player.cxx:
+./Player.cxx:  camera->drawUIAt(drawInfo, ui, 2);
+./Player.cxx:  camera->drawUIAt(drawInfo, ui, 3);
+./Player.cxx:}
+./Player.cxx:
+./Player.cxx:void Player::handlePlayerMovement(UniformBufferObject &UBO,
+./Player.cxx:                                  VkExtent2D &swapChainExtent, Event &event) {
+./Player.cxx:  static float deltaJZ = 0;
+./Player.cxx:
+./Player.cxx:  double dx = 0, dy = 0, dz = 0;
+./Player.cxx:
+./Player.cxx:  selfTransform.position = camera->cameraPos;
+./Player.cxx:  selfTransform.position.z += .2f;
+./Player.cxx:
+./Player.cxx:  aabb.max = selfTransform.position + glm::vec3(.25f, .25f, .0f);
+./Player.cxx:  aabb.min = selfTransform.position - glm::vec3(.25f, .25f, 1.8f);
+./Player.cxx:
+./Player.cxx:  AxisAlignedBoundingBox groundAABB{};
+./Player.cxx:  groundAABB.max = selfTransform.position + glm::vec3(.1f, .1f, .0f);
+./Player.cxx:  groundAABB.min = selfTransform.position - glm::vec3(.1f, .1f, 1.8f);
+./Player.cxx:
+./Player.cxx:  // ── ground check ────────────────────────────────────────────────────────
+./Player.cxx:  playerState.onGround = false;
+./Player.cxx:  {
+./Player.cxx:    int feet = floor(groundAABB.min.z);
+./Player.cxx:    int head = floor(groundAABB.max.z);
+./Player.cxx:    int minX = floor(groundAABB.min.x);
+./Player.cxx:    int maxX = floor(groundAABB.max.x);
+./Player.cxx:    int minY = floor(groundAABB.min.y);
+./Player.cxx:    int maxY = floor(groundAABB.max.y);
+./Player.cxx:
+./Player.cxx:    for (int k = feet; k <= head && !playerState.onGround; k++)
+./Player.cxx:      for (int i = minX; i <= maxX && !playerState.onGround; i++)
+./Player.cxx:        for (int j = minY; j <= maxY; j++) {
+./Player.cxx:          auto v = gameObjectPool.getVoxelGlobal({i, j, k});
+./Player.cxx:          if (v && v->blockType != AIR) {
+./Player.cxx:            playerState.onGround = true;
+./Player.cxx:            break;
+./Player.cxx:          }
+./Player.cxx:        }
+./Player.cxx:  }
+./Player.cxx:
+./Player.cxx:  // ── gravity / jump ───────────────────────────────────────────────────────
+./Player.cxx:  if (!playerState.onGround && !playerState.inJump)
+./Player.cxx:    dz -= .01f * event.dt;
+./Player.cxx:  else if (playerState.inJump) {
+./Player.cxx:    deltaJZ -= .003f * event.dt;
+./Player.cxx:    dz += .01f * event.dt * deltaJZ;
+./Player.cxx:  }
+./Player.cxx:
+./Player.cxx:  // ── desired XY movement ──────────────────────────────────────────────────
+./Player.cxx:  float x_fac = cos(glm::radians(camera->yaw));
+./Player.cxx:  float y_fac = sin(glm::radians(camera->yaw));
+./Player.cxx:  float x_fac_dx = x_fac * camera->speed * event.dt;
+./Player.cxx:  float y_fac_dy = y_fac * camera->speed * event.dt;
+./Player.cxx:
+./Player.cxx:  // Update facing direction for animation / other systems — NOT used for
+./Player.cxx:  // collision
+./Player.cxx:  bool xDominant = std::abs(x_fac) > std::abs(y_fac);
+./Player.cxx:  if (x_fac > 0 && xDominant)
+./Player.cxx:    facingDirection = NORTH;
+./Player.cxx:  else if (x_fac < 0 && xDominant)
+./Player.cxx:    facingDirection = SOUTH;
+./Player.cxx:  else if (y_fac > 0 && !xDominant)
+./Player.cxx:    facingDirection = WEST;
+./Player.cxx:  else if (y_fac < 0 && !xDominant)
+./Player.cxx:    facingDirection = EAST;
+./Player.cxx:
+./Player.cxx:  bool KEY_W = event.getKeyPressed(GLFW_KEY_W);
+./Player.cxx:  bool KEY_S = event.getKeyPressed(GLFW_KEY_S);
+./Player.cxx:  bool KEY_A = event.getKeyPressed(GLFW_KEY_A);
+./Player.cxx:  bool KEY_D = event.getKeyPressed(GLFW_KEY_D);
+./Player.cxx:
+./Player.cxx:  if (KEY_W) {
+./Player.cxx:    dx += x_fac_dx;
+./Player.cxx:    dy += y_fac_dy;
+./Player.cxx:  }
+./Player.cxx:  if (KEY_S) {
+./Player.cxx:    dx -= x_fac_dx;
+./Player.cxx:    dy -= y_fac_dy;
+./Player.cxx:  }
+./Player.cxx:  if (KEY_A) {
+./Player.cxx:    dx += -y_fac_dy;
+./Player.cxx:    dy += x_fac_dx;
+./Player.cxx:  }
+./Player.cxx:  if (KEY_D) {
+./Player.cxx:    dx -= -y_fac_dy;
+./Player.cxx:    dy -= x_fac_dx;
+./Player.cxx:  }
+./Player.cxx:
+./Player.cxx:  // ── axis-separated collision ─────────────────────────────────────────────
+./Player.cxx:  // Helper: does the AABB at `testPos` overlap any solid voxel?
+./Player.cxx:  auto overlaps = [&](glm::vec3 testPos) -> bool {
+./Player.cxx:    glm::vec3 tMax = testPos + glm::vec3(.25f, .25f, .0f);
+./Player.cxx:    glm::vec3 tMin = testPos - glm::vec3(.25f, .25f, 1.8f);
+./Player.cxx:
+./Player.cxx:    int x0 = floor(tMin.x), x1 = floor(tMax.x);
+./Player.cxx:    int y0 = floor(tMin.y), y1 = floor(tMax.y);
+./Player.cxx:    int z0 = floor(tMin.z) + 1, z1 = floor(tMax.z);
+./Player.cxx:
+./Player.cxx:    for (int k = z0; k <= z1; k++)
+./Player.cxx:      for (int i = x0; i <= x1; i++)
+./Player.cxx:        for (int j = y0; j <= y1; j++) {
+./Player.cxx:          auto v = gameObjectPool.getVoxelGlobal({i, j, k});
+./Player.cxx:          if (v && v->blockType != AIR)
+./Player.cxx:            return true;
+./Player.cxx:        }
+./Player.cxx:    return false;
+./Player.cxx:  };
+./Player.cxx:
+./Player.cxx:  glm::vec3 base = selfTransform.position;
+./Player.cxx:
+./Player.cxx:  if (overlaps(base + glm::vec3(dx, 0, 0)))
+./Player.cxx:    dx = 0;
+./Player.cxx:
+./Player.cxx:  if (overlaps(base + glm::vec3(0, dy, 0)))
+./Player.cxx:    dy = 0;
+./Player.cxx:
+./Player.cxx:  if (overlaps(base + glm::vec3(0, 0, dz)))
+./Player.cxx:    dz = 0;
+./Player.cxx:
+./Player.cxx:  if (playerState.onGround) [[likely]]
+./Player.cxx:    playerState.inJump = false;
+./Player.cxx:
+./Player.cxx:  if (event.getKeyPressed(GLFW_KEY_SPACE) && playerState.onGround) {
+./Player.cxx:    deltaJZ = 1.f;
+./Player.cxx:    playerState.inJump = true;
+./Player.cxx:  }
+./Player.cxx:
+./Player.cxx:  camera->cameraPos.x += dx;
+./Player.cxx:  camera->cameraPos.y += dy;
+./Player.cxx:  camera->cameraPos.z += dz;
+./Player.cxx:
+./Player.cxx:  camera->locked = playerState.inInventory;
+./Player.cxx:
+./Player.cxx:  camera->updateUBO(UBO, swapChainExtent, event);
+./Player.cxx:}
+./Player.cxx:
+./Player.cxx:const int Player::getHealthPoints() { return healtPoints; }
+./GraphicsPipeline.cxx:#include "GraphicsPipeline.h"
+./GraphicsPipeline.cxx:#include <iostream>
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:u_GraphicsPipeline::u_GraphicsPipeline() {}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:u_GraphicsPipeline::~u_GraphicsPipeline() {}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:void u_GraphicsPipeline::destroyPipelineLayout() {
+./GraphicsPipeline.cxx:  vkDestroyPipeline(device, graphicsPipeline, nullptr);
+./GraphicsPipeline.cxx:  vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:void u_GraphicsPipeline::createGraphicsPipeline() {
+./GraphicsPipeline.cxx:  std::cout << "Creating Graphics Pipeline..." << std::endl;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  auto vertShaderCode =
+./GraphicsPipeline.cxx:      readFile("/home/divyansh/MinecraftClone/shaders/simple_shader_v.spv");
+./GraphicsPipeline.cxx:  auto fragShaderCode =
+./GraphicsPipeline.cxx:      readFile("/home/divyansh/MinecraftClone/shaders/simple_shader_f.spv");
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+./GraphicsPipeline.cxx:  VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  // shaderStageCreation
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+./GraphicsPipeline.cxx:  vertShaderStageInfo.sType =
+./GraphicsPipeline.cxx:      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+./GraphicsPipeline.cxx:  vertShaderStageInfo.stage =
+./GraphicsPipeline.cxx:      VK_SHADER_STAGE_VERTEX_BIT; // telling vulkan 'which stage must this
+./GraphicsPipeline.cxx:                                  // shader go'
+./GraphicsPipeline.cxx:  vertShaderStageInfo.module = vertShaderModule;
+./GraphicsPipeline.cxx:  vertShaderStageInfo.pName = "main";
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+./GraphicsPipeline.cxx:  fragShaderStageInfo.sType =
+./GraphicsPipeline.cxx:      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+./GraphicsPipeline.cxx:  fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+./GraphicsPipeline.cxx:  fragShaderStageInfo.module = fragShaderModule;
+./GraphicsPipeline.cxx:  fragShaderStageInfo.pName = "main";
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo,
+./GraphicsPipeline.cxx:                                                    fragShaderStageInfo};
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  auto bindingDescription = Vertex::getBindingDescription();
+./GraphicsPipeline.cxx:  auto attributeDescriptions = Vertex::getAttributeDescriptions();
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+./GraphicsPipeline.cxx:  vertexInputInfo.sType =
+./GraphicsPipeline.cxx:      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:  vertexInputInfo.vertexBindingDescriptionCount = 1;
+./GraphicsPipeline.cxx:  vertexInputInfo.vertexAttributeDescriptionCount =
+./GraphicsPipeline.cxx:      static_cast<uint32_t>(attributeDescriptions.size());
+./GraphicsPipeline.cxx:  vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+./GraphicsPipeline.cxx:  vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  // input assembly
+./GraphicsPipeline.cxx:  VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+./GraphicsPipeline.cxx:  inputAssembly.sType =
+./GraphicsPipeline.cxx:      VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:  inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+./GraphicsPipeline.cxx:  inputAssembly.primitiveRestartEnable = VK_FALSE;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  // viewport and scissors
+./GraphicsPipeline.cxx:  VkViewport viewport{};
+./GraphicsPipeline.cxx:  viewport.x = .0f;
+./GraphicsPipeline.cxx:  viewport.y = .0f;
+./GraphicsPipeline.cxx:  viewport.width = (float)swapChainExtent.width;
+./GraphicsPipeline.cxx:  viewport.height =
+./GraphicsPipeline.cxx:      (float)swapChainExtent
+./GraphicsPipeline.cxx:          .height; // this swapchain is used as a framebuffer hensforth using it
+./GraphicsPipeline.cxx:                   // as the size for our viewport
+./GraphicsPipeline.cxx:  viewport.minDepth = .0f;
+./GraphicsPipeline.cxx:  viewport.maxDepth = 1.0f;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkRect2D scissor{};
+./GraphicsPipeline.cxx:  scissor.offset = {0, 0};
+./GraphicsPipeline.cxx:  scissor.extent = swapChainExtent;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  // //dyanmic scissor and viewport
+./GraphicsPipeline.cxx:  // std::vector<VkDynamicState> dynamicStates =
+./GraphicsPipeline.cxx:  // {
+./GraphicsPipeline.cxx:  //     VK_DYNAMIC_STATE_VIEWPORT,
+./GraphicsPipeline.cxx:  //     VK_DYNAMIC_STATE_SCISSOR
+./GraphicsPipeline.cxx:  // };
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  // VkPipelineDynamicStateCreateInfo dynamicState{};
+./GraphicsPipeline.cxx:  // dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:  // dynamicState.dynamicStateCount =
+./GraphicsPipeline.cxx:  // static_cast<uint32_t>(dynamicStates.size()); dynamicState.pDynamicStates =
+./GraphicsPipeline.cxx:  // dynamicStates.data();
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkPipelineViewportStateCreateInfo viewportState{};
+./GraphicsPipeline.cxx:  viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:  viewportState.viewportCount = 1;
+./GraphicsPipeline.cxx:  viewportState.pViewports = &viewport;
+./GraphicsPipeline.cxx:  viewportState.scissorCount = 1;
+./GraphicsPipeline.cxx:  viewportState.pScissors = &scissor;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  // Rasterizer
+./GraphicsPipeline.cxx:  VkPipelineRasterizationStateCreateInfo rasterizer{};
+./GraphicsPipeline.cxx:  rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:  rasterizer.depthClampEnable = VK_FALSE;
+./GraphicsPipeline.cxx:  rasterizer.rasterizerDiscardEnable = VK_FALSE;
+./GraphicsPipeline.cxx:  rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  rasterizer.lineWidth = 1.0f;
+./GraphicsPipeline.cxx:  rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+./GraphicsPipeline.cxx:  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  rasterizer.depthBiasEnable = VK_FALSE;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  // MSSA(disabled for now)
+./GraphicsPipeline.cxx:  VkPipelineMultisampleStateCreateInfo multisampling{};
+./GraphicsPipeline.cxx:  multisampling.sType =
+./GraphicsPipeline.cxx:      VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:  multisampling.sampleShadingEnable = VK_FALSE;
+./GraphicsPipeline.cxx:  multisampling.rasterizationSamples = msaaSamples;
+./GraphicsPipeline.cxx:  multisampling.minSampleShading = .2f;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkPipelineDepthStencilStateCreateInfo depthStencil{};
+./GraphicsPipeline.cxx:  depthStencil.sType =
+./GraphicsPipeline.cxx:      VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:  depthStencil.depthTestEnable = VK_TRUE;
+./GraphicsPipeline.cxx:  depthStencil.depthWriteEnable = VK_TRUE;
+./GraphicsPipeline.cxx:  depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+./GraphicsPipeline.cxx:  depthStencil.depthBoundsTestEnable = VK_FALSE;
+./GraphicsPipeline.cxx:  depthStencil.minDepthBounds = 0.0f; // Optional
+./GraphicsPipeline.cxx:  depthStencil.maxDepthBounds = 1.0f; // Optional
+./GraphicsPipeline.cxx:  depthStencil.stencilTestEnable = VK_FALSE;
+./GraphicsPipeline.cxx:  depthStencil.front = {}; // Optional
+./GraphicsPipeline.cxx:  depthStencil.back = {};  // Optional
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  /// color blending
+./GraphicsPipeline.cxx:  VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+./GraphicsPipeline.cxx:  colorBlendAttachment.colorWriteMask =
+./GraphicsPipeline.cxx:      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+./GraphicsPipeline.cxx:      VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+./GraphicsPipeline.cxx:  colorBlendAttachment.blendEnable = VK_FALSE;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkPipelineColorBlendStateCreateInfo colorBlending{};
+./GraphicsPipeline.cxx:  colorBlending.sType =
+./GraphicsPipeline.cxx:      VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+./GraphicsPipeline.cxx:  colorBlending.logicOpEnable = VK_FALSE;
+./GraphicsPipeline.cxx:  colorBlending.attachmentCount = 1;
+./GraphicsPipeline.cxx:  colorBlending.pAttachments = &colorBlendAttachment;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  // Pipeline Layout
+./GraphicsPipeline.cxx:  //(passing data to uniform objects in shaders)
+./GraphicsPipeline.cxx:  VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+./GraphicsPipeline.cxx:  pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+./GraphicsPipeline.cxx:  pipelineLayoutInfo.setLayoutCount = 1;
+./GraphicsPipeline.cxx:  pipelineLayoutInfo.pSetLayouts = descriptorSetLayout;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkPushConstantRange pushConstatn;
+./GraphicsPipeline.cxx:  pushConstatn.offset = 0;
+./GraphicsPipeline.cxx:  pushConstatn.size = sizeof(PushConstantC1);
+./GraphicsPipeline.cxx:  pushConstatn.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  pipelineLayoutInfo.pPushConstantRanges = &pushConstatn;
+./GraphicsPipeline.cxx:  pipelineLayoutInfo.pushConstantRangeCount = 1;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr,
+./GraphicsPipeline.cxx:                             &pipelineLayout) != VK_SUCCESS) {
+./GraphicsPipeline.cxx:    throw std::runtime_error("failed to create pipeline layout!");
+./GraphicsPipeline.cxx:  }
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  // creating graphics pipeline
+./GraphicsPipeline.cxx:  VkGraphicsPipelineCreateInfo pipelineInfo{};
+./GraphicsPipeline.cxx:  pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+./GraphicsPipeline.cxx:  pipelineInfo.stageCount = 2; // the shader stage count
+./GraphicsPipeline.cxx:  pipelineInfo.pStages = shaderStages;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  pipelineInfo.pVertexInputState = &vertexInputInfo;
+./GraphicsPipeline.cxx:  pipelineInfo.pInputAssemblyState = &inputAssembly;
+./GraphicsPipeline.cxx:  pipelineInfo.pViewportState = &viewportState;
+./GraphicsPipeline.cxx:  pipelineInfo.pRasterizationState = &rasterizer;
+./GraphicsPipeline.cxx:  pipelineInfo.pMultisampleState = &multisampling;
+./GraphicsPipeline.cxx:  pipelineInfo.pDepthStencilState = &depthStencil; // disabled
+./GraphicsPipeline.cxx:  pipelineInfo.pColorBlendState = &colorBlending;
+./GraphicsPipeline.cxx:  // pipelineInfo.pDynamicState = &dynamic_state;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  pipelineInfo.layout = pipelineLayout;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  pipelineInfo.renderPass = renderPass; // passs the render pass
+./GraphicsPipeline.cxx:  pipelineInfo.subpass = 0;
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo,
+./GraphicsPipeline.cxx:                                nullptr, &graphicsPipeline) != VK_SUCCESS) {
+./GraphicsPipeline.cxx:    throw std::runtime_error("failed to create graphics pipeline!");
+./GraphicsPipeline.cxx:  }
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  vkDestroyShaderModule(device, fragShaderModule, nullptr);
+./GraphicsPipeline.cxx:  vkDestroyShaderModule(device, vertShaderModule, nullptr);
+./GraphicsPipeline.cxx:  // vulkan copies it internally so it can be destroid safely
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:void u_GraphicsPipeline::u_PassGraphicsPipelineCreateInfo(
+./GraphicsPipeline.cxx:    u_GraphicsPipelineCreateInfo pCreateInfo) {
+./GraphicsPipeline.cxx:  device = pCreateInfo.device;
+./GraphicsPipeline.cxx:  height = pCreateInfo.height;
+./GraphicsPipeline.cxx:  width = pCreateInfo.width;
+./GraphicsPipeline.cxx:  swapChainExtent = pCreateInfo.swapChainExtent;
+./GraphicsPipeline.cxx:  renderPass = pCreateInfo.renderPass;
+./GraphicsPipeline.cxx:  descriptorSetLayout = pCreateInfo.descriptorSetLayout;
+./GraphicsPipeline.cxx:  msaaSamples = pCreateInfo.msaaSamples;
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:std::vector<char> u_GraphicsPipeline::readFile(const std::string &filename) {
+./GraphicsPipeline.cxx:  std::ifstream file(filename, std::ios::ate | std::ios::binary);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  if (!file.is_open()) {
+./GraphicsPipeline.cxx:    std::cout << "File: " << filename << std::endl;
+./GraphicsPipeline.cxx:    throw std::runtime_error("Failed to open file");
+./GraphicsPipeline.cxx:  }
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  size_t fileSize = (size_t)file.tellg();
+./GraphicsPipeline.cxx:  std::vector<char> buffer(fileSize);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  file.seekg(0);
+./GraphicsPipeline.cxx:  file.read(buffer.data(), fileSize);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  file.close();
+./GraphicsPipeline.cxx:  return buffer;
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:VkShaderModule
+./GraphicsPipeline.cxx:u_GraphicsPipeline::createShaderModule(const std::vector<char> &code) {
+./GraphicsPipeline.cxx:  VkShaderModuleCreateInfo createInfo{};
+./GraphicsPipeline.cxx:  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+./GraphicsPipeline.cxx:  createInfo.codeSize = code.size();
+./GraphicsPipeline.cxx:  createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  VkShaderModule shaderModule;
+./GraphicsPipeline.cxx:  if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) !=
+./GraphicsPipeline.cxx:      VK_SUCCESS) {
+./GraphicsPipeline.cxx:    throw std::runtime_error("Failed to create shader module");
+./GraphicsPipeline.cxx:  }
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  return shaderModule;
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:// Telling vulkan how to pass data to the vertex shader once it's been uploaded
+./GraphicsPipeline.cxx:// into the GPU
+./GraphicsPipeline.cxx:VkVertexInputBindingDescription Vertex::getBindingDescription() {
+./GraphicsPipeline.cxx:  VkVertexInputBindingDescription bindingDescription{};
+./GraphicsPipeline.cxx:  // A vertex binding describes at which rate to load data from memory
+./GraphicsPipeline.cxx:  // throughout the verticies. It specifies the number of bytes between data
+./GraphicsPipeline.cxx:  // entries and whether to move to the next data entery after each vertex or
+./GraphicsPipeline.cxx:  // after each instance.
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  bindingDescription.binding = 0; // binding index to zero
+./GraphicsPipeline.cxx:  bindingDescription.stride = sizeof(Vertex);
+./GraphicsPipeline.cxx:  bindingDescription.inputRate =
+./GraphicsPipeline.cxx:      VK_VERTEX_INPUT_RATE_VERTEX; // advance to the next input per vertex
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  return bindingDescription;
+./GraphicsPipeline.cxx:}
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:// this structure describies how to handle vertex input
+./GraphicsPipeline.cxx:// each attribute required its own description
+./GraphicsPipeline.cxx:std::array<VkVertexInputAttributeDescription, 4>
+./GraphicsPipeline.cxx:Vertex::getAttributeDescriptions() {
+./GraphicsPipeline.cxx:  std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
+./GraphicsPipeline.cxx:  attributeDescriptions[0].binding = 0; // same as getBindingDescription
+./GraphicsPipeline.cxx:  attributeDescriptions[0].location =
+./GraphicsPipeline.cxx:      0; // directly co-relates to 'layout(location = 0)'
+./GraphicsPipeline.cxx:  attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
+./GraphicsPipeline.cxx:  attributeDescriptions[0].offset = offsetof(Vertex, pos);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  attributeDescriptions[1].binding = 0;
+./GraphicsPipeline.cxx:  attributeDescriptions[1].location = 1;
+./GraphicsPipeline.cxx:  attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
+./GraphicsPipeline.cxx:  attributeDescriptions[1].offset = offsetof(Vertex, size);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  attributeDescriptions[2].binding = 0;
+./GraphicsPipeline.cxx:  attributeDescriptions[2].location = 2;
+./GraphicsPipeline.cxx:  attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+./GraphicsPipeline.cxx:  attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  attributeDescriptions[3].location = 3;
+./GraphicsPipeline.cxx:  attributeDescriptions[3].format = VK_FORMAT_R32_SFLOAT;
+./GraphicsPipeline.cxx:  attributeDescriptions[3].offset = offsetof(Vertex, brightness);
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  // Formats
+./GraphicsPipeline.cxx:  //  float -> VK_FORMAT_R32_SFLOAT
+./GraphicsPipeline.cxx:  //  vec2  -> VK_FORMAT_R32G32_SFLOAT
+./GraphicsPipeline.cxx:  //  vec3  -> VK_FORMAT_R32G32B32_SFLOAT
+./GraphicsPipeline.cxx:  //  vec4  -> VK_FORMAT_R32G32B32A32_SFLOAT
+./GraphicsPipeline.cxx:  // ivec2  -> VK_FORMAT_R32G32_SINT
+./GraphicsPipeline.cxx:  // uvec4  -> VK_FORMAT_R32G32B32A32_UINT
+./GraphicsPipeline.cxx:  // double -> VK_FORMAT_R64_SFLOAT
+./GraphicsPipeline.cxx:
+./GraphicsPipeline.cxx:  return attributeDescriptions;
+./GraphicsPipeline.cxx:}
 ./Chunk.cxx:// Chunk.cpp — optimized
+./Chunk.cxx://
 ./Chunk.cxx:// Key changes:
-./Chunk.cxx://   1. makeVisible: cache neighbor chunks once per edge; avoid per-voxel gop calls
-./Chunk.cxx://   2. generateMesh: single pass to bucket visible voxels by type; greedy only iterates its own bucket
+./Chunk.cxx://   1. makeVisible: cache neighbor chunks once per edge; avoid per-voxel gop
+./Chunk.cxx://   calls
+./Chunk.cxx://   2. generateMesh: single pass to bucket visible voxels by type; greedy only
+./Chunk.cxx://   iterates its own bucket
 ./Chunk.cxx://   3. Mask arrays allocated once outside loops, cleared with memset
 ./Chunk.cxx://   4. Per-layer hasVisible flag skips fully-buried layers entirely
 ./Chunk.cxx://   5. vertices/indices reserved upfront
@@ -7004,40 +6753,56 @@
 ./Chunk.cxx:#include "Chunk.h"
 ./Chunk.cxx:#include "GameObjectPool.h"
 ./Chunk.cxx:#include "GraphicsPipeline.h"
+./Chunk.cxx:#include "Terrain.h"
+./Chunk.cxx:#include <cstdint>
 ./Chunk.cxx:#include <fmt/base.h>
 ./Chunk.cxx:#include <fmt/core.h>
 ./Chunk.cxx:
+./Chunk.cxx:#include "PerlinNoise.hpp"
+./Chunk.cxx:
 ./Chunk.cxx:#include <array>
-./Chunk.cxx:#include <cstring>   // memset
+./Chunk.cxx:#include <cstring> // memset
 ./Chunk.cxx:#include <iostream>
 ./Chunk.cxx:
 ./Chunk.cxx:// ---------------------------------------------------------------------------
 ./Chunk.cxx:// Construction — unchanged logic, just tidied
 ./Chunk.cxx:// ---------------------------------------------------------------------------
 ./Chunk.cxx:Chunk::Chunk(int cmx, int cmy, VulkanContext &vkContext, GameObjectPool &gop)
-./Chunk.cxx:    : vkContext{vkContext}, chunkMesh{vkContext}, gop{gop}
-./Chunk.cxx:{
-./Chunk.cxx:    chunkOffset[0] = cmx;
-./Chunk.cxx:    chunkOffset[1] = cmy;
+./Chunk.cxx:    : vkContext{vkContext}, chunkMesh{vkContext}, gop{gop} {
+./Chunk.cxx:  chunkOffset[0] = cmx;
+./Chunk.cxx:  chunkOffset[1] = cmy;
 ./Chunk.cxx:
-./Chunk.cxx:    const float baseX = cmx * 16;
-./Chunk.cxx:    const float baseY = cmy * 16;
+./Chunk.cxx:  const float baseX = cmx * 16;
+./Chunk.cxx:  const float baseY = cmy * 16;
 ./Chunk.cxx:
-./Chunk.cxx:    for (int z = 0; z < 256; ++z) {
-./Chunk.cxx:        auto &layer = layers[z];
-./Chunk.cxx:        layer.z = z;
-./Chunk.cxx:        layer.hasVisible = false;   // initialise the new flag
+./Chunk.cxx:  float freq = .05f;
+./Chunk.cxx:  int octv = 1;
+./Chunk.cxx:  uint32_t seed = 32846347;
+./Chunk.cxx:  int baseZ = 60;
 ./Chunk.cxx:
-./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
-./Chunk.cxx:            const float px = baseX + x;
-./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
-./Chunk.cxx:                Voxel &v = layer.voxels[x][y];
-./Chunk.cxx:                if (z < 60)  v.setType(GRASS);
-./Chunk.cxx:                if (z == 0)  v.setType(BEDROCK);
-./Chunk.cxx:                v.setPosition(glm::vec3(px + 0.5f, baseY + y + 0.5f, z + 0.5f));
-./Chunk.cxx:            }
-./Chunk.cxx:        }
+./Chunk.cxx:  const siv::PerlinNoise perlin{seed};
+./Chunk.cxx:
+./Chunk.cxx:  for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:    auto &layer = layers[z];
+./Chunk.cxx:    layer.z = z;
+./Chunk.cxx:    layer.hasVisible = false; // initialise the new flag
+./Chunk.cxx:
+./Chunk.cxx:    for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:      const float px = baseX + x;
+./Chunk.cxx:      for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:        Voxel &v = layer.voxels[x][y];
+./Chunk.cxx:
+./Chunk.cxx:        int grassZ = baseZ + 2 * perlin.octave2D_11(
+./Chunk.cxx:                                     (x + 16 * chunkOffset[0]) * freq,
+./Chunk.cxx:                                     (y + 16 * chunkOffset[1]) * freq, octv);
+./Chunk.cxx:        if (z < grassZ)
+./Chunk.cxx:          v.setType(GRASS);
+./Chunk.cxx:
+./Chunk.cxx:        if (z == 0)
+./Chunk.cxx:          v.setType(BEDROCK);
+./Chunk.cxx:      }
 ./Chunk.cxx:    }
+./Chunk.cxx:  }
 ./Chunk.cxx:}
 ./Chunk.cxx:
 ./Chunk.cxx:// ---------------------------------------------------------------------------
@@ -7048,91 +6813,96 @@
 ./Chunk.cxx://     neighbor lookups are a single array index rather than a hash/map lookup.
 ./Chunk.cxx://   * Set layer.hasVisible so generateMesh can skip dead layers cheaply.
 ./Chunk.cxx:// ---------------------------------------------------------------------------
-./Chunk.cxx:void Chunk::makeVisible()
-./Chunk.cxx:{
-./Chunk.cxx:    // Fetch the four cardinal neighbor chunks once.
-./Chunk.cxx:    // getChunkAt is assumed to return nullptr for unloaded chunks.
-./Chunk.cxx:    const int cx = chunkOffset[0];
-./Chunk.cxx:    const int cy = chunkOffset[1];
+./Chunk.cxx:void Chunk::makeVisible() {
+./Chunk.cxx:  // Fetch the four cardinal neighbor chunks once.
+./Chunk.cxx:  // terrain->getChunkByKey() is assumed to return nullTerrain::chunkKeyptr for
+./Chunk.cxx:  // unloaded) chunks.
+./Chunk.cxx:  const int cx = chunkOffset[0];
+./Chunk.cxx:  const int cy = chunkOffset[1];
 ./Chunk.cxx:
-./Chunk.cxx:    Chunk *chunkLeft  = gop.getChunkAt(cx,     cy - 1); // y-1
-./Chunk.cxx:    Chunk *chunkRight = gop.getChunkAt(cx,     cy + 1); // y+1
-./Chunk.cxx:    Chunk *chunkFront = gop.getChunkAt(cx + 1, cy    ); // x+1
-./Chunk.cxx:    Chunk *chunkBack  = gop.getChunkAt(cx - 1, cy    ); // x-1
+./Chunk.cxx:  Chunk *chunkLeft =
+./Chunk.cxx:      gop.terrain->getChunkByKey(Terrain::chunkKey(cx, cy - 1)); // y-1
+./Chunk.cxx:  Chunk *chunkRight =
+./Chunk.cxx:      gop.terrain->getChunkByKey(Terrain::chunkKey(cx, cy + 1)); // y+1
+./Chunk.cxx:  Chunk *chunkFront =
+./Chunk.cxx:      gop.terrain->getChunkByKey(Terrain::chunkKey(cx + 1, cy)); // x+1
+./Chunk.cxx:  Chunk *chunkBack =
+./Chunk.cxx:      gop.terrain->getChunkByKey(Terrain::chunkKey(cx - 1, cy)); // x-1
 ./Chunk.cxx:
-./Chunk.cxx:    for (int z = 0; z < 256; ++z) {
-./Chunk.cxx:        Layer &layer = layers[z];
-./Chunk.cxx:        layer.hasVisible = false;
+./Chunk.cxx:  for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:    Layer &layer = layers[z];
+./Chunk.cxx:    layer.hasVisible = false;
 ./Chunk.cxx:
-./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
-./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
-./Chunk.cxx:                Voxel &v = layer.voxels[x][y];
+./Chunk.cxx:    for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:      for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:        Voxel &v = layer.voxels[x][y];
 ./Chunk.cxx:
-./Chunk.cxx:                if (v.blockType == AIR) {
-./Chunk.cxx:                    v.visible = false;
-./Chunk.cxx:                    continue;
-./Chunk.cxx:                }
-./Chunk.cxx:
-./Chunk.cxx:                if (z == 0 || z == 255) [[unlikely]] {
-./Chunk.cxx:                    v.visible = true;
-./Chunk.cxx:                    layer.hasVisible = true;
-./Chunk.cxx:                    continue;
-./Chunk.cxx:                }
-./Chunk.cxx:
-./Chunk.cxx:                // Vertical neighbors are always within this chunk.
-./Chunk.cxx:                if (layers[z + 1].voxels[x][y].blockType == AIR ||
-./Chunk.cxx:                    layers[z - 1].voxels[x][y].blockType == AIR) {
-./Chunk.cxx:                    v.visible = true;
-./Chunk.cxx:                    layer.hasVisible = true;
-./Chunk.cxx:                    continue;
-./Chunk.cxx:                }
-./Chunk.cxx:
-./Chunk.cxx:                // Lateral neighbors — use chunk pointers for edge voxels.
-./Chunk.cxx:                bool nextToAir = false;
-./Chunk.cxx:
-./Chunk.cxx:                // left (y-1)
-./Chunk.cxx:                if (y > 0) {
-./Chunk.cxx:                    nextToAir |= layer.voxels[x][y - 1].blockType == AIR;
-./Chunk.cxx:                } else {
-./Chunk.cxx:                    nextToAir |= !chunkLeft ||
-./Chunk.cxx:                                 chunkLeft->layers[z].voxels[x][15].blockType == AIR;
-./Chunk.cxx:                }
-./Chunk.cxx:
-./Chunk.cxx:                // right (y+1)
-./Chunk.cxx:                if (!nextToAir) {
-./Chunk.cxx:                    if (y < 15) {
-./Chunk.cxx:                        nextToAir |= layer.voxels[x][y + 1].blockType == AIR;
-./Chunk.cxx:                    } else {
-./Chunk.cxx:                        nextToAir |= !chunkRight ||
-./Chunk.cxx:                                     chunkRight->layers[z].voxels[x][0].blockType == AIR;
-./Chunk.cxx:                    }
-./Chunk.cxx:                }
-./Chunk.cxx:
-./Chunk.cxx:                // front (x+1)
-./Chunk.cxx:                if (!nextToAir) {
-./Chunk.cxx:                    if (x < 15) {
-./Chunk.cxx:                        nextToAir |= layer.voxels[x + 1][y].blockType == AIR;
-./Chunk.cxx:                    } else {
-./Chunk.cxx:                        nextToAir |= !chunkFront ||
-./Chunk.cxx:                                     chunkFront->layers[z].voxels[0][y].blockType == AIR;
-./Chunk.cxx:                    }
-./Chunk.cxx:                }
-./Chunk.cxx:
-./Chunk.cxx:                // back (x-1)
-./Chunk.cxx:                if (!nextToAir) {
-./Chunk.cxx:                    if (x > 0) {
-./Chunk.cxx:                        nextToAir |= layer.voxels[x - 1][y].blockType == AIR;
-./Chunk.cxx:                    } else {
-./Chunk.cxx:                        nextToAir |= !chunkBack ||
-./Chunk.cxx:                                     chunkBack->layers[z].voxels[15][y].blockType == AIR;
-./Chunk.cxx:                    }
-./Chunk.cxx:                }
-./Chunk.cxx:
-./Chunk.cxx:                v.visible = nextToAir;
-./Chunk.cxx:                if (nextToAir) layer.hasVisible = true;
-./Chunk.cxx:            }
+./Chunk.cxx:        if (v.blockType == AIR) {
+./Chunk.cxx:          v.visible = false;
+./Chunk.cxx:          continue;
 ./Chunk.cxx:        }
+./Chunk.cxx:
+./Chunk.cxx:        if (z == 0 || z == 255) [[unlikely]] {
+./Chunk.cxx:          v.visible = true;
+./Chunk.cxx:          layer.hasVisible = true;
+./Chunk.cxx:          continue;
+./Chunk.cxx:        }
+./Chunk.cxx:
+./Chunk.cxx:        // Vertical neighbors are always within this chunk.
+./Chunk.cxx:        if (layers[z + 1].voxels[x][y].blockType == AIR ||
+./Chunk.cxx:            layers[z - 1].voxels[x][y].blockType == AIR) {
+./Chunk.cxx:          v.visible = true;
+./Chunk.cxx:          layer.hasVisible = true;
+./Chunk.cxx:          continue;
+./Chunk.cxx:        }
+./Chunk.cxx:
+./Chunk.cxx:        // Lateral neighbors — use chunk pointers for edge voxels.
+./Chunk.cxx:        bool nextToAir = false;
+./Chunk.cxx:
+./Chunk.cxx:        // left (y-1)
+./Chunk.cxx:        if (y > 0) {
+./Chunk.cxx:          nextToAir |= layer.voxels[x][y - 1].blockType == AIR;
+./Chunk.cxx:        } else {
+./Chunk.cxx:          nextToAir |=
+./Chunk.cxx:              !chunkLeft || chunkLeft->layers[z].voxels[x][15].blockType == AIR;
+./Chunk.cxx:        }
+./Chunk.cxx:
+./Chunk.cxx:        // right (y+1)
+./Chunk.cxx:        if (!nextToAir) {
+./Chunk.cxx:          if (y < 15) {
+./Chunk.cxx:            nextToAir |= layer.voxels[x][y + 1].blockType == AIR;
+./Chunk.cxx:          } else {
+./Chunk.cxx:            nextToAir |= !chunkRight ||
+./Chunk.cxx:                         chunkRight->layers[z].voxels[x][0].blockType == AIR;
+./Chunk.cxx:          }
+./Chunk.cxx:        }
+./Chunk.cxx:
+./Chunk.cxx:        // front (x+1)
+./Chunk.cxx:        if (!nextToAir) {
+./Chunk.cxx:          if (x < 15) {
+./Chunk.cxx:            nextToAir |= layer.voxels[x + 1][y].blockType == AIR;
+./Chunk.cxx:          } else {
+./Chunk.cxx:            nextToAir |= !chunkFront ||
+./Chunk.cxx:                         chunkFront->layers[z].voxels[0][y].blockType == AIR;
+./Chunk.cxx:          }
+./Chunk.cxx:        }
+./Chunk.cxx:
+./Chunk.cxx:        // back (x-1)
+./Chunk.cxx:        if (!nextToAir) {
+./Chunk.cxx:          if (x > 0) {
+./Chunk.cxx:            nextToAir |= layer.voxels[x - 1][y].blockType == AIR;
+./Chunk.cxx:          } else {
+./Chunk.cxx:            nextToAir |= !chunkBack ||
+./Chunk.cxx:                         chunkBack->layers[z].voxels[15][y].blockType == AIR;
+./Chunk.cxx:          }
+./Chunk.cxx:        }
+./Chunk.cxx:
+./Chunk.cxx:        v.visible = nextToAir;
+./Chunk.cxx:        if (nextToAir)
+./Chunk.cxx:          layer.hasVisible = true;
+./Chunk.cxx:      }
 ./Chunk.cxx:    }
+./Chunk.cxx:  }
 ./Chunk.cxx:}
 ./Chunk.cxx:
 ./Chunk.cxx:// ---------------------------------------------------------------------------
@@ -7144,388 +6914,794 @@
 ./Chunk.cxx://   * Mask arrays allocated ONCE outside loops; cleared with memset.
 ./Chunk.cxx://   * emmitQuad uses a precomputed UV table.
 ./Chunk.cxx:// ---------------------------------------------------------------------------
-./Chunk.cxx:void Chunk::generateMesh()
-./Chunk.cxx:{
-./Chunk.cxx:    TIMER_START(mesh);
+./Chunk.cxx:void Chunk::generateMesh() {
+./Chunk.cxx:  TIMER_START(mesh);
 ./Chunk.cxx:
-./Chunk.cxx:    std::vector<Vertex>   vertices;
-./Chunk.cxx:    std::vector<uint32_t> indices;
+./Chunk.cxx:  std::vector<Vertex> vertices;
+./Chunk.cxx:  std::vector<uint32_t> indices;
 ./Chunk.cxx:
-./Chunk.cxx:    // Reserve a generous upper bound. A worst-case fully exposed chunk has
-./Chunk.cxx:    // 16*16*256 = 65 536 voxels × 6 faces × 4 verts = ~1.57M verts — but
-./Chunk.cxx:    // greedy meshing collapses most of them. 128k is a practical ceiling.
-./Chunk.cxx:    vertices.reserve(128 * 1024);
-./Chunk.cxx:    indices.reserve(192 * 1024);
+./Chunk.cxx:  // Reserve a generous upper bound. A worst-case fully exposed chunk has
+./Chunk.cxx:  // 16*16*256 = 65 536 voxels × 6 faces × 4 verts = ~1.57M verts — but
+./Chunk.cxx:  // greedy meshing collapses most of them. 128k is a practical ceiling.
+./Chunk.cxx:  vertices.reserve(128 * 1024);
+./Chunk.cxx:  indices.reserve(192 * 1024);
 ./Chunk.cxx:
-./Chunk.cxx:    int ind = 0;
+./Chunk.cxx:  int ind = 0;
 ./Chunk.cxx:
-./Chunk.cxx:    const float ox = chunkOffset[0] * 16.0f;
-./Chunk.cxx:    const float oy = chunkOffset[1] * 16.0f;
+./Chunk.cxx:  const float ox = chunkOffset[0] * 16.0f;
+./Chunk.cxx:  const float oy = chunkOffset[1] * 16.0f;
 ./Chunk.cxx:
-./Chunk.cxx:    // Pre-built UV table: uv[i] = glm::vec2{(int)type, i}  — avoids
-./Chunk.cxx:    // rebuilding the same 4 vec2s for every quad.
-./Chunk.cxx:    // We pass the texture index in and index into this at emit time.
-./Chunk.cxx:    auto emmitQuad = [&](glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3,
-./Chunk.cxx:                         int tex, float brightness) {
-./Chunk.cxx:        const glm::vec2 uv0{tex, 0}, uv1{tex, 1}, uv2{tex, 2}, uv3{tex, 3};
-./Chunk.cxx:        vertices.push_back({p0, {1,1,1}, uv0, brightness});
-./Chunk.cxx:        vertices.push_back({p1, {1,1,1}, uv1, brightness});
-./Chunk.cxx:        vertices.push_back({p2, {1,1,1}, uv2, brightness});
-./Chunk.cxx:        vertices.push_back({p3, {1,1,1}, uv3, brightness});
-./Chunk.cxx:        const uint32_t base = ind * 4;
-./Chunk.cxx:        indices.push_back(base);
-./Chunk.cxx:        indices.push_back(base + 1);
-./Chunk.cxx:        indices.push_back(base + 2);
-./Chunk.cxx:        indices.push_back(base + 2);
-./Chunk.cxx:        indices.push_back(base + 3);
-./Chunk.cxx:        indices.push_back(base);
-./Chunk.cxx:        ++ind;
-./Chunk.cxx:    };
+./Chunk.cxx:  // Pre-built UV table: uv[i] = glm::vec2{(int)type, i}  — avoids
+./Chunk.cxx:  // rebuilding the same 4 vec2s for every quad.
+./Chunk.cxx:  // We pass the texture index in and index into this at emit time.
+./Chunk.cxx:  auto emmitQuad = [&](glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3,
+./Chunk.cxx:                       int tex, float brightness) {
+./Chunk.cxx:    const float width = glm::length(p3 - p0);
+./Chunk.cxx:    const float height = glm::length(p1 - p0);
+./Chunk.cxx:    const glm::vec3 size{width, height, 0};
 ./Chunk.cxx:
-./Chunk.cxx:    // -------------------------------------------------------------------
-./Chunk.cxx:    // TOP / BOTTOM faces — one pass per layer, skips invisible layers.
-./Chunk.cxx:    // -------------------------------------------------------------------
-./Chunk.cxx:    // Masks allocated once, reset per layer with memset.
-./Chunk.cxx:    bool topMask[16][16], botMask[16][16];
-./Chunk.cxx:    bool topUsed[16][16], botUsed[16][16];
+./Chunk.cxx:    const glm::vec2 uv0{tex, 0}, uv1{tex, 1}, uv2{tex, 2}, uv3{tex, 3};
+./Chunk.cxx:    vertices.push_back({p0, size, uv0, brightness});
+./Chunk.cxx:    vertices.push_back({p1, size, uv1, brightness});
+./Chunk.cxx:    vertices.push_back({p2, size, uv2, brightness});
+./Chunk.cxx:    vertices.push_back({p3, size, uv3, brightness});
+./Chunk.cxx:    const uint32_t base = ind * 4;
+./Chunk.cxx:    indices.push_back(base);
+./Chunk.cxx:    indices.push_back(base + 1);
+./Chunk.cxx:    indices.push_back(base + 2);
+./Chunk.cxx:    indices.push_back(base + 2);
+./Chunk.cxx:    indices.push_back(base + 3);
+./Chunk.cxx:    indices.push_back(base);
+./Chunk.cxx:    ++ind;
+./Chunk.cxx:  };
 ./Chunk.cxx:
-./Chunk.cxx:    for (int z = 0; z < 256; ++z) {
-./Chunk.cxx:        Layer &layer = layers[z];
-./Chunk.cxx:        if (!layer.hasVisible) continue;   // entire layer buried — skip
+./Chunk.cxx:  // -------------------------------------------------------------------
+./Chunk.cxx:  // TOP / BOTTOM faces — one pass per layer, skips invisible layers.
+./Chunk.cxx:  // -------------------------------------------------------------------
+./Chunk.cxx:  // Masks allocated once, reset per layer with memset.
+./Chunk.cxx:  bool topMask[16][16], botMask[16][16];
+./Chunk.cxx:  bool topUsed[16][16], botUsed[16][16];
 ./Chunk.cxx:
-./Chunk.cxx:        memset(topMask, 0, sizeof(topMask));
-./Chunk.cxx:        memset(botMask, 0, sizeof(botMask));
+./Chunk.cxx:  for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:    Layer &layer = layers[z];
+./Chunk.cxx:    if (!layer.hasVisible)
+./Chunk.cxx:      continue; // entire layer buried — skip
 ./Chunk.cxx:
-./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
-./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
-./Chunk.cxx:                Voxel &v = layer.voxels[x][y];
-./Chunk.cxx:                if (!v.visible) continue;
-./Chunk.cxx:                topMask[x][y] = (z == 255) || (layers[z+1].voxels[x][y].blockType == AIR);
-./Chunk.cxx:                botMask[x][y] = (z == 0)   || (layers[z-1].voxels[x][y].blockType == AIR);
-./Chunk.cxx:            }
-./Chunk.cxx:        }
+./Chunk.cxx:    memset(topMask, 0, sizeof(topMask));
+./Chunk.cxx:    memset(botMask, 0, sizeof(botMask));
 ./Chunk.cxx:
-./Chunk.cxx:        // --- TOP ---
-./Chunk.cxx:        memset(topUsed, 0, sizeof(topUsed));
-./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
-./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
-./Chunk.cxx:                if (!topMask[x][y] || topUsed[x][y]) continue;
-./Chunk.cxx:                const int tex = layer.voxels[x][y].faceTexture[TOP];
-./Chunk.cxx:                int h = 1;
-./Chunk.cxx:                while (y+h < 16 && topMask[x][y+h] && !topUsed[x][y+h] &&
-./Chunk.cxx:                       layer.voxels[x][y+h].faceTexture[TOP] == tex) ++h;
-./Chunk.cxx:                int w = 1;
-./Chunk.cxx:                while (x+w < 16) {
-./Chunk.cxx:                    bool ok = true;
-./Chunk.cxx:                    for (int dy = 0; dy < h && ok; ++dy)
-./Chunk.cxx:                        if (!topMask[x+w][y+dy] || topUsed[x+w][y+dy] ||
-./Chunk.cxx:                            layer.voxels[x+w][y+dy].faceTexture[TOP] != tex) ok = false;
-./Chunk.cxx:                    if (!ok) break;
-./Chunk.cxx:                    ++w;
-./Chunk.cxx:                }
-./Chunk.cxx:                for (int dx = 0; dx < w; ++dx)
-./Chunk.cxx:                    for (int dy = 0; dy < h; ++dy)
-./Chunk.cxx:                        topUsed[x+dx][y+dy] = true;
-./Chunk.cxx:
-./Chunk.cxx:                emmitQuad({ox+x,   oy+y,   (float)z+1},
-./Chunk.cxx:                          {ox+x+w, oy+y,   (float)z+1},
-./Chunk.cxx:                          {ox+x+w, oy+y+h, (float)z+1},
-./Chunk.cxx:                          {ox+x,   oy+y+h, (float)z+1}, tex, 1.0f);
-./Chunk.cxx:            }
-./Chunk.cxx:        }
-./Chunk.cxx:
-./Chunk.cxx:        // --- BOTTOM ---
-./Chunk.cxx:        memset(botUsed, 0, sizeof(botUsed));
-./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
-./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
-./Chunk.cxx:                if (!botMask[x][y] || botUsed[x][y]) continue;
-./Chunk.cxx:                const int tex = layer.voxels[x][y].faceTexture[BOTTOM];
-./Chunk.cxx:                int h = 1;
-./Chunk.cxx:                while (y+h < 16 && botMask[x][y+h] && !botUsed[x][y+h] &&
-./Chunk.cxx:                       layer.voxels[x][y+h].faceTexture[BOTTOM] == tex) ++h;
-./Chunk.cxx:                int w = 1;
-./Chunk.cxx:                while (x+w < 16) {
-./Chunk.cxx:                    bool ok = true;
-./Chunk.cxx:                    for (int dy = 0; dy < h && ok; ++dy)
-./Chunk.cxx:                        if (!botMask[x+w][y+dy] || botUsed[x+w][y+dy] ||
-./Chunk.cxx:                            layer.voxels[x+w][y+dy].faceTexture[BOTTOM] != tex) ok = false;
-./Chunk.cxx:                    if (!ok) break;
-./Chunk.cxx:                    ++w;
-./Chunk.cxx:                }
-./Chunk.cxx:                for (int dx = 0; dx < w; ++dx)
-./Chunk.cxx:                    for (int dy = 0; dy < h; ++dy)
-./Chunk.cxx:                        botUsed[x+dx][y+dy] = true;
-./Chunk.cxx:
-./Chunk.cxx:                emmitQuad({ox+x,   oy+y,   (float)z},
-./Chunk.cxx:                          {ox+x,   oy+y+h, (float)z},
-./Chunk.cxx:                          {ox+x+w, oy+y+h, (float)z},
-./Chunk.cxx:                          {ox+x+w, oy+y,   (float)z}, tex, 0.6f);
-./Chunk.cxx:            }
-./Chunk.cxx:        }
+./Chunk.cxx:    for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:      for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:        Voxel &v = layer.voxels[x][y];
+./Chunk.cxx:        if (!v.visible)
+./Chunk.cxx:          continue;
+./Chunk.cxx:        topMask[x][y] =
+./Chunk.cxx:            (z == 255) || (layers[z + 1].voxels[x][y].blockType == AIR);
+./Chunk.cxx:        botMask[x][y] =
+./Chunk.cxx:            (z == 0) || (layers[z - 1].voxels[x][y].blockType == AIR);
+./Chunk.cxx:      }
 ./Chunk.cxx:    }
 ./Chunk.cxx:
-./Chunk.cxx:    // -------------------------------------------------------------------
-./Chunk.cxx:    // X-FACES (front / back) — one pass per x-slice.
-./Chunk.cxx:    // Masks are [y][z] = [16][256]; allocated once, cleared per slice.
-./Chunk.cxx:    // -------------------------------------------------------------------
-./Chunk.cxx:    {
-./Chunk.cxx:        // Allocate on heap to avoid large VLA on the stack.
-./Chunk.cxx:        static thread_local bool frontMask[16][256];
-./Chunk.cxx:        static thread_local bool backMask [16][256];
-./Chunk.cxx:        static thread_local bool frontUsed[16][256];
-./Chunk.cxx:        static thread_local bool backUsed [16][256];
-./Chunk.cxx:
-./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
-./Chunk.cxx:            memset(frontMask, 0, sizeof(frontMask));
-./Chunk.cxx:            memset(backMask,  0, sizeof(backMask));
-./Chunk.cxx:
-./Chunk.cxx:            const int wx = chunkOffset[0] * 16 + x;
-./Chunk.cxx:
-./Chunk.cxx:            // Fetch lateral neighbor chunks for this x-column edge once.
-./Chunk.cxx:            Chunk *frontChunk = (x == 15) ? gop.getChunkAt(chunkOffset[0]+1, chunkOffset[1]) : nullptr;
-./Chunk.cxx:            Chunk *backChunk  = (x == 0)  ? gop.getChunkAt(chunkOffset[0]-1, chunkOffset[1]) : nullptr;
-./Chunk.cxx:
-./Chunk.cxx:            for (int z = 0; z < 256; ++z) {
-./Chunk.cxx:                if (!layers[z].hasVisible) continue;
-./Chunk.cxx:                for (int y = 0; y < 16; ++y) {
-./Chunk.cxx:                    Voxel &v = layers[z].voxels[x][y];
-./Chunk.cxx:                    if (!v.visible) continue;
-./Chunk.cxx:
-./Chunk.cxx:                    // front (x+1)
-./Chunk.cxx:                    BlockType fnt;
-./Chunk.cxx:                    if (x < 15) {
-./Chunk.cxx:                        fnt = (BlockType)layers[z].voxels[x+1][y].blockType;
-./Chunk.cxx:                    } else {
-./Chunk.cxx:                        fnt = frontChunk ? (BlockType)frontChunk->layers[z].voxels[0][y].blockType : AIR;
-./Chunk.cxx:                    }
-./Chunk.cxx:                    if (fnt == AIR) frontMask[y][z] = true;
-./Chunk.cxx:
-./Chunk.cxx:                    // back (x-1)
-./Chunk.cxx:                    BlockType bck;
-./Chunk.cxx:                    if (x > 0) {
-./Chunk.cxx:                        bck = (BlockType)layers[z].voxels[x-1][y].blockType;
-./Chunk.cxx:                    } else {
-./Chunk.cxx:                        bck = backChunk ? (BlockType)backChunk->layers[z].voxels[15][y].blockType : AIR;
-./Chunk.cxx:                    }
-./Chunk.cxx:                    if (bck == AIR) backMask[y][z] = true;
-./Chunk.cxx:                }
-./Chunk.cxx:            }
-./Chunk.cxx:
-./Chunk.cxx:            // Greedy front faces
-./Chunk.cxx:            memset(frontUsed, 0, sizeof(frontUsed));
-./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
-./Chunk.cxx:                for (int z = 0; z < 256; ++z) {
-./Chunk.cxx:                    if (!frontMask[y][z] || frontUsed[y][z]) continue;
-./Chunk.cxx:                    const int tex = layers[z].voxels[x][y].faceTexture[FRONT];
-./Chunk.cxx:                    const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
-./Chunk.cxx:                    int dz = 1;
-./Chunk.cxx:                    while (z+dz < 256 && frontMask[y][z+dz] && !frontUsed[y][z+dz] &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].blockType == bt &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].visible &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].faceTexture[FRONT] == tex) ++dz;
-./Chunk.cxx:                    int dy = 1;
-./Chunk.cxx:                    while (y+dy < 16) {
-./Chunk.cxx:                        bool ok = true;
-./Chunk.cxx:                        for (int k = 0; k < dz && ok; ++k)
-./Chunk.cxx:                            if (!frontMask[y+dy][z+k] || frontUsed[y+dy][z+k] ||
-./Chunk.cxx:                                layers[z+k].voxels[x][y+dy].blockType != bt ||
-./Chunk.cxx:                                !layers[z+k].voxels[x][y+dy].visible ||
-./Chunk.cxx:                                layers[z+k].voxels[x][y+dy].faceTexture[FRONT] != tex) ok = false;
-./Chunk.cxx:                        if (!ok) break;
-./Chunk.cxx:                        ++dy;
-./Chunk.cxx:                    }
-./Chunk.cxx:                    for (int a = 0; a < dy; ++a)
-./Chunk.cxx:                        for (int b = 0; b < dz; ++b)
-./Chunk.cxx:                            frontUsed[y+a][z+b] = true;
-./Chunk.cxx:
-./Chunk.cxx:                    emmitQuad({ox+x+1, oy+y,    (float)z   },
-./Chunk.cxx:                              {ox+x+1, oy+y+dy, (float)z   },
-./Chunk.cxx:                              {ox+x+1, oy+y+dy, (float)(z+dz)},
-./Chunk.cxx:                              {ox+x+1, oy+y,    (float)(z+dz)}, tex, 0.8f);
-./Chunk.cxx:                }
-./Chunk.cxx:            }
-./Chunk.cxx:
-./Chunk.cxx:            // Greedy back faces
-./Chunk.cxx:            memset(backUsed, 0, sizeof(backUsed));
-./Chunk.cxx:            for (int y = 0; y < 16; ++y) {
-./Chunk.cxx:                for (int z = 0; z < 256; ++z) {
-./Chunk.cxx:                    if (!backMask[y][z] || backUsed[y][z]) continue;
-./Chunk.cxx:                    const int tex = layers[z].voxels[x][y].faceTexture[BACK];
-./Chunk.cxx:                    const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
-./Chunk.cxx:                    int dz = 1;
-./Chunk.cxx:                    while (z+dz < 256 && backMask[y][z+dz] && !backUsed[y][z+dz] &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].blockType == bt &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].visible &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].faceTexture[BACK] == tex) ++dz;
-./Chunk.cxx:                    int dy = 1;
-./Chunk.cxx:                    while (y+dy < 16) {
-./Chunk.cxx:                        bool ok = true;
-./Chunk.cxx:                        for (int k = 0; k < dz && ok; ++k)
-./Chunk.cxx:                            if (!backMask[y+dy][z+k] || backUsed[y+dy][z+k] ||
-./Chunk.cxx:                                layers[z+k].voxels[x][y+dy].blockType != bt ||
-./Chunk.cxx:                                !layers[z+k].voxels[x][y+dy].visible ||
-./Chunk.cxx:                                layers[z+k].voxels[x][y+dy].faceTexture[BACK] != tex) ok = false;
-./Chunk.cxx:                        if (!ok) break;
-./Chunk.cxx:                        ++dy;
-./Chunk.cxx:                    }
-./Chunk.cxx:                    for (int a = 0; a < dy; ++a)
-./Chunk.cxx:                        for (int b = 0; b < dz; ++b)
-./Chunk.cxx:                            backUsed[y+a][z+b] = true;
-./Chunk.cxx:
-./Chunk.cxx:                    emmitQuad({ox+x,   oy+y,    (float)z   },
-./Chunk.cxx:                              {ox+x,   oy+y,    (float)(z+dz)},
-./Chunk.cxx:                              {ox+x,   oy+y+dy, (float)(z+dz)},
-./Chunk.cxx:                              {ox+x,   oy+y+dy, (float)z   }, tex, 0.8f);
-./Chunk.cxx:                }
-./Chunk.cxx:            }
+./Chunk.cxx:    // --- TOP ---
+./Chunk.cxx:    memset(topUsed, 0, sizeof(topUsed));
+./Chunk.cxx:    for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:      for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:        if (!topMask[x][y] || topUsed[x][y])
+./Chunk.cxx:          continue;
+./Chunk.cxx:        const int tex = layer.voxels[x][y].faceTexture[TOP];
+./Chunk.cxx:        int h = 1;
+./Chunk.cxx:        while (y + h < 16 && topMask[x][y + h] && !topUsed[x][y + h] &&
+./Chunk.cxx:               layer.voxels[x][y + h].faceTexture[TOP] == tex)
+./Chunk.cxx:          ++h;
+./Chunk.cxx:        int w = 1;
+./Chunk.cxx:        while (x + w < 16) {
+./Chunk.cxx:          bool ok = true;
+./Chunk.cxx:          for (int dy = 0; dy < h && ok; ++dy)
+./Chunk.cxx:            if (!topMask[x + w][y + dy] || topUsed[x + w][y + dy] ||
+./Chunk.cxx:                layer.voxels[x + w][y + dy].faceTexture[TOP] != tex)
+./Chunk.cxx:              ok = false;
+./Chunk.cxx:          if (!ok)
+./Chunk.cxx:            break;
+./Chunk.cxx:          ++w;
 ./Chunk.cxx:        }
+./Chunk.cxx:        for (int dx = 0; dx < w; ++dx)
+./Chunk.cxx:          for (int dy = 0; dy < h; ++dy)
+./Chunk.cxx:            topUsed[x + dx][y + dy] = true;
+./Chunk.cxx:
+./Chunk.cxx:        emmitQuad({ox + x, oy + y, (float)z + 1},
+./Chunk.cxx:                  {ox + x + w, oy + y, (float)z + 1},
+./Chunk.cxx:                  {ox + x + w, oy + y + h, (float)z + 1},
+./Chunk.cxx:                  {ox + x, oy + y + h, (float)z + 1}, tex, 1.0f);
+./Chunk.cxx:      }
 ./Chunk.cxx:    }
 ./Chunk.cxx:
-./Chunk.cxx:    // -------------------------------------------------------------------
-./Chunk.cxx:    // Y-FACES (right / left) — one pass per y-slice.
-./Chunk.cxx:    // -------------------------------------------------------------------
-./Chunk.cxx:    {
-./Chunk.cxx:        static thread_local bool rightMask[16][256];
-./Chunk.cxx:        static thread_local bool leftMask [16][256];
-./Chunk.cxx:        static thread_local bool rightUsed[16][256];
-./Chunk.cxx:        static thread_local bool leftUsed [16][256];
+./Chunk.cxx:    // --- BOTTOM ---
+./Chunk.cxx:    memset(botUsed, 0, sizeof(botUsed));
+./Chunk.cxx:    for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:      for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:        if (!botMask[x][y] || botUsed[x][y])
+./Chunk.cxx:          continue;
+./Chunk.cxx:        const int tex = layer.voxels[x][y].faceTexture[BOTTOM];
+./Chunk.cxx:        int h = 1;
+./Chunk.cxx:        while (y + h < 16 && botMask[x][y + h] && !botUsed[x][y + h] &&
+./Chunk.cxx:               layer.voxels[x][y + h].faceTexture[BOTTOM] == tex)
+./Chunk.cxx:          ++h;
+./Chunk.cxx:        int w = 1;
+./Chunk.cxx:        while (x + w < 16) {
+./Chunk.cxx:          bool ok = true;
+./Chunk.cxx:          for (int dy = 0; dy < h && ok; ++dy)
+./Chunk.cxx:            if (!botMask[x + w][y + dy] || botUsed[x + w][y + dy] ||
+./Chunk.cxx:                layer.voxels[x + w][y + dy].faceTexture[BOTTOM] != tex)
+./Chunk.cxx:              ok = false;
+./Chunk.cxx:          if (!ok)
+./Chunk.cxx:            break;
+./Chunk.cxx:          ++w;
+./Chunk.cxx:        }
+./Chunk.cxx:        for (int dx = 0; dx < w; ++dx)
+./Chunk.cxx:          for (int dy = 0; dy < h; ++dy)
+./Chunk.cxx:            botUsed[x + dx][y + dy] = true;
 ./Chunk.cxx:
+./Chunk.cxx:        emmitQuad({ox + x, oy + y, (float)z}, {ox + x, oy + y + h, (float)z},
+./Chunk.cxx:                  {ox + x + w, oy + y + h, (float)z},
+./Chunk.cxx:                  {ox + x + w, oy + y, (float)z}, tex, 0.6f);
+./Chunk.cxx:      }
+./Chunk.cxx:    }
+./Chunk.cxx:  }
+./Chunk.cxx:
+./Chunk.cxx:  // -------------------------------------------------------------------
+./Chunk.cxx:  // X-FACES (front / back) — one pass per x-slice.
+./Chunk.cxx:  // Masks are [y][z] = [16][256]; allocated once, cleared per slice.
+./Chunk.cxx:  // -------------------------------------------------------------------
+./Chunk.cxx:  {
+./Chunk.cxx:    // Allocate on heap to avoid large VLA on the stack.
+./Chunk.cxx:    static thread_local bool frontMask[16][256];
+./Chunk.cxx:    static thread_local bool backMask[16][256];
+./Chunk.cxx:    static thread_local bool frontUsed[16][256];
+./Chunk.cxx:    static thread_local bool backUsed[16][256];
+./Chunk.cxx:
+./Chunk.cxx:    for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:      memset(frontMask, 0, sizeof(frontMask));
+./Chunk.cxx:      memset(backMask, 0, sizeof(backMask));
+./Chunk.cxx:
+./Chunk.cxx:      const int wx = chunkOffset[0] * 16 + x;
+./Chunk.cxx:
+./Chunk.cxx:      // Fetch lateral neighbor chunks for this x-column edge once.
+./Chunk.cxx:      Chunk *frontChunk =
+./Chunk.cxx:          (x == 15) ? gop.terrain->getChunkByKey(
+./Chunk.cxx:                          Terrain::chunkKey(chunkOffset[0] + 1, chunkOffset[1]))
+./Chunk.cxx:                    : nullptr;
+./Chunk.cxx:      Chunk *backChunk =
+./Chunk.cxx:          (x == 0) ? gop.terrain->getChunkByKey(
+./Chunk.cxx:                         Terrain::chunkKey(chunkOffset[0] - 1, chunkOffset[1]))
+./Chunk.cxx:                   : nullptr;
+./Chunk.cxx:
+./Chunk.cxx:      for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:        if (!layers[z].hasVisible)
+./Chunk.cxx:          continue;
 ./Chunk.cxx:        for (int y = 0; y < 16; ++y) {
-./Chunk.cxx:            memset(rightMask, 0, sizeof(rightMask));
-./Chunk.cxx:            memset(leftMask,  0, sizeof(leftMask));
+./Chunk.cxx:          Voxel &v = layers[z].voxels[x][y];
+./Chunk.cxx:          if (!v.visible)
+./Chunk.cxx:            continue;
 ./Chunk.cxx:
-./Chunk.cxx:            const int wy = chunkOffset[1] * 16 + y;
+./Chunk.cxx:          // front (x+1)
+./Chunk.cxx:          BlockType fnt;
+./Chunk.cxx:          if (x < 15) {
+./Chunk.cxx:            fnt = (BlockType)layers[z].voxels[x + 1][y].blockType;
+./Chunk.cxx:          } else {
+./Chunk.cxx:            fnt = frontChunk
+./Chunk.cxx:                      ? (BlockType)frontChunk->layers[z].voxels[0][y].blockType
+./Chunk.cxx:                      : AIR;
+./Chunk.cxx:          }
+./Chunk.cxx:          if (fnt == AIR)
+./Chunk.cxx:            frontMask[y][z] = true;
 ./Chunk.cxx:
-./Chunk.cxx:            Chunk *rightChunk = (y == 15) ? gop.getChunkAt(chunkOffset[0], chunkOffset[1]+1) : nullptr;
-./Chunk.cxx:            Chunk *leftChunk  = (y == 0)  ? gop.getChunkAt(chunkOffset[0], chunkOffset[1]-1) : nullptr;
-./Chunk.cxx:
-./Chunk.cxx:            for (int z = 0; z < 256; ++z) {
-./Chunk.cxx:                if (!layers[z].hasVisible) continue;
-./Chunk.cxx:                for (int x = 0; x < 16; ++x) {
-./Chunk.cxx:                    Voxel &v = layers[z].voxels[x][y];
-./Chunk.cxx:                    if (!v.visible) continue;
-./Chunk.cxx:
-./Chunk.cxx:                    // right (y+1)
-./Chunk.cxx:                    BlockType rgt;
-./Chunk.cxx:                    if (y < 15) {
-./Chunk.cxx:                        rgt = (BlockType)layers[z].voxels[x][y+1].blockType;
-./Chunk.cxx:                    } else {
-./Chunk.cxx:                        rgt = rightChunk ? (BlockType)rightChunk->layers[z].voxels[x][0].blockType : AIR;
-./Chunk.cxx:                    }
-./Chunk.cxx:                    if (rgt == AIR) rightMask[x][z] = true;
-./Chunk.cxx:
-./Chunk.cxx:                    // left (y-1)
-./Chunk.cxx:                    BlockType lft;
-./Chunk.cxx:                    if (y > 0) {
-./Chunk.cxx:                        lft = (BlockType)layers[z].voxels[x][y-1].blockType;
-./Chunk.cxx:                    } else {
-./Chunk.cxx:                        lft = leftChunk ? (BlockType)leftChunk->layers[z].voxels[x][15].blockType : AIR;
-./Chunk.cxx:                    }
-./Chunk.cxx:                    if (lft == AIR) leftMask[x][z] = true;
-./Chunk.cxx:                }
-./Chunk.cxx:            }
-./Chunk.cxx:
-./Chunk.cxx:            // Greedy right faces
-./Chunk.cxx:            memset(rightUsed, 0, sizeof(rightUsed));
-./Chunk.cxx:            for (int x = 0; x < 16; ++x) {
-./Chunk.cxx:                for (int z = 0; z < 256; ++z) {
-./Chunk.cxx:                    if (!rightMask[x][z] || rightUsed[x][z]) continue;
-./Chunk.cxx:                    const int tex = layers[z].voxels[x][y].faceTexture[RIGHT];
-./Chunk.cxx:                    const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
-./Chunk.cxx:                    int dz = 1;
-./Chunk.cxx:                    while (z+dz < 256 && rightMask[x][z+dz] && !rightUsed[x][z+dz] &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].blockType == bt &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].visible &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].faceTexture[RIGHT] == tex) ++dz;
-./Chunk.cxx:                    int dx = 1;
-./Chunk.cxx:                    while (x+dx < 16) {
-./Chunk.cxx:                        bool ok = true;
-./Chunk.cxx:                        for (int k = 0; k < dz && ok; ++k)
-./Chunk.cxx:                            if (!rightMask[x+dx][z+k] || rightUsed[x+dx][z+k] ||
-./Chunk.cxx:                                layers[z+k].voxels[x+dx][y].blockType != bt ||
-./Chunk.cxx:                                !layers[z+k].voxels[x+dx][y].visible ||
-./Chunk.cxx:                                layers[z+k].voxels[x+dx][y].faceTexture[RIGHT] != tex) ok = false;
-./Chunk.cxx:                        if (!ok) break;
-./Chunk.cxx:                        ++dx;
-./Chunk.cxx:                    }
-./Chunk.cxx:                    for (int a = 0; a < dx; ++a)
-./Chunk.cxx:                        for (int b = 0; b < dz; ++b)
-./Chunk.cxx:                            rightUsed[x+a][z+b] = true;
-./Chunk.cxx:
-./Chunk.cxx:                    emmitQuad({ox+x,    oy+y+1, (float)z   },
-./Chunk.cxx:                              {ox+x,    oy+y+1, (float)(z+dz)},
-./Chunk.cxx:                              {ox+x+dx, oy+y+1, (float)(z+dz)},
-./Chunk.cxx:                              {ox+x+dx, oy+y+1, (float)z   }, tex, 0.9f);
-./Chunk.cxx:                }
-./Chunk.cxx:            }
-./Chunk.cxx:
-./Chunk.cxx:            // Greedy left faces
-./Chunk.cxx:            memset(leftUsed, 0, sizeof(leftUsed));
-./Chunk.cxx:            for (int x = 0; x < 16; ++x) {
-./Chunk.cxx:                for (int z = 0; z < 256; ++z) {
-./Chunk.cxx:                    if (!leftMask[x][z] || leftUsed[x][z]) continue;
-./Chunk.cxx:                    const int tex = layers[z].voxels[x][y].faceTexture[LEFT];
-./Chunk.cxx:                    const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
-./Chunk.cxx:                    int dz = 1;
-./Chunk.cxx:                    while (z+dz < 256 && leftMask[x][z+dz] && !leftUsed[x][z+dz] &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].blockType == bt &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].visible &&
-./Chunk.cxx:                           layers[z+dz].voxels[x][y].faceTexture[LEFT] == tex) ++dz;
-./Chunk.cxx:                    int dx = 1;
-./Chunk.cxx:                    while (x+dx < 16) {
-./Chunk.cxx:                        bool ok = true;
-./Chunk.cxx:                        for (int k = 0; k < dz && ok; ++k)
-./Chunk.cxx:                            if (!leftMask[x+dx][z+k] || leftUsed[x+dx][z+k] ||
-./Chunk.cxx:                                layers[z+k].voxels[x+dx][y].blockType != bt ||
-./Chunk.cxx:                                !layers[z+k].voxels[x+dx][y].visible ||
-./Chunk.cxx:                                layers[z+k].voxels[x+dx][y].faceTexture[LEFT] != tex) ok = false;
-./Chunk.cxx:                        if (!ok) break;
-./Chunk.cxx:                        ++dx;
-./Chunk.cxx:                    }
-./Chunk.cxx:                    for (int a = 0; a < dx; ++a)
-./Chunk.cxx:                        for (int b = 0; b < dz; ++b)
-./Chunk.cxx:                            leftUsed[x+a][z+b] = true;
-./Chunk.cxx:
-./Chunk.cxx:                    emmitQuad({ox+x,    oy+y, (float)z   },
-./Chunk.cxx:                              {ox+x+dx, oy+y, (float)z   },
-./Chunk.cxx:                              {ox+x+dx, oy+y, (float)(z+dz)},
-./Chunk.cxx:                              {ox+x,    oy+y, (float)(z+dz)}, tex, 0.9f);
-./Chunk.cxx:                }
-./Chunk.cxx:            }
+./Chunk.cxx:          // back (x-1)
+./Chunk.cxx:          BlockType bck;
+./Chunk.cxx:          if (x > 0) {
+./Chunk.cxx:            bck = (BlockType)layers[z].voxels[x - 1][y].blockType;
+./Chunk.cxx:          } else {
+./Chunk.cxx:            bck = backChunk
+./Chunk.cxx:                      ? (BlockType)backChunk->layers[z].voxels[15][y].blockType
+./Chunk.cxx:                      : AIR;
+./Chunk.cxx:          }
+./Chunk.cxx:          if (bck == AIR)
+./Chunk.cxx:            backMask[y][z] = true;
 ./Chunk.cxx:        }
-./Chunk.cxx:    }
+./Chunk.cxx:      }
 ./Chunk.cxx:
-./Chunk.cxx:    chunkMesh.loadVertices(vertices);
-./Chunk.cxx:    chunkMesh.loadIndices(indices);
-./Chunk.cxx:    TIMER_END(mesh);
+./Chunk.cxx:      // Greedy front faces
+./Chunk.cxx:      memset(frontUsed, 0, sizeof(frontUsed));
+./Chunk.cxx:      for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:        for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:          if (!frontMask[y][z] || frontUsed[y][z])
+./Chunk.cxx:            continue;
+./Chunk.cxx:          const int tex = layers[z].voxels[x][y].faceTexture[FRONT];
+./Chunk.cxx:          const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
+./Chunk.cxx:          int dz = 1;
+./Chunk.cxx:          while (z + dz < 256 && frontMask[y][z + dz] &&
+./Chunk.cxx:                 !frontUsed[y][z + dz] &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].blockType == bt &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].visible &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].faceTexture[FRONT] == tex)
+./Chunk.cxx:            ++dz;
+./Chunk.cxx:          int dy = 1;
+./Chunk.cxx:          while (y + dy < 16) {
+./Chunk.cxx:            bool ok = true;
+./Chunk.cxx:            for (int k = 0; k < dz && ok; ++k)
+./Chunk.cxx:              if (!frontMask[y + dy][z + k] || frontUsed[y + dy][z + k] ||
+./Chunk.cxx:                  layers[z + k].voxels[x][y + dy].blockType != bt ||
+./Chunk.cxx:                  !layers[z + k].voxels[x][y + dy].visible ||
+./Chunk.cxx:                  layers[z + k].voxels[x][y + dy].faceTexture[FRONT] != tex)
+./Chunk.cxx:                ok = false;
+./Chunk.cxx:            if (!ok)
+./Chunk.cxx:              break;
+./Chunk.cxx:            ++dy;
+./Chunk.cxx:          }
+./Chunk.cxx:          for (int a = 0; a < dy; ++a)
+./Chunk.cxx:            for (int b = 0; b < dz; ++b)
+./Chunk.cxx:              frontUsed[y + a][z + b] = true;
+./Chunk.cxx:
+./Chunk.cxx:          emmitQuad({ox + x + 1, oy + y, (float)z},
+./Chunk.cxx:                    {ox + x + 1, oy + y + dy, (float)z},
+./Chunk.cxx:                    {ox + x + 1, oy + y + dy, (float)(z + dz)},
+./Chunk.cxx:                    {ox + x + 1, oy + y, (float)(z + dz)}, tex, 0.8f);
+./Chunk.cxx:        }
+./Chunk.cxx:      }
+./Chunk.cxx:
+./Chunk.cxx:      // Greedy back faces
+./Chunk.cxx:      memset(backUsed, 0, sizeof(backUsed));
+./Chunk.cxx:      for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:        for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:          if (!backMask[y][z] || backUsed[y][z])
+./Chunk.cxx:            continue;
+./Chunk.cxx:          const int tex = layers[z].voxels[x][y].faceTexture[BACK];
+./Chunk.cxx:          const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
+./Chunk.cxx:          int dz = 1;
+./Chunk.cxx:          while (z + dz < 256 && backMask[y][z + dz] && !backUsed[y][z + dz] &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].blockType == bt &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].visible &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].faceTexture[BACK] == tex)
+./Chunk.cxx:            ++dz;
+./Chunk.cxx:          int dy = 1;
+./Chunk.cxx:          while (y + dy < 16) {
+./Chunk.cxx:            bool ok = true;
+./Chunk.cxx:            for (int k = 0; k < dz && ok; ++k)
+./Chunk.cxx:              if (!backMask[y + dy][z + k] || backUsed[y + dy][z + k] ||
+./Chunk.cxx:                  layers[z + k].voxels[x][y + dy].blockType != bt ||
+./Chunk.cxx:                  !layers[z + k].voxels[x][y + dy].visible ||
+./Chunk.cxx:                  layers[z + k].voxels[x][y + dy].faceTexture[BACK] != tex)
+./Chunk.cxx:                ok = false;
+./Chunk.cxx:            if (!ok)
+./Chunk.cxx:              break;
+./Chunk.cxx:            ++dy;
+./Chunk.cxx:          }
+./Chunk.cxx:          for (int a = 0; a < dy; ++a)
+./Chunk.cxx:            for (int b = 0; b < dz; ++b)
+./Chunk.cxx:              backUsed[y + a][z + b] = true;
+./Chunk.cxx:
+./Chunk.cxx:          emmitQuad({ox + x, oy + y, (float)z},
+./Chunk.cxx:                    {ox + x, oy + y, (float)(z + dz)},
+./Chunk.cxx:                    {ox + x, oy + y + dy, (float)(z + dz)},
+./Chunk.cxx:                    {ox + x, oy + y + dy, (float)z}, tex, 0.8f);
+./Chunk.cxx:        }
+./Chunk.cxx:      }
+./Chunk.cxx:    }
+./Chunk.cxx:  }
+./Chunk.cxx:
+./Chunk.cxx:  // -------------------------------------------------------------------
+./Chunk.cxx:  // Y-FACES (right / left) — one pass per y-slice.
+./Chunk.cxx:  // -------------------------------------------------------------------
+./Chunk.cxx:  {
+./Chunk.cxx:    static thread_local bool rightMask[16][256];
+./Chunk.cxx:    static thread_local bool leftMask[16][256];
+./Chunk.cxx:    static thread_local bool rightUsed[16][256];
+./Chunk.cxx:    static thread_local bool leftUsed[16][256];
+./Chunk.cxx:
+./Chunk.cxx:    for (int y = 0; y < 16; ++y) {
+./Chunk.cxx:      memset(rightMask, 0, sizeof(rightMask));
+./Chunk.cxx:      memset(leftMask, 0, sizeof(leftMask));
+./Chunk.cxx:
+./Chunk.cxx:      const int wy = chunkOffset[1] * 16 + y;
+./Chunk.cxx:
+./Chunk.cxx:      Chunk *rightChunk =
+./Chunk.cxx:          (y == 15) ? gop.terrain->getChunkByKey(
+./Chunk.cxx:                          Terrain::chunkKey(chunkOffset[0], chunkOffset[1] + 1))
+./Chunk.cxx:                    : nullptr;
+./Chunk.cxx:      Chunk *leftChunk =
+./Chunk.cxx:          (y == 0) ? gop.terrain->getChunkByKey(
+./Chunk.cxx:                         Terrain::chunkKey(chunkOffset[0], chunkOffset[1] - 1))
+./Chunk.cxx:                   : nullptr;
+./Chunk.cxx:
+./Chunk.cxx:      for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:        if (!layers[z].hasVisible)
+./Chunk.cxx:          continue;
+./Chunk.cxx:        for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:          Voxel &v = layers[z].voxels[x][y];
+./Chunk.cxx:          if (!v.visible)
+./Chunk.cxx:            continue;
+./Chunk.cxx:
+./Chunk.cxx:          // right (y+1)
+./Chunk.cxx:          BlockType rgt;
+./Chunk.cxx:          if (y < 15) {
+./Chunk.cxx:            rgt = (BlockType)layers[z].voxels[x][y + 1].blockType;
+./Chunk.cxx:          } else {
+./Chunk.cxx:            rgt = rightChunk
+./Chunk.cxx:                      ? (BlockType)rightChunk->layers[z].voxels[x][0].blockType
+./Chunk.cxx:                      : AIR;
+./Chunk.cxx:          }
+./Chunk.cxx:          if (rgt == AIR)
+./Chunk.cxx:            rightMask[x][z] = true;
+./Chunk.cxx:
+./Chunk.cxx:          // left (y-1)
+./Chunk.cxx:          BlockType lft;
+./Chunk.cxx:          if (y > 0) {
+./Chunk.cxx:            lft = (BlockType)layers[z].voxels[x][y - 1].blockType;
+./Chunk.cxx:          } else {
+./Chunk.cxx:            lft = leftChunk
+./Chunk.cxx:                      ? (BlockType)leftChunk->layers[z].voxels[x][15].blockType
+./Chunk.cxx:                      : AIR;
+./Chunk.cxx:          }
+./Chunk.cxx:          if (lft == AIR)
+./Chunk.cxx:            leftMask[x][z] = true;
+./Chunk.cxx:        }
+./Chunk.cxx:      }
+./Chunk.cxx:
+./Chunk.cxx:      // Greedy right faces
+./Chunk.cxx:      memset(rightUsed, 0, sizeof(rightUsed));
+./Chunk.cxx:      for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:        for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:          if (!rightMask[x][z] || rightUsed[x][z])
+./Chunk.cxx:            continue;
+./Chunk.cxx:          const int tex = layers[z].voxels[x][y].faceTexture[RIGHT];
+./Chunk.cxx:          const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
+./Chunk.cxx:          int dz = 1;
+./Chunk.cxx:          while (z + dz < 256 && rightMask[x][z + dz] &&
+./Chunk.cxx:                 !rightUsed[x][z + dz] &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].blockType == bt &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].visible &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].faceTexture[RIGHT] == tex)
+./Chunk.cxx:            ++dz;
+./Chunk.cxx:          int dx = 1;
+./Chunk.cxx:          while (x + dx < 16) {
+./Chunk.cxx:            bool ok = true;
+./Chunk.cxx:            for (int k = 0; k < dz && ok; ++k)
+./Chunk.cxx:              if (!rightMask[x + dx][z + k] || rightUsed[x + dx][z + k] ||
+./Chunk.cxx:                  layers[z + k].voxels[x + dx][y].blockType != bt ||
+./Chunk.cxx:                  !layers[z + k].voxels[x + dx][y].visible ||
+./Chunk.cxx:                  layers[z + k].voxels[x + dx][y].faceTexture[RIGHT] != tex)
+./Chunk.cxx:                ok = false;
+./Chunk.cxx:            if (!ok)
+./Chunk.cxx:              break;
+./Chunk.cxx:            ++dx;
+./Chunk.cxx:          }
+./Chunk.cxx:          for (int a = 0; a < dx; ++a)
+./Chunk.cxx:            for (int b = 0; b < dz; ++b)
+./Chunk.cxx:              rightUsed[x + a][z + b] = true;
+./Chunk.cxx:
+./Chunk.cxx:          emmitQuad({ox + x, oy + y + 1, (float)z},
+./Chunk.cxx:                    {ox + x, oy + y + 1, (float)(z + dz)},
+./Chunk.cxx:                    {ox + x + dx, oy + y + 1, (float)(z + dz)},
+./Chunk.cxx:                    {ox + x + dx, oy + y + 1, (float)z}, tex, 0.9f);
+./Chunk.cxx:        }
+./Chunk.cxx:      }
+./Chunk.cxx:
+./Chunk.cxx:      // Greedy left faces
+./Chunk.cxx:      memset(leftUsed, 0, sizeof(leftUsed));
+./Chunk.cxx:      for (int x = 0; x < 16; ++x) {
+./Chunk.cxx:        for (int z = 0; z < 256; ++z) {
+./Chunk.cxx:          if (!leftMask[x][z] || leftUsed[x][z])
+./Chunk.cxx:            continue;
+./Chunk.cxx:          const int tex = layers[z].voxels[x][y].faceTexture[LEFT];
+./Chunk.cxx:          const BlockType bt = (BlockType)layers[z].voxels[x][y].blockType;
+./Chunk.cxx:          int dz = 1;
+./Chunk.cxx:          while (z + dz < 256 && leftMask[x][z + dz] && !leftUsed[x][z + dz] &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].blockType == bt &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].visible &&
+./Chunk.cxx:                 layers[z + dz].voxels[x][y].faceTexture[LEFT] == tex)
+./Chunk.cxx:            ++dz;
+./Chunk.cxx:          int dx = 1;
+./Chunk.cxx:          while (x + dx < 16) {
+./Chunk.cxx:            bool ok = true;
+./Chunk.cxx:            for (int k = 0; k < dz && ok; ++k)
+./Chunk.cxx:              if (!leftMask[x + dx][z + k] || leftUsed[x + dx][z + k] ||
+./Chunk.cxx:                  layers[z + k].voxels[x + dx][y].blockType != bt ||
+./Chunk.cxx:                  !layers[z + k].voxels[x + dx][y].visible ||
+./Chunk.cxx:                  layers[z + k].voxels[x + dx][y].faceTexture[LEFT] != tex)
+./Chunk.cxx:                ok = false;
+./Chunk.cxx:            if (!ok)
+./Chunk.cxx:              break;
+./Chunk.cxx:            ++dx;
+./Chunk.cxx:          }
+./Chunk.cxx:          for (int a = 0; a < dx; ++a)
+./Chunk.cxx:            for (int b = 0; b < dz; ++b)
+./Chunk.cxx:              leftUsed[x + a][z + b] = true;
+./Chunk.cxx:
+./Chunk.cxx:          emmitQuad({ox + x, oy + y, (float)z}, {ox + x + dx, oy + y, (float)z},
+./Chunk.cxx:                    {ox + x + dx, oy + y, (float)(z + dz)},
+./Chunk.cxx:                    {ox + x, oy + y, (float)(z + dz)}, tex, 0.9f);
+./Chunk.cxx:        }
+./Chunk.cxx:      }
+./Chunk.cxx:    }
+./Chunk.cxx:  }
+./Chunk.cxx:
+./Chunk.cxx:  chunkMesh.loadVertices(vertices);
+./Chunk.cxx:  chunkMesh.loadIndices(indices);
+./Chunk.cxx:  TIMER_END(mesh);
 ./Chunk.cxx:}
 ./Chunk.cxx:
 ./Chunk.cxx:// ---------------------------------------------------------------------------
 ./Chunk.cxx:// The rest is unchanged.
 ./Chunk.cxx:// ---------------------------------------------------------------------------
-./Chunk.cxx:void Chunk::createBuffers()
-./Chunk.cxx:{
-./Chunk.cxx:    chunkMesh.createVertexBuffer();
-./Chunk.cxx:    chunkMesh.createIndexBuffer();
+./Chunk.cxx:void Chunk::createBuffers() {
+./Chunk.cxx:  chunkMesh.createVertexBuffer();
+./Chunk.cxx:  chunkMesh.createIndexBuffer();
 ./Chunk.cxx:}
 ./Chunk.cxx:
-./Chunk.cxx:void Chunk::updateChunkMesh()
-./Chunk.cxx:{
-./Chunk.cxx:    makeVisible();
-./Chunk.cxx:    generateMesh();
-./Chunk.cxx:    vkDeviceWaitIdle(vkContext.device);
-./Chunk.cxx:    chunkMesh.updateVertexBuffer();
-./Chunk.cxx:    chunkMesh.updateIndexBuffer();
+./Chunk.cxx:void Chunk::updateChunkMesh() {
+./Chunk.cxx:  makeVisible();
+./Chunk.cxx:  generateMesh();
+./Chunk.cxx:  vkDeviceWaitIdle(vkContext.device);
+./Chunk.cxx:  chunkMesh.updateVertexBuffer();
+./Chunk.cxx:  chunkMesh.updateIndexBuffer();
 ./Chunk.cxx:}
 ./Chunk.cxx:
 ./Chunk.cxx:void Chunk::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
 ./Chunk.cxx:                 VkPipeline graphicsPipeline,
 ./Chunk.cxx:                 std::vector<VkDescriptorSet> &descriptorSets,
 ./Chunk.cxx:                 uint32_t currentFrame, VkExtent2D &swapChainExtent,
-./Chunk.cxx:                 PushConstantC1 &c1)
-./Chunk.cxx:{
-./Chunk.cxx:    chunkMesh.draw(commandBuffer, pipelineLayout, graphicsPipeline,
-./Chunk.cxx:                   descriptorSets, currentFrame, swapChainExtent, c1);
+./Chunk.cxx:                 PushConstantC1 &c1) {
+./Chunk.cxx:  chunkMesh.draw(commandBuffer, pipelineLayout, graphicsPipeline,
+./Chunk.cxx:                 descriptorSets, currentFrame, swapChainExtent, c1);
 ./Chunk.cxx:}
 ./Chunk.cxx:
 ./Chunk.cxx:void Chunk::cleanup() { chunkMesh.cleanup(); }
+./Update.cxx:#include <cstdlib>
+./Update.cxx:#include <cstring>
+./Update.cxx:#include <fmt/core.h>
+./Update.cxx:#include <iostream>
+./Update.cxx:
+./Update.cxx:#include "Camera.h"
+./Update.cxx:#include "Event.h"
+./Update.cxx:#include "HelloTriangleApplication.hpp"
+./Update.cxx:#include "Inventory.h"
+./Update.cxx:#include "Player.h"
+./Update.cxx:#include "Ray.h"
+./Update.cxx:#include "Terrain.h"
+./Update.cxx:#include "UI.h"
+./Update.cxx:#include <memory>
+./Update.cxx:#include <random>
+./Update.cxx:
+./Update.cxx:void HelloTriangleApplication::initGameObjects() {
+./Update.cxx:  static VulkanContext context{};
+./Update.cxx:  context.device = device;
+./Update.cxx:  context.physicalDevice = physicalDevice;
+./Update.cxx:  context.graphicsQueue = graphicsQueue;
+./Update.cxx:  context.instance = instance;
+./Update.cxx:  context.presentQueue = presentQueue;
+./Update.cxx:  context.commandPool = commandPool;
+./Update.cxx:
+./Update.cxx:  playerS1 = std::make_unique<Player>(context, gameObjectPool);
+./Update.cxx:
+./Update.cxx:  terrain = std::make_unique<Terrain>(context, gameObjectPool);
+./Update.cxx:  ui = std::move(UI(context));
+./Update.cxx:
+./Update.cxx:  srand(87844057);
+./Update.cxx:
+./Update.cxx:  float aspect = float(swapChainExtent.width) / float(swapChainExtent.height);
+./Update.cxx:
+./Update.cxx:  // UI Components
+./Update.cxx:
+./Update.cxx:  inventory = std::make_unique<Inventory>(context, dimensions);
+./Update.cxx:  inventory->attachPlayerState(&playerS1->playerState);
+./Update.cxx:
+./Update.cxx:  Crosshair = std::make_unique<UIComponents>(context);
+./Update.cxx:  Heart = std::make_unique<UIComponents>(context);
+./Update.cxx:
+./Update.cxx:  Crosshair->setTextureIDX(1);
+./Update.cxx:  Crosshair->initUIComponent(glm::vec2(0, 0), glm::vec2(.05f, .05f));
+./Update.cxx:
+./Update.cxx:  Heart->setTextureIDX(2);
+./Update.cxx:  Heart->initUIComponent(glm::vec2(-1 * aspect + .04f, 1 - .04f),
+./Update.cxx:                         glm::vec2(.08f, .08f));
+./Update.cxx:  Heart->setInstanceCount(0);
+./Update.cxx:
+./Update.cxx:  ui->attachComponent(inventory->getInventoryComponentPointer());
+./Update.cxx:  ui->attachComponent(inventory->getFilterComponentPointer());
+./Update.cxx:  ui->attachComponent(Crosshair.get());
+./Update.cxx:  ui->attachComponent(Heart.get());
+./Update.cxx:
+./Update.cxx:  gameObjectPool.terrain = terrain.get();
+./Update.cxx:  terrain->generateChunks();
+./Update.cxx:}
+./Update.cxx:
+./Update.cxx:KeyTracker keys;
+./Update.cxx:
+./Update.cxx:void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage) {
+./Update.cxx:
+./Update.cxx:  std::cout << "Coordinates: " << "(x,y,z) (x"
+./Update.cxx:            << playerS1->camera->gePositionInWorldCoords().x << ", "
+./Update.cxx:            << playerS1->camera->gePositionInWorldCoords().y << ", "
+./Update.cxx:            << playerS1->camera->gePositionInWorldCoords().z << ")"
+./Update.cxx:            << std::endl;
+./Update.cxx:
+./Update.cxx:  Heart->setInstanceCount(playerS1->getHealthPoints());
+./Update.cxx:
+./Update.cxx:  HitInfo hitInfo{};
+./Update.cxx:  playerS1->camera->getHitInfo(hitInfo);
+./Update.cxx:  if (event->getMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) &&
+./Update.cxx:      !playerS1->playerState.inInventory)
+./Update.cxx:    if (hitInfo.hitVoxel) {
+./Update.cxx:      std::cout << "Hit block type: " << hitInfo.hitVoxel->getBlockType()
+./Update.cxx:                << std::endl;
+./Update.cxx:      std::cout << "Hit block coordinates: (x,y,z) (" << hitInfo.blockCoords.x
+./Update.cxx:                << ", " << hitInfo.blockCoords.y << ", "
+./Update.cxx:                << hitInfo.blockCoords.z << ")" << std::endl;
+./Update.cxx:
+./Update.cxx:      if (hitInfo.hitVoxel->getBlockType() == BEDROCK)
+./Update.cxx:        goto _no;
+./Update.cxx:
+./Update.cxx:      hitInfo.hitVoxel->setType(AIR);
+./Update.cxx:
+./Update.cxx:      terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4,
+./Update.cxx:                               hitInfo.blockCoords.y >> 4);
+./Update.cxx:
+./Update.cxx:      if ((hitInfo.blockCoords.x & 15) == 0)
+./Update.cxx:        terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) - 1,
+./Update.cxx:                                 hitInfo.blockCoords.y >> 4);
+./Update.cxx:      if ((hitInfo.blockCoords.x & 15) == 15)
+./Update.cxx:        terrain->updateChunkMesh((hitInfo.blockCoords.x >> 4) + 1,
+./Update.cxx:                                 hitInfo.blockCoords.y >> 4);
+./Update.cxx:      if ((hitInfo.blockCoords.y & 15) == 0)
+./Update.cxx:        terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4,
+./Update.cxx:                                 (hitInfo.blockCoords.y >> 4) - 1);
+./Update.cxx:      if ((hitInfo.blockCoords.y & 15) == 15)
+./Update.cxx:        terrain->updateChunkMesh(hitInfo.blockCoords.x >> 4,
+./Update.cxx:                                 (hitInfo.blockCoords.y >> 4) + 1);
+./Update.cxx:    _no:;
+./Update.cxx:    }
+./Update.cxx:
+./Update.cxx:  if (keys.justPressed(event.get(), GLFW_KEY_ESCAPE)) {
+./Update.cxx:    if (!playerS1->playerState.inInventory)
+./Update.cxx:      glfwSetWindowShouldClose(_window, GLFW_TRUE);
+./Update.cxx:    else
+./Update.cxx:      playerS1->playerState.inInventory = false;
+./Update.cxx:  }
+./Update.cxx:
+./Update.cxx:  if (keys.justPressed(event.get(), GLFW_KEY_E)) {
+./Update.cxx:    playerS1->playerState.inInventory = !playerS1->playerState.inInventory;
+./Update.cxx:  }
+./Update.cxx:
+./Update.cxx:  if (playerS1->playerState.inInventory) {
+./Update.cxx:    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+./Update.cxx:  } else {
+./Update.cxx:    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+./Update.cxx:  }
+./Update.cxx:
+./Update.cxx:  UniformBufferObject ubo{};
+./Update.cxx:
+./Update.cxx:  playerS1->handlePlayerMovement(ubo, swapChainExtent, *event.get());
+./Update.cxx:  inventory->inventoryUpdates(*event);
+./Update.cxx:
+./Update.cxx:  int baseChunksX = int(floor(playerS1->selfTransform.position.x)) >> 4;
+./Update.cxx:  int baseChunksY = int(floor(playerS1->selfTransform.position.y)) >> 4;
+./Update.cxx:
+./Update.cxx:  for (int x = -RENDER_DISTANCE; x < RENDER_DISTANCE; x++) {
+./Update.cxx:    for (int y = -RENDER_DISTANCE; y < RENDER_DISTANCE; y++) {
+./Update.cxx:      terrain->apppendNewChunkAsyncronously(baseChunksX + x, baseChunksY + y);
+./Update.cxx:    }
+./Update.cxx:  }
+./Update.cxx:
+./Update.cxx:  terrain->sweepHandleTerrain();
+./Update.cxx:
+./Update.cxx:  memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+./Update.cxx:  keys.update(event.get(), {GLFW_KEY_E, GLFW_KEY_ESCAPE});
+./Update.cxx:}
+./Terrain.h:#pragma once
+./Terrain.h:#include "Chunk.h"
+./Terrain.h:#include "GameObjectPool.h"
+./Terrain.h:#include <atomic>
+./Terrain.h:#include <cstdint>
+./Terrain.h:#include <mutex>
+./Terrain.h:#include <set>
+./Terrain.h:#include <thread>
+./Terrain.h:#include <vector>
+./Terrain.h:#define RENDER_DISTANCE 10
+./Terrain.h:
+./Terrain.h:#include <unordered_map>
+./Terrain.h:
+./Terrain.h:struct chunkSubmitCreateInfo {
+./Terrain.h:  int x{};
+./Terrain.h:  int y{};
+./Terrain.h:};
+./Terrain.h:
+./Terrain.h:class Terrain {
+./Terrain.h:private:
+./Terrain.h:  VulkanContext &vkContext;
+./Terrain.h:  std::unordered_map<uint64_t, Chunk *> chunks;
+./Terrain.h:  GameObjectPool &gop;
+./Terrain.h:
+./Terrain.h:  std::atomic<bool> running{true};
+./Terrain.h:  bool ready{false};
+./Terrain.h:
+./Terrain.h:  std::vector<chunkSubmitCreateInfo> chunksSubmitVector;
+./Terrain.h:  std::set<uint64_t> chunksLoaded;
+./Terrain.h:  std::atomic<uint64_t> nChunksLoaded{0};
+./Terrain.h:  std::thread chunkBuilderThread;
+./Terrain.h:  std::recursive_mutex chunkMutex;
+./Terrain.h:
+./Terrain.h:  friend class HelloTriangleApplication;
+./Terrain.h:
+./Terrain.h:public:
+./Terrain.h:  Terrain(VulkanContext &vkContext, GameObjectPool &gop);
+./Terrain.h:  static inline uint64_t chunkKey(int x, int y) {
+./Terrain.h:    return (static_cast<uint64_t>(static_cast<uint32_t>(x)) << 32) |
+./Terrain.h:           static_cast<uint64_t>(static_cast<uint32_t>(y));
+./Terrain.h:  }
+./Terrain.h:  Chunk *getChunkByKey(uint64_t key);
+./Terrain.h:
+./Terrain.h:  void generateChunks();
+./Terrain.h:
+./Terrain.h:  void updateChunkMesh(int cmx, int cmy);
+./Terrain.h:
+./Terrain.h:  void apppendNewChunkAsyncronously(int cx, int cy);
+./Terrain.h:
+./Terrain.h:  void generateNewChunks(int chunkX, int chunkY);
+./Terrain.h:  void sweepHandleTerrain();
+./Terrain.h:
+./Terrain.h:  void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
+./Terrain.h:            VkPipeline graphicsPipeline,
+./Terrain.h:            std::vector<VkDescriptorSet> &descriptorSets, uint32_t currentFrame,
+./Terrain.h:            VkExtent2D &swapChainExtent);
+./Terrain.h:
+./Terrain.h:  void cleanup();
+./Terrain.h:  ~Terrain();
+./Terrain.h:};
+./Terrain.cxx:#include "Terrain.h"
+./Terrain.cxx:#include "Chunk.h"
+./Terrain.cxx:#include <atomic>
+./Terrain.cxx:#include <fmt/base.h>
+./Terrain.cxx:#include <fmt/core.h>
+./Terrain.cxx:#include <mutex>
+./Terrain.cxx:#include <ranges>
+./Terrain.cxx:#include <thread>
+./Terrain.cxx:#include <vector>
+./Terrain.cxx:
+./Terrain.cxx:Terrain::Terrain(VulkanContext &vkContext, GameObjectPool &gop)
+./Terrain.cxx:    : vkContext{vkContext}, gop{gop} {
+./Terrain.cxx:
+./Terrain.cxx:  chunkBuilderThread = std::thread([&]() {
+./Terrain.cxx:    while (running.load(std::memory_order_relaxed)) {
+./Terrain.cxx:      chunkMutex.lock();
+./Terrain.cxx:      std::vector<chunkSubmitCreateInfo> newChunksMaps = chunksSubmitVector;
+./Terrain.cxx:      chunkMutex.unlock();
+./Terrain.cxx:
+./Terrain.cxx:      for (auto &chunkSubmitInfo : newChunksMaps) {
+./Terrain.cxx:        this->generateNewChunks(chunkSubmitInfo.x, chunkSubmitInfo.y);
+./Terrain.cxx:      }
+./Terrain.cxx:
+./Terrain.cxx:      chunkMutex.lock();
+./Terrain.cxx:      chunksSubmitVector.clear();
+./Terrain.cxx:      chunkMutex.unlock();
+./Terrain.cxx:    }
+./Terrain.cxx:  });
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:void Terrain::generateChunks() {
+./Terrain.cxx:
+./Terrain.cxx:  int nChunks = 0;
+./Terrain.cxx:
+./Terrain.cxx:  std::lock_guard<std::recursive_mutex> gLock(chunkMutex);
+./Terrain.cxx:  for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
+./Terrain.cxx:    for (int y = -RENDER_DISTANCE; y <= RENDER_DISTANCE; y++) {
+./Terrain.cxx:
+./Terrain.cxx:      Chunk *c = new Chunk(x, y, vkContext, gop);
+./Terrain.cxx:      chunks.emplace(chunkKey(x, y), c);
+./Terrain.cxx:
+./Terrain.cxx:      c->makeVisible();
+./Terrain.cxx:
+./Terrain.cxx:      c->generateMesh();
+./Terrain.cxx:      c->createBuffers();
+./Terrain.cxx:      nChunks++;
+./Terrain.cxx:    }
+./Terrain.cxx:  }
+./Terrain.cxx:
+./Terrain.cxx:  ready = true;
+./Terrain.cxx:  fmt::println("total chunks created is: {}", nChunks);
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:void Terrain::updateChunkMesh(int cmx, int cmy) {
+./Terrain.cxx:
+./Terrain.cxx:  chunkMutex.lock();
+./Terrain.cxx:  auto it = chunks.find(chunkKey(cmx, cmy));
+./Terrain.cxx:  if (it == chunks.end())
+./Terrain.cxx:    return;
+./Terrain.cxx:
+./Terrain.cxx:  auto chunk = it->second;
+./Terrain.cxx:
+./Terrain.cxx:  chunk->updateChunkMesh();
+./Terrain.cxx:  chunkMutex.unlock();
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:void Terrain::draw(VkCommandBuffer commandBuffer,
+./Terrain.cxx:                   VkPipelineLayout pipelineLayout, VkPipeline graphicsPipeline,
+./Terrain.cxx:                   std::vector<VkDescriptorSet> &descriptorSets,
+./Terrain.cxx:                   uint32_t currentFrame, VkExtent2D &swapChainExtent) {
+./Terrain.cxx:
+./Terrain.cxx:  chunkMutex.lock();
+./Terrain.cxx:  PushConstantC1 c1;
+./Terrain.cxx:  c1.data = glm::mat4(1.f);
+./Terrain.cxx:  for (auto it = chunks.begin(); it != chunks.end(); it++) {
+./Terrain.cxx:    it->second->draw(commandBuffer, pipelineLayout, graphicsPipeline,
+./Terrain.cxx:                     descriptorSets, currentFrame, swapChainExtent, c1);
+./Terrain.cxx:  }
+./Terrain.cxx:  chunkMutex.unlock();
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:Chunk *Terrain::getChunkByKey(uint64_t key) {
+./Terrain.cxx:
+./Terrain.cxx:  chunkMutex.lock();
+./Terrain.cxx:  auto it = chunks.find(key);
+./Terrain.cxx:  chunkMutex.unlock();
+./Terrain.cxx:
+./Terrain.cxx:  if (it != chunks.end())
+./Terrain.cxx:    return it->second;
+./Terrain.cxx:
+./Terrain.cxx:  return nullptr;
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:void Terrain::cleanup() {
+./Terrain.cxx:  chunkMutex.lock();
+./Terrain.cxx:  for (auto it = chunks.begin(); it != chunks.end(); it++) {
+./Terrain.cxx:    it->second->cleanup();
+./Terrain.cxx:    delete it->second;
+./Terrain.cxx:  }
+./Terrain.cxx:  chunkMutex.unlock();
+./Terrain.cxx:
+./Terrain.cxx:  this->running.store(false);
+./Terrain.cxx:
+./Terrain.cxx:  chunkBuilderThread.join();
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:void Terrain::generateNewChunks(int chunkX, int chunkY) {
+./Terrain.cxx:
+./Terrain.cxx:  chunkMutex.lock();
+./Terrain.cxx:  auto it = chunks.find(chunkKey(chunkX, chunkY));
+./Terrain.cxx:  chunkMutex.unlock();
+./Terrain.cxx:
+./Terrain.cxx:  if (it != chunks.end())
+./Terrain.cxx:    return;
+./Terrain.cxx:
+./Terrain.cxx:  Chunk *c = new Chunk(chunkX, chunkY, vkContext, gop);
+./Terrain.cxx:
+./Terrain.cxx:  c->makeVisible();
+./Terrain.cxx:  c->generateMesh();
+./Terrain.cxx:  c->createBuffers();
+./Terrain.cxx:
+./Terrain.cxx:  chunkMutex.lock();
+./Terrain.cxx:  nChunksLoaded++;
+./Terrain.cxx:  chunks.emplace(chunkKey(chunkX, chunkY), c);
+./Terrain.cxx:  chunkMutex.unlock();
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:void Terrain::sweepHandleTerrain() {
+./Terrain.cxx:  if (nChunksLoaded.load() !=
+./Terrain.cxx:      ((2 * RENDER_DISTANCE + 1) * (2 * RENDER_DISTANCE + 1))) {
+./Terrain.cxx:    chunkMutex.lock();
+./Terrain.cxx:    for (auto it = chunks.begin(); it != chunks.end(); it++) {
+./Terrain.cxx:      it->second->cleanup();
+./Terrain.cxx:      delete it->second;
+./Terrain.cxx:    }
+./Terrain.cxx:    chunks.clear();
+./Terrain.cxx:    nChunksLoaded = 0;
+./Terrain.cxx:    chunkMutex.unlock();
+./Terrain.cxx:  }
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:void Terrain::apppendNewChunkAsyncronously(int cx, int cy) {
+./Terrain.cxx:
+./Terrain.cxx:  chunkMutex.lock();
+./Terrain.cxx:  this->chunksSubmitVector.emplace_back(cx, cy);
+./Terrain.cxx:  chunkMutex.unlock();
+./Terrain.cxx:}
+./Terrain.cxx:
+./Terrain.cxx:Terrain::~Terrain() {}
