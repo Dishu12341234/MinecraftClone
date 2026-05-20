@@ -63,6 +63,7 @@ private:
 
   friend class RayGraphicsPipeline;
   friend class UIRenderPipeline;
+  friend class FontRenderPipeline;
 
 public:
   VkPipelineLayout pipelineLayout;

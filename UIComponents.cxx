@@ -91,8 +91,7 @@ void UIComponents::initUIComponent(glm::vec2 position, glm::vec2 size) {
 
 void UIComponents::setTextureIDX(int idx) { this->textureIDX = idx; }
 
-void UIComponents::draw(DrawInfo &drawInfo,
-                        PushConstantC2 &c2) {
+void UIComponents::draw(DrawInfo &drawInfo, PushConstantC2 &c2) {
   VkBuffer vertexBuffers[] = {vertexBuffer};
   VkDeviceSize offsets[] = {0};
 
@@ -100,17 +99,21 @@ void UIComponents::draw(DrawInfo &drawInfo,
     return;
 
   vkCmdBindVertexBuffers(drawInfo.commandBuffer, 0, 1, vertexBuffers, offsets);
-  vkCmdBindIndexBuffer(drawInfo.commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindIndexBuffer(drawInfo.commandBuffer, indexBuffer, 0,
+                       VK_INDEX_TYPE_UINT32);
 
-  vkCmdPushConstants(drawInfo.commandBuffer, drawInfo.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT,
-                     0, sizeof(PushConstantC2), &c2);
+  vkCmdPushConstants(drawInfo.commandBuffer, drawInfo.pipelineLayout,
+                     VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantC2),
+                     &c2);
 
-  vkCmdBindDescriptorSets(drawInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          drawInfo.pipelineLayout, 0, 1, &(drawInfo.descriptorSets[drawInfo.currentFrame]),
-                          0, nullptr);
+  vkCmdBindDescriptorSets(
+      drawInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+      drawInfo.pipelineLayout, 0, 1,
+      &(drawInfo.descriptorSets[drawInfo.currentFrame]), 0, nullptr);
 
-  vkCmdDrawIndexed(drawInfo.commandBuffer, static_cast<uint32_t>(indices.size()),
-                   instanceCount, 0, 0, 0);
+  vkCmdDrawIndexed(drawInfo.commandBuffer,
+                   static_cast<uint32_t>(indices.size()), instanceCount, 0, 0,
+                   0);
 }
 
 void UIComponents::setInstanceCount(int instanceCount) {

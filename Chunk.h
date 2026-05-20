@@ -7,8 +7,8 @@
 #include "Structs.h"
 #include "Voxel.h"
 
-#include <chrono>
 #include <array>
+#include <chrono>
 
 #define TIMER_START(name)                                                      \
   auto name##_start = std::chrono::high_resolution_clock::now();
@@ -39,14 +39,11 @@ private:
 
   int chunkOffset[2] = {0, 0}; // x,y
 
-  Mesh chunkMesh;
+  Mesh<Vertex> chunkMesh;
   GameObjectPool &gop;
-
-
 
   friend class GameObjectPool;
   friend class Terrain;
-
 
 public:
   Chunk(int cmx, int cmy, VulkanContext &vkContext, GameObjectPool &gop);
@@ -56,7 +53,6 @@ public:
   void createBuffers();
 
   void updateChunkMesh();
-
 
   void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
             VkPipeline graphicsPipeline,

@@ -35,6 +35,7 @@ COMMON_CXXFLAGS := -std=c++2b -Wall -g -O1 \
 	-MMD -MP \
 	-lprofiler \
 	-I/usr/include \
+	-I/usr/include/freetype2 \
 	-fno-inline -rdynamic
 
 MAC_CXXFLAGS := $(COMMON_CXXFLAGS) \
@@ -43,7 +44,7 @@ MAC_CXXFLAGS := $(COMMON_CXXFLAGS) \
 LINUX_CXXFLAGS := $(COMMON_CXXFLAGS) \
 	-I$(LINUX_VULKAN_SDK)/include
 
-COMMON_LDFLAGS := -L/opt/homebrew/lib -L./lib -lglfw -lfmt
+COMMON_LDFLAGS := -L/opt/homebrew/lib -L./lib -lglfw -lfmt -lfreetype
 
 MAC_LDFLAGS := $(COMMON_LDFLAGS) \
 	-L$(MAC_VULKAN_SDK)/macOS/lib \

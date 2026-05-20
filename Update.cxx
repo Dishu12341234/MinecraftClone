@@ -27,7 +27,7 @@ void HelloTriangleApplication::initGameObjects() {
 
   terrain = std::make_unique<Terrain>(context, gameObjectPool);
   ui = std::move(UI(context));
-
+  font = std::make_unique<Fonts>(context, ft);
   srand(87844057);
 
   float aspect = float(swapChainExtent.width) / float(swapChainExtent.height);

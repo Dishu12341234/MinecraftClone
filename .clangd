@@ -1,5 +1,11 @@
 CompileFlags:
-  Add: [-I/usr/include, -I/usr/include/vulkan, -std=c++23]
+  Add:
+    [
+      -I/usr/include,
+      -I/usr/include/freetype2,
+      -I/usr/include/vulkan,
+      -std=c++23,
+    ]
 
 Completion:
   HeaderInsertion: Never

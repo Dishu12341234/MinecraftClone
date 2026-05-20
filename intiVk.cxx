@@ -157,6 +157,10 @@ void HelloTriangleApplication::initVulkan() {
 
   uiRenderPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
   uiRenderPipeline.createGraphicsPipeline();
+
+  fontRenderPipeline.u_PassGraphicsPipelineCreateInfo(createInfo);
+  fontRenderPipeline.createGraphicsPipeline();
+
   u_TexturePassInfo texturePassInfo{};
   texturePassInfo.device = device;
   texturePassInfo.physicalDevice = physicalDevice;
@@ -165,6 +169,8 @@ void HelloTriangleApplication::initVulkan() {
   for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++) {
     uiTexturePaths[i] = "/home/divyansh/MinecraftClone/textures/corrupt.png";
   }
+
+  uiTexturePaths[4] = "/home/divyansh/MinecraftClone/textures/corrupt.png";
 
   for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++) {
     uiTextures.emplace_back();
@@ -189,7 +195,6 @@ void HelloTriangleApplication::initVulkan() {
   context.presentQueue = presentQueue;
   context.commandPool = commandPool;
 
-
   texturePassInfo.graphicsQueue = graphicsQueue;
   texturePassInfo.renderPass = renderPass;
   texturePassInfo.commandPool = commandPool;
@@ -197,28 +202,36 @@ void HelloTriangleApplication::initVulkan() {
   texturePassInfo.width = WIDTH;
   texturePassInfo.texturePath = TEXTURE_PATH;
 
-
   this->blockTextureArray2D = std::make_unique<TextureArray2D>(context);
   this->blockTextureArray2D->passInfo(texturePassInfo);
 
-  this->blockTextureArray2D->setTexturePaths(19, "/home/divyansh/MinecraftClone/textures/corrupt_blk.png");
+  this->blockTextureArray2D->setTexturePaths(
+      19, "/home/divyansh/MinecraftClone/textures/corrupt_blk.png");
 
-
-  this->blockTextureArray2D->setTexturePaths(0, "/home/divyansh/MinecraftClone/textures/grass_top.png");
-  this->blockTextureArray2D->setTexturePaths(1, "/home/divyansh/MinecraftClone/textures/grass_side.png");
-  this->blockTextureArray2D->setTexturePaths(2, "/home/divyansh/MinecraftClone/textures/debug_blk.png");
-  this->blockTextureArray2D->setTexturePaths(3, "/home/divyansh/MinecraftClone/textures/wood.png");
-  this->blockTextureArray2D->setTexturePaths(4, "/home/divyansh/MinecraftClone/textures/leaf.png");
-  this->blockTextureArray2D->setTexturePaths(5, "/home/divyansh/MinecraftClone/textures/stone.png");
-  this->blockTextureArray2D->setTexturePaths(6, "/home/divyansh/MinecraftClone/textures/bedrock.png");
+  this->blockTextureArray2D->setTexturePaths(
+      0, "/home/divyansh/MinecraftClone/textures/grass_top.png");
+  this->blockTextureArray2D->setTexturePaths(
+      1, "/home/divyansh/MinecraftClone/textures/grass_side.png");
+  this->blockTextureArray2D->setTexturePaths(
+      2, "/home/divyansh/MinecraftClone/textures/debug_blk.png");
+  this->blockTextureArray2D->setTexturePaths(
+      3, "/home/divyansh/MinecraftClone/textures/wood.png");
+  this->blockTextureArray2D->setTexturePaths(
+      4, "/home/divyansh/MinecraftClone/textures/leaf.png");
+  this->blockTextureArray2D->setTexturePaths(
+      5, "/home/divyansh/MinecraftClone/textures/stone.png");
+  this->blockTextureArray2D->setTexturePaths(
+      6, "/home/divyansh/MinecraftClone/textures/bedrock.png");
 
   blockTextureArray2D->allocateStorageForTextures();
   blockTextureArray2D->createBlkTextureStagingBuffer();
   blockTextureArray2D->createBlkTextureArrayImage();
   blockTextureArray2D->allocateBlkTextureArrayMemory();
-  blockTextureArray2D->transitionBlkTextureArrayImageLayout();  // UNDEFINED -> TRANSFER_DST
-  blockTextureArray2D->uploadBlkTexturesToArray();              // copy pixels
-  blockTextureArray2D->transitionBlkTextureArrayToShaderRead(); // TRANSFER_DST -> SHADER_READ
+  blockTextureArray2D
+      ->transitionBlkTextureArrayImageLayout();    // UNDEFINED -> TRANSFER_DST
+  blockTextureArray2D->uploadBlkTexturesToArray(); // copy pixels
+  blockTextureArray2D
+      ->transitionBlkTextureArrayToShaderRead(); // TRANSFER_DST -> SHADER_READ
   blockTextureArray2D->createBlkTextureArrayImageView();
   blockTextureArray2D->createBlkArraySampler();
   texture.passTextureCreateInfo(texturePassInfo);
@@ -249,6 +262,14 @@ void HelloTriangleApplication::initVulkan() {
     uiTextures.at(i).createTextureView();
     uiTextures.at(i).createTextureSampler();
   }
+
+  initFontLib();
+  texturePassInfo.texturePath =
+      "/home/divyansh/MinecraftClone/textures/inventory.png";
+  font->texture.passTextureCreateInfo(texturePassInfo);
+  font->createTextureImage();
+  font->buildTextMesh("amnesia", .1f);
+  font->texture.createTextureSampler();
 
   createDescriptorSets();
   createCommandBuffers();
@@ -918,7 +939,7 @@ void HelloTriangleApplication::createUniformBuffers() {
 void HelloTriangleApplication::createDescriptorPool() {
   std::cout << "Creating Descriptor Pool..." << std::endl;
 
-  std::array<VkDescriptorPoolSize, 3> poolSizes{};
+  std::array<VkDescriptorPoolSize, 4> poolSizes{};
   poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
@@ -930,6 +951,10 @@ void HelloTriangleApplication::createDescriptorPool() {
       NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES *
       static_cast<uint32_t>(
           MAX_FRAMES_IN_FLIGHT); // uiTexturesBinding.descriptorCount = 16;
+                                 //
+
+  poolSizes[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  poolSizes[3].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
   VkDescriptorPoolCreateInfo poolInfo{};
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -977,6 +1002,11 @@ void HelloTriangleApplication::updateDescriptorSets(u_Texture &texture) {
     imageInfo.imageView = blockTextureArray2D->blkTextureArrayImageView;
     imageInfo.sampler = blockTextureArray2D->blkArraySampler;
 
+    VkDescriptorImageInfo fontImageInfo{};
+    fontImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    fontImageInfo.imageView = font->texture.textureImageView;
+    fontImageInfo.sampler = font->texture.textureSampler;
+
     std::vector<VkDescriptorImageInfo> imageInfos(
         NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES);
     for (uint32_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++) {
@@ -986,7 +1016,7 @@ void HelloTriangleApplication::updateDescriptorSets(u_Texture &texture) {
       imageInfos[i].sampler = uiTextures[i].textureSampler;
     }
 
-    std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
+    std::array<VkWriteDescriptorSet, 4> descriptorWrites{};
 
     descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptorWrites[0].dstSet = descriptorSets[i];
@@ -1013,6 +1043,15 @@ void HelloTriangleApplication::updateDescriptorSets(u_Texture &texture) {
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptorWrites[2].descriptorCount = NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES;
     descriptorWrites[2].pImageInfo = imageInfos.data();
+
+    descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrites[3].dstSet = descriptorSets[i];
+    descriptorWrites[3].dstBinding = 3;
+    descriptorWrites[3].dstArrayElement = 0;
+    descriptorWrites[3].descriptorType =
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrites[3].descriptorCount = 1;
+    descriptorWrites[3].pImageInfo = &fontImageInfo;
 
     vkUpdateDescriptorSets(device,
                            static_cast<uint32_t>(descriptorWrites.size()),
@@ -1044,17 +1083,25 @@ void HelloTriangleApplication::createDescriptorSetLayout() {
   uiTexturesBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
   uiTexturesBinding.pImmutableSamplers = nullptr;
 
+  VkDescriptorSetLayoutBinding fontTexturesBinding{};
+  fontTexturesBinding.binding = 3;
+  fontTexturesBinding.descriptorType =
+      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  fontTexturesBinding.descriptorCount = 1;
+  fontTexturesBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  fontTexturesBinding.pImmutableSamplers = nullptr;
+
   VkDescriptorBindingFlags bindingFlags =
       VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT;
 
   VkDescriptorSetLayoutBindingFlagsCreateInfo flagsInfo{};
   flagsInfo.sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
-  flagsInfo.bindingCount = 3;
+  flagsInfo.bindingCount = 4;
   flagsInfo.pBindingFlags = &bindingFlags;
 
-  std::array<VkDescriptorSetLayoutBinding, 3> bindings = {
-      uboLayoutBinding, blkTexBinding, uiTexturesBinding};
+  std::array<VkDescriptorSetLayoutBinding, 4> bindings = {
+      uboLayoutBinding, blkTexBinding, uiTexturesBinding, fontTexturesBinding};
   VkDescriptorSetLayoutCreateInfo layoutInfo{};
   layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -1147,4 +1194,21 @@ void HelloTriangleApplication::createSyncObject() {
       throw std::runtime_error("failed to create renderFinished semaphore!");
     }
   }
+}
+
+void HelloTriangleApplication::initFontLib() {
+  if (FT_Init_FreeType(&ft)) {
+    std::cout << "ERROR::FREETYPE Could not init FreeType lib" << std::endl;
+    cleanup();
+    exit(1);
+  }
+
+  FT_Face face;
+  if (FT_New_Face(ft, "/home/divyansh/MinecraftClone/fonts/arial.ttf", 0,
+                  &face)) {
+    std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
+    FT_Done_Face(face);
+    exit(1);
+  }
+  FT_Done_Face(face);
 }

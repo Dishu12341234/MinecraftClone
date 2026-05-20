@@ -7,7 +7,7 @@
 #include <set>
 #include <thread>
 #include <vector>
-#define RENDER_DISTANCE 10
+#define RENDER_DISTANCE 3
 
 #include <unordered_map>
 

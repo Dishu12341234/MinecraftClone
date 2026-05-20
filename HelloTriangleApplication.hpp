@@ -1,6 +1,11 @@
 #pragma once
+#include "FontRenderPipeline.h"
 #include "Structs.h"
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #define GLFW_INCLUDE_VULKAN
+#include "2DTextureArray.h"
+#include "Fonts.h"
 #include "GameObjectPool.h"
 #include "GraphicsPipeline.h"
 #include "RayGraphicsPipeline.h"
@@ -9,12 +14,10 @@
 #include "UIRenderPipeline.h"
 #include "uiTexture.h"
 #include <GLFW/glfw3.h>
-#include "2DTextureArray.h"
 #include <chrono>
 #include <memory>
 #include <optional>
 #include <vector>
-
 class Event;
 class Inventory;
 #define NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES 16
@@ -30,6 +33,8 @@ class UI;
 
 class HelloTriangleApplication {
 private:
+  FT_Library ft;
+
   const int MAX_FRAMES_IN_FLIGHT = 3;
   std::chrono::high_resolution_clock::time_point startTime =
       std::chrono::high_resolution_clock::now();
@@ -39,6 +44,7 @@ private:
   std::unique_ptr<Inventory> inventory;
   std::unique_ptr<UIComponents> Crosshair;
   std::unique_ptr<UIComponents> Heart;
+  std::unique_ptr<Fonts> font;
 
   std::array<std::string, NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES> uiTexturePaths;
   std::vector<UITexture> uiTextures;
@@ -192,7 +198,11 @@ private:
 
   UIRenderPipeline uiRenderPipeline;
 
+  FontRenderPipeline fontRenderPipeline;
+
   void initGameObjects();
+
+  void initFontLib();
 
   void createFramebuffers();
   void createCommandPool();

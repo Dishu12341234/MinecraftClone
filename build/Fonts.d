@@ -1,8 +1,5 @@
-build/Camera.o: Camera.cxx Camera.h Event.h PassInfo.hpp GameObjectPool.h \
- GraphicsPipeline.h Structs.h Voxel.h Ray.h RayMesher.h \
- RayGraphicsPipeline.h UI.h UIComponents.h UIRenderPipeline.h \
- HelloTriangleApplication.hpp FontRenderPipeline.h \
- /usr/include/freetype2/ft2build.h \
+build/Fonts.o: Fonts.cxx Fonts.h FontRenderPipeline.h GraphicsPipeline.h \
+ PassInfo.hpp Structs.h /usr/include/freetype2/ft2build.h \
  /usr/include/freetype2/freetype/config/ftheader.h \
  /usr/include/freetype2/freetype/freetype.h \
  /usr/include/freetype2/freetype/config/ftconfig.h \
@@ -16,23 +13,13 @@ build/Camera.o: Camera.cxx Camera.h Event.h PassInfo.hpp GameObjectPool.h \
  /usr/include/freetype2/freetype/ftimage.h \
  /usr/include/freetype2/freetype/fterrors.h \
  /usr/include/freetype2/freetype/ftmoderr.h \
- /usr/include/freetype2/freetype/fterrdef.h 2DTextureArray.h Textures.hpp \
- include/stb-master/stb_image.h Fonts.h Mesh.h uiTexture.h
-Camera.h:
-Event.h:
-PassInfo.hpp:
-GameObjectPool.h:
-GraphicsPipeline.h:
-Structs.h:
-Voxel.h:
-Ray.h:
-RayMesher.h:
-RayGraphicsPipeline.h:
-UI.h:
-UIComponents.h:
-UIRenderPipeline.h:
-HelloTriangleApplication.hpp:
+ /usr/include/freetype2/freetype/fterrdef.h Mesh.h Textures.hpp \
+ include/stb-master/stb_image.h
+Fonts.h:
 FontRenderPipeline.h:
+GraphicsPipeline.h:
+PassInfo.hpp:
+Structs.h:
 /usr/include/freetype2/ft2build.h:
 /usr/include/freetype2/freetype/config/ftheader.h:
 /usr/include/freetype2/freetype/freetype.h:
@@ -48,9 +35,6 @@ FontRenderPipeline.h:
 /usr/include/freetype2/freetype/fterrors.h:
 /usr/include/freetype2/freetype/ftmoderr.h:
 /usr/include/freetype2/freetype/fterrdef.h:
-2DTextureArray.h:
+Mesh.h:
 Textures.hpp:
 include/stb-master/stb_image.h:
-Fonts.h:
-Mesh.h:
-uiTexture.h:

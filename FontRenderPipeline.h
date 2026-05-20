@@ -1,26 +1,27 @@
-#pragma once
+#ifndef FONTRENDER_PIPELINE_H
+#define FONTRENDER_PIPELINE_H
+
 #include "GraphicsPipeline.h"
 
-struct UIVertex {
+struct FontVertex {
   glm::vec3 pos;
   glm::vec2 uv;
-  uint32_t textureIndex{0};
 
   // Telling vulkan how to setup binding
   // Struct 1/2
   static VkVertexInputBindingDescription getBindingDescription();
   // Struct 2/2
-  static std::array<VkVertexInputAttributeDescription, 3>
+  static std::array<VkVertexInputAttributeDescription, 2>
   getAttributeDescriptions();
 
-  bool operator==(const UIVertex &other) const {
+  bool operator==(const FontVertex &other) const {
     return pos == other.pos && uv == other.uv;
   }
 };
 
 namespace std {
-template <> struct hash<UIVertex> {
-  size_t operator()(UIVertex const &vertex) const {
+template <> struct hash<FontVertex> {
+  size_t operator()(FontVertex const &vertex) const {
     size_t seed = 0;
 
     auto hashCombine = [&seed](auto const &v) {
@@ -40,10 +41,11 @@ template <> struct hash<UIVertex> {
 };
 } // namespace std
 
-class UIRenderPipeline : public u_GraphicsPipeline {
-private:
+class FontRenderPipeline : public u_GraphicsPipeline {
 public:
-  UIRenderPipeline();
+  FontRenderPipeline() = default;
   void createGraphicsPipeline() override;
-  ~UIRenderPipeline();
-};
+  ~FontRenderPipeline() = default;
+}; // FontRenderPipeline
+
+#endif
