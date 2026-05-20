@@ -1,0 +1,4 @@
+build/
+*.o
+*.d
+main_linux
