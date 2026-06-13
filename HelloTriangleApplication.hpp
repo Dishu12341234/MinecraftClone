@@ -8,6 +8,7 @@
 #include "Fonts.h"
 #include "GameObjectPool.h"
 #include "GraphicsPipeline.h"
+#include "ItemPool.h"
 #include "RayGraphicsPipeline.h"
 #include "Textures.hpp"
 #include "UI.h"
@@ -44,8 +45,9 @@ private:
   std::unique_ptr<Inventory> inventory;
   std::unique_ptr<UIComponents> Crosshair;
   std::unique_ptr<UIComponents> Heart;
+  std::unique_ptr<UIComponents> Hotbar;
   std::unique_ptr<Fonts> font;
-
+  ItemPool itemPool;
   std::array<std::string, NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES> uiTexturePaths;
   std::vector<UITexture> uiTextures;
 
@@ -215,6 +217,7 @@ private:
   void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags properties, VkBuffer &buffer,
                     VkDeviceMemory &bufferMemory);
+  void initItems();
   void loadModel();
   void createVertexBuffer();
   void createIndexBuffer();

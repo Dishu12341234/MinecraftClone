@@ -1,0 +1,134 @@
+[
+  {
+    "file": "Chunk.cxx",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "-Wall",
+      "-g",
+      "-O1",
+      "-MMD",
+      "-MP",
+      "-I/usr/include",
+      "-I/usr/include/freetype2",
+      "-fno-inline",
+      "-I/home/divyansh/SDKs/vksdk/1.4.335.0/x86_64/include",
+      "-c",
+      "Chunk.cxx",
+      "-o",
+      "build/Chunk.o"
+    ],
+    "directory": "/home/divyansh/MinecraftClone",
+    "output": "build/Chunk.o"
+  },
+  {
+    "file": "Player.cxx",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "-Wall",
+      "-g",
+      "-O1",
+      "-MMD",
+      "-MP",
+      "-I/usr/include",
+      "-I/usr/include/freetype2",
+      "-fno-inline",
+      "-I/home/divyansh/SDKs/vksdk/1.4.335.0/x86_64/include",
+      "-c",
+      "Player.cxx",
+      "-o",
+      "build/Player.o"
+    ],
+    "directory": "/home/divyansh/MinecraftClone",
+    "output": "build/Player.o"
+  },
+  {
+    "file": "HelloTriangleApplication.cxx",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "-Wall",
+      "-g",
+      "-O1",
+      "-MMD",
+      "-MP",
+      "-I/usr/include",
+      "-I/usr/include/freetype2",
+      "-fno-inline",
+      "-I/home/divyansh/SDKs/vksdk/1.4.335.0/x86_64/include",
+      "-c",
+      "HelloTriangleApplication.cxx",
+      "-o",
+      "build/HelloTriangleApplication.o"
+    ],
+    "directory": "/home/divyansh/MinecraftClone",
+    "output": "build/HelloTriangleApplication.o"
+  },
+  {
+    "file": "Update.cxx",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "-Wall",
+      "-g",
+      "-O1",
+      "-MMD",
+      "-MP",
+      "-I/usr/include",
+      "-I/usr/include/freetype2",
+      "-fno-inline",
+      "-I/home/divyansh/SDKs/vksdk/1.4.335.0/x86_64/include",
+      "-c",
+      "Update.cxx",
+      "-o",
+      "build/Update.o"
+    ],
+    "directory": "/home/divyansh/MinecraftClone",
+    "output": "build/Update.o"
+  },
+  {
+    "file": "Terrain.cxx",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "-Wall",
+      "-g",
+      "-O1",
+      "-MMD",
+      "-MP",
+      "-I/usr/include",
+      "-I/usr/include/freetype2",
+      "-fno-inline",
+      "-I/home/divyansh/SDKs/vksdk/1.4.335.0/x86_64/include",
+      "-c",
+      "Terrain.cxx",
+      "-o",
+      "build/Terrain.o"
+    ],
+    "directory": "/home/divyansh/MinecraftClone",
+    "output": "build/Terrain.o"
+  },
+  {
+    "file": "GameObjectPool.cxx",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "-Wall",
+      "-g",
+      "-O1",
+      "-MMD",
+      "-MP",
+      "-I/usr/include",
+      "-I/usr/include/freetype2",
+      "-fno-inline",
+      "-I/home/divyansh/SDKs/vksdk/1.4.335.0/x86_64/include",
+      "-c",
+      "GameObjectPool.cxx",
+      "-o",
+      "build/GameObjectPool.o"
+    ],
+    "directory": "/home/divyansh/MinecraftClone",
+    "output": "build/GameObjectPool.o"
+  }
+]

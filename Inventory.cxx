@@ -1,5 +1,6 @@
 #include "Inventory.h"
 #include "Event.h"
+#include "ItemPool.h"
 #include "Structs.h"
 #include <fmt/base.h>
 #include <fmt/core.h>
@@ -136,6 +137,9 @@ Inventory::Inventory(VulkanContext &vkContext,
   inventoryLayout.hotbar.boxWidth = 20 * inventoryLayout.textureScaling.x;
   inventoryLayout.hotbar.boxHeight = 20 * inventoryLayout.textureScaling.y;
 
+  inventoryLayout.hotbar.primaryHotbarPos = glm::vec2(0, 1.f - .0625f);
+  inventoryLayout.hotbar.primaryHotbarSize = glm::vec2(1.5f, .125f);
+
   inventoryLayout.innerSlots.leftMargin = 4 * inventoryLayout.textureScaling.x;
   inventoryLayout.innerSlots.bottomMargin =
       30 * inventoryLayout.textureScaling.y;
@@ -197,14 +201,19 @@ UIComponents *Inventory::getFilterComponentPointer() {
   return &filterComponent;
 }
 
-
 void Inventory::inventoryUpdates(Event &event) {
+
+  if (itemPool != nullptr) {
+    auto currentItemInHand =
+        itemPool->getItemAt(inventoryLayout.hotbar.slots[col].itemID);
+    if (currentItemInHand != nullptr) {
+      fmt::println("Item Exists at col: {}", col);
+    }
+  }
   float mouseX = event.mouseX;
   float mouseY = event.mouseY;
   voffset.x = dimensions.cw;
   voffset.y = dimensions.ch;
-
-  fmt::println("voff_x: {}", voffset.x);
 
   int hotbarCell =
       getHotbarCell(inventoryLayout, texture_start, texture_end, event);
@@ -228,8 +237,6 @@ void Inventory::inventoryUpdates(Event &event) {
 
   voffset.x *= dimensions.cw;
   voffset.y *= dimensions.ch;
-
-  fmt::println("vx: {} ", voffset.x);
 }
 
 void Inventory::drawUI(DrawInfo &drawInfo, std::shared_ptr<Camera> playerCamera,
@@ -237,7 +244,35 @@ void Inventory::drawUI(DrawInfo &drawInfo, std::shared_ptr<Camera> playerCamera,
   if (playerState->inInventory) {
     playerCamera->drawUIAt(drawInfo, ui, 0);
     playerCamera->drawUIAt(drawInfo, ui, 1, glm::vec3(voffset, 0));
+  } else {
+    // the one on the top will be the one at the very front
+    playerCamera->drawUIAt(drawInfo, ui, 4);
+    playerCamera->drawUIAt(
+        drawInfo, ui, 1,
+        glm::vec3(
+            inventoryLayout.hotbar.primaryHotbarPos -
+                glm::vec2(
+                    (inventoryLayout.hotbar.primaryHotbarSize.x / 2.f - .0625f -
+                     inventoryLayout.hotbar.primaryHotbarSize.x * col / 12.f),
+                    0),
+            0),
+        glm::vec3(2.f / 3.f, 2.f / 3.f, 1));
+    playerCamera->drawUIAt(drawInfo, ui, 2);
+    playerCamera->drawUIAt(drawInfo, ui, 3);
   }
+}
+
+void Inventory::populateSlots(ItemPool &itemPool) {
+  this->itemPool = &itemPool;
+  inventoryLayout.hotbar.slots[0].itemID = 0; // storing grass at 0
+  inventoryLayout.hotbar.slots[1].itemID = 1; // storing stone at 1
+}
+
+Item *Inventory::getCurrentItemInPrimaryHand() {
+  if (itemPool != nullptr) {
+    return itemPool->getItemAt(inventoryLayout.hotbar.slots[col].itemID);
+  }
+  return nullptr;
 }
 
 Inventory::~Inventory() {}

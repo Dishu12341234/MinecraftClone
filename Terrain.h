@@ -59,3 +59,4 @@ public:
   void cleanup();
   ~Terrain();
 };
+// TODO: Handle multi-thread sync issues

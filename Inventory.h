@@ -4,8 +4,11 @@
 #include "PassInfo.hpp"
 #include "Structs.h"
 #include "UIComponents.h"
-#include <memory>
 #include <array>
+#include <memory>
+
+class Item;
+class ItemPool;
 
 struct BoundingBox {
   glm::vec2 min;
@@ -13,14 +16,14 @@ struct BoundingBox {
 };
 
 struct Slot {
-  int itemID{0};
+  uint64_t itemID{UINT64_MAX};
   BoundingBox bb{};
 };
 
 struct InnerSlots {
-  int leftMargin = 0;   // 4
-  int bottomMargin = 0; // 4
-  glm::vec2 box_boxGap{0};   // 2
+  int leftMargin = 0;      // 4
+  int bottomMargin = 0;    // 4
+  glm::vec2 box_boxGap{0}; // 2
 
   int boxWidth = 0;  // 20
   int boxHeight = 0; // 20
@@ -37,6 +40,10 @@ struct Hotbar {
   int boxHeight = 0; // 20
 
   std::array<Slot, 12> slots;
+
+  // the hotbar that is always visible
+  glm::vec2 primaryHotbarSize{};
+  glm::vec2 primaryHotbarPos{};
 };
 
 struct InventoryLayout {
@@ -55,6 +62,7 @@ private:
 
   UIComponents inventoryComponent;
   UIComponents filterComponent;
+  ItemPool *itemPool = nullptr;
 
   float scale = .75f;
 
@@ -66,15 +74,17 @@ private:
 
   glm::vec2 voffset{};
 
-
   InventoryLayout inventoryLayout;
 
   PlayerState *playerState = nullptr;
 
 public:
   static ApplicationDimensions dimensions;
+  unsigned int col = 0;
 
   Inventory(VulkanContext &vkContext, ApplicationDimensions &dimensions);
+
+  void populateSlots(ItemPool &ItemPool);
 
   UIComponents *getInventoryComponentPointer();
   UIComponents *getFilterComponentPointer();
@@ -85,6 +95,8 @@ public:
 
   void inventoryUpdates(Event &event);
   void drawUI(DrawInfo &drawInfo, std::shared_ptr<Camera> playerCamera, UI &ui);
+
+  Item *getCurrentItemInPrimaryHand();
 
   ~Inventory();
 };

@@ -9,14 +9,15 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 Fonts::Fonts(VulkanContext &vkContext, FT_Library &ft)
-    : vkContext(vkContext), mesh(vkContext), ft(ft) {}
+    : vkContext(vkContext), ft(ft), mesh(vkContext) {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // createTextureImage
 // ─────────────────────────────────────────────────────────────────────────────
 void Fonts::createTextureImage() {
 
-  const std::string fontPath = "/home/divyansh/MinecraftClone/fonts/arial.ttf";
+  const std::string fontPath =
+      "/home/divyansh/MinecraftClone/fonts/PixelifySans-VariableFont_wght.ttf";
 
   // ── 1. Load face ─────────────────────────────────────────────────────────
   FT_Face face;
@@ -161,6 +162,8 @@ void Fonts::createTextureImage() {
 float Fonts::buildTextMesh(const std::string &text, float screenScale) {
 
   const float px2ws = screenScale / static_cast<float>(FONT_PIXEL_HEIGHT);
+  // Line height: full pixel height plus a small gap, converted to world space
+  const float lineHeight = static_cast<float>(FONT_PIXEL_HEIGHT) * px2ws * 1.2f;
 
   std::vector<FontVertex> vertices;
   std::vector<uint32_t> indices;
@@ -168,9 +171,18 @@ float Fonts::buildTextMesh(const std::string &text, float screenScale) {
   indices.reserve(text.size() * 6);
 
   float penX = 0.0f;
+  float penY = 0.0f;    // advances downward on each \n
+  float maxPenX = 0.0f; // track the widest line for the return value
 
   for (char ch : text) {
     uint32_t c = static_cast<unsigned char>(ch);
+
+    if (c == '\n') {
+      maxPenX = std::max(maxPenX, penX);
+      penX = 0.0f;
+      penY += lineHeight;
+      continue;
+    }
 
     if (c < FIRST_CHAR || c > LAST_CHAR) {
       if (c == ' ')
@@ -188,16 +200,11 @@ float Fonts::buildTextMesh(const std::string &text, float screenScale) {
     float x0 = penX + static_cast<float>(g.bearingX) * px2ws;
     float x1 = x0 + static_cast<float>(g.bitmapW) * px2ws;
 
-    // Vulkan NDC has Y pointing DOWN.
-    // bearingY is pixels above the baseline → negate to push the glyph
-    // downward.
-    float y0 = -static_cast<float>(g.bearingY) * px2ws; // top edge
-    float y1 =
-        static_cast<float>(g.bitmapH - g.bearingY) * px2ws; // bottom edge
+    float y0 = penY + (-static_cast<float>(g.bearingY) * px2ws);
+    float y1 = penY + (static_cast<float>(g.bitmapH - g.bearingY) * px2ws);
 
     uint32_t base = static_cast<uint32_t>(vertices.size());
 
-    // UV v0 = top of glyph in atlas, v1 = bottom — unchanged.
     vertices.push_back(FontVertex{{x0, y0, 0.f}, {g.u0, g.v0}}); // TL
     vertices.push_back(FontVertex{{x1, y0, 0.f}, {g.u1, g.v0}}); // TR
     vertices.push_back(FontVertex{{x1, y1, 0.f}, {g.u1, g.v1}}); // BR
@@ -209,14 +216,15 @@ float Fonts::buildTextMesh(const std::string &text, float screenScale) {
     penX += static_cast<float>(g.advanceX) / 64.0f * px2ws;
   }
 
+  maxPenX = std::max(maxPenX, penX); // account for the last (or only) line
+
   mesh.loadVertices(vertices);
   mesh.loadIndices(indices);
   mesh.createVertexBuffer();
   mesh.createIndexBuffer();
 
-  return penX;
+  return maxPenX;
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 void Fonts::cleanup() {
   mesh.cleanup();

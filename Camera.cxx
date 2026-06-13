@@ -2,6 +2,7 @@
 #include "HelloTriangleApplication.hpp"
 #include "Ray.h"
 #include "glm/gtx/quaternion.hpp"
+#include <fmt/base.h>
 #include <iostream>
 
 std::ostream &operator<<(std::ostream &os, const glm::vec3 &v) {
@@ -12,7 +13,7 @@ std::ostream &operator<<(std::ostream &os, const glm::vec3 &v) {
 void Camera::getHitInfo(HitInfo &hitInfo)
 
 {
-  float stepSize = 0.1f;
+  float stepSize = 0.01f;
 
   glm::vec3 rayOriginCR = gePositionInWorldCoords();
   glm::vec3 rayDirCR = forwardCR;
@@ -29,7 +30,44 @@ void Camera::getHitInfo(HitInfo &hitInfo)
     if (voxel && voxel->getBlockType() != AIR) {
       hitInfo.blockCoords = blockCoords;
       hitInfo.hitVoxel = voxel;
+      float lx = point.x - blockCoords.x;
+      float ly = point.y - blockCoords.y;
+      float lz = point.z - blockCoords.z;
+      float dLeft = ly;
+      float dRight = 1.0f - ly;
 
+      float dBottom = lz;
+      float dTop = 1.0f - lz;
+
+      float dBack = lx;
+      float dFront = 1.0f - lx;
+
+      float d = dLeft;
+      Face face = Face::Left;
+
+      std::string faceS;
+
+      if (dRight < d) {
+        d = dRight;
+        face = Face::Right;
+      }
+      if (dBottom < d) {
+        d = dBottom;
+        face = Face::Bottom;
+      }
+      if (dTop < d) {
+        d = dTop;
+        face = Face::Top;
+      }
+      if (dBack < d) {
+        d = dBack;
+        face = Face::Back;
+      }
+      if (dFront < d) {
+        d = dFront;
+        face = Face::Front;
+      }
+      hitInfo.faceDirection = (FaceDirection)face;
       break;
     }
   }
@@ -113,7 +151,7 @@ Camera::drawUI(DrawInfo &drawInfo, UI &ui) {
 }
 
 void Camera::drawUIAt(DrawInfo &drawInfo, UI &ui, uint32_t idx,
-                      glm::vec3 offset) {
+                      glm::vec3 offset, glm::vec3 scale) {
   PushConstantC2 c2;
 
   float aspect = (float)drawInfo.swapChainExtent.width /
@@ -121,6 +159,7 @@ void Camera::drawUIAt(DrawInfo &drawInfo, UI &ui, uint32_t idx,
   c2.proj = glm::ortho(-aspect, aspect, -1.0f, 1.0f, 0.0f, 1.0f);
   c2.model = glm::mat4(1.f);
   c2.model = glm::translate(c2.model, offset);
+  c2.model = glm::scale(c2.model, scale);
 
   ui.renderAt(drawInfo, c2, idx);
 }

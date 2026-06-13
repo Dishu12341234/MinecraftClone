@@ -109,6 +109,7 @@ void Terrain::generateNewChunks(int chunkX, int chunkY) {
 
   Chunk *c = new Chunk(chunkX, chunkY, vkContext, gop);
 
+  vkDeviceWaitIdle(vkContext.device);
   c->makeVisible();
   c->generateMesh();
   c->createBuffers();
@@ -132,6 +133,7 @@ void Terrain::sweepHandleTerrain(int playerChunkX, int playerChunkY) {
     }
   }
 
+  vkDeviceWaitIdle(vkContext.device);
   for (uint64_t key : toRemove) {
     chunks[key]->cleanup();
     delete chunks[key];

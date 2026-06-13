@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
-
+enum class Face { Top, Bottom, Left, Right, Front, Back };
 namespace BlockFaces {
 inline char grassFaceTexture[6] = {0, 1, 1, 1, 1, 1};
 inline char dirtFaceTexture[6] = {1, 1, 1, 1, 1, 1};

@@ -3,7 +3,6 @@
 
 #include "Event.h"
 #include "GameObjectPool.h"
-#include "GraphicsPipeline.h"
 #include "Ray.h"
 #include "Structs.h"
 #include "UI.h"
@@ -12,8 +11,8 @@ struct HitInfo {
   BlockCoordinates blockCoords{};
   glm::vec3 hitNormal{};
   Voxel *hitVoxel{nullptr};
+  FaceDirection faceDirection;
 };
-
 
 class Camera {
 private:
@@ -56,7 +55,8 @@ public:
 
   void drawUI(DrawInfo &drawInfo, UI &ui);
   void drawUIAt(DrawInfo &drawInfo, UI &ui, uint32_t idx,
-                glm::vec3 offset = glm::vec3(0));
+                glm::vec3 offset = glm::vec3(0),
+                glm::vec3 scale = glm::vec3(1));
 
   ~Camera();
 };

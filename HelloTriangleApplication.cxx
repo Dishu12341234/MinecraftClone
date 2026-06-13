@@ -139,7 +139,6 @@ void HelloTriangleApplication::recordCommandBuffer(
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     uiRenderPipeline.graphicsPipeline);
   inventory->drawUI(drawInfoUI, playerS1->camera, ui.value());
-  playerS1->drawUIIfPossible(drawInfoUI, ui.value());
 
   PushConstantC1 c1{};
   float aspect = float(swapChainExtent.width) / float(swapChainExtent.height);
@@ -164,6 +163,8 @@ void HelloTriangleApplication::cleanup() {
   playerS1->camera->cleanup();
   ui->cleanup();
   font->cleanup();
+
+  itemPool.cleanUPItems();
 
   // Destroy per-frame semaphores and fences
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {

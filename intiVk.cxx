@@ -1,5 +1,6 @@
 #include "Event.h"
 #include "HelloTriangleApplication.hpp"
+#include "Properties.h"
 #include <algorithm>
 #include <cstdlib>
 #include <cxxabi.h>
@@ -241,14 +242,20 @@ void HelloTriangleApplication::initVulkan() {
   uiTexturePaths[2] = "/home/divyansh/MinecraftClone/textures/heart.png";
   uiTexturePaths[3] =
       "/home/divyansh/MinecraftClone/textures/inventorySelectionMask.png";
+  uiTexturePaths[4] = "/home/divyansh/MinecraftClone/textures/hotbar.png";
+
+  // 16 for now
   for (size_t i = 0; i < NUM_DESCRIPTOR_COUNT_FOR_UI_TEXTURES; i++) {
     texturePassInfo.texturePath = uiTexturePaths[i];
     uiTextures.at(i).passTextureCreateInfo(texturePassInfo);
   }
 
+  // --ITEMS
+
   loadModel();
   // createVertexBuffer();
   // createIndexBuffer();
+  initItems();
   initGameObjects();
   createUniformBuffers();
   createDescriptorPool();
@@ -264,11 +271,10 @@ void HelloTriangleApplication::initVulkan() {
   }
 
   initFontLib();
-  texturePassInfo.texturePath =
-      "/home/divyansh/MinecraftClone/textures/inventory.png";
+  texturePassInfo.texturePath = ""; // not used
   font->texture.passTextureCreateInfo(texturePassInfo);
   font->createTextureImage();
-  font->buildTextMesh("amnesia", .1f);
+  font->buildTextMesh("amnes\nia", .1f);
   font->texture.createTextureSampler();
 
   createDescriptorSets();
@@ -1211,4 +1217,15 @@ void HelloTriangleApplication::initFontLib() {
     exit(1);
   }
   FT_Done_Face(face);
+}
+
+void HelloTriangleApplication::initItems() {
+  auto *blockPropertiesGrass = new BlockTypeProperties{GRASS};
+  auto *blockPropertiesStone = new BlockTypeProperties{STONE};
+
+  Item *grass = new Item(0, "...", ItemType::BLOCK, blockPropertiesGrass);
+  Item *stone = new Item(1, "...", ItemType::BLOCK, blockPropertiesStone);
+
+  itemPool.insertNewItem(grass->itemID, grass);
+  itemPool.insertNewItem(stone->itemID, stone);
 }

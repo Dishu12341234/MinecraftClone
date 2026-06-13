@@ -18,9 +18,6 @@ void Player::drawUIIfPossible(DrawInfo &drawInfo, UI &ui) {
   //   camera->drawUIAt(drawInfo, ui, 0);
   //   camera->drawUIAt(drawInfo, ui, 1);
   // }
-
-  camera->drawUIAt(drawInfo, ui, 2);
-  camera->drawUIAt(drawInfo, ui, 3);
 }
 
 void Player::handlePlayerMovement(UniformBufferObject &UBO,
